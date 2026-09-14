@@ -68,6 +68,56 @@
 | 28 | 에러/네트워크 오류 화면 | |
 | 29 | 빈 상태(Empty state) 화면 | 프로젝트 없음 등 |
 
+## 화면 흐름 다이어그램
+
+디자인이 아니라 "어떤 동작을 하면 어떤 화면으로 이동하는지"만 표현한 흐름도입니다. 점선(`-.->`)은 자동 전환/링크 전달처럼 사용자의 직접 탭이 아닌 흐름입니다. 에러/빈 상태 화면(G)은 특정 상황에서 조건부로 뜨는 공통 화면이라 흐름도에는 표시하지 않았습니다.
+
+```mermaid
+flowchart TD
+    Splash["스플래시"] --> Home["홈"]
+
+    Home -->|"로그인 안 됨 → 로그인"| Login["로그인"]
+    Home -->|"로그인 안 됨 → 회원가입"| Signup["회원가입"]
+    Login -->|"비밀번호 찾기"| PwReset["비밀번호 재설정"]
+    Login -->|"로그인 성공"| ProjectList["프로젝트 목록"]
+    Signup -->|"가입 완료"| ProjectList
+    Home -->|"이미 로그인됨"| ProjectList
+    Home -->|"하단 네비 · 마이페이지"| MyPage["마이페이지"]
+
+    ProjectList -->|"+ 새 청첩장"| ProjectCreate["프로젝트 생성"]
+    ProjectList -->|"기존 프로젝트 선택"| EditorMain["에디터 메인"]
+    ProjectCreate -->|"기본정보 입력 완료"| StyleTheme["스타일 테마 선택"]
+    StyleTheme -->|"테마 선택 완료"| EditorMain
+
+    EditorMain -->|"블록 탭"| BlockEdit["블록 편집"]
+    BlockEdit -->|"사진 추가"| ImageUpload["이미지 업로드"]
+    ImageUpload -->|"완료"| BlockEdit
+    BlockEdit -->|"저장"| EditorMain
+    EditorMain -->|"BGM 메뉴"| BGMSelect["BGM 선택"]
+    BGMSelect -->|"완료"| EditorMain
+    EditorMain -->|"미리보기"| Preview["실시간 미리보기"]
+    Preview -->|"편집으로"| EditorMain
+    EditorMain -->|"설정 메뉴"| ProjectSettings["프로젝트 설정"]
+    ProjectSettings -->|"완료"| EditorMain
+    EditorMain -->|"공유하기"| ShareScreen["공유하기"]
+    ShareScreen -->|"미리보기 설정"| SharePreview["공유 미리보기 설정"]
+    SharePreview -->|"완료"| ShareScreen
+    EditorMain -->|"응답 현황"| RSVPStatus["RSVP 응답 현황"]
+    EditorMain -->|"방명록 관리"| GuestbookManage["방명록 관리"]
+    EditorMain -->|"통계"| Stats["통계/조회수"]
+
+    ShareScreen -.->|"링크 전달"| Viewer["청첩장 뷰어 (하객)"]
+    Viewer -->|"참석 의사 전달"| RSVPInput["RSVP 입력"]
+    RSVPInput --> Viewer
+    Viewer -->|"방명록 남기기"| GuestbookWrite["방명록 작성"]
+    GuestbookWrite --> Viewer
+    Viewer -.->|"예식일+N일 경과 (자동)"| ThankYou["감사 인사 페이지"]
+
+    MyPage -->|"알림 설정"| NotiSettings["알림 설정"]
+    MyPage -->|"포인트 내역"| Points["포인트/결제 내역"]
+    MyPage -->|"고객센터"| Support["고객센터/문의"]
+```
+
 ## 다음 논의 필요
 
-- [ ] 각 카테고리 내 화면들의 정확한 이동 흐름(플로우) 다이어그램
+- [ ] 프로젝트 목록에서 기존 프로젝트를 선택했을 때 바로 에디터로 갈지, 중간에 대시보드(요약) 화면을 거칠지
