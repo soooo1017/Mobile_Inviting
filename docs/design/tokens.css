@@ -1,0 +1,47 @@
+/* Invite App — Base Tokens (tokens.json과 동일 값) */
+:root {
+  /* background */
+  --bg-canvas: #f4f2ef;
+  --bg-surface: #ffffff;
+  --bg-tabbar: #fbfaf8;
+  --bg-placeholder: #e7e1d9;
+
+  /* ink */
+  --ink-primary: #23212a;      /* 제목·본문·주버튼 배경 */
+  --ink-on-primary: #f4f2ef;   /* 주버튼 텍스트 */
+  --ink-label: #4f4b56;        /* 폼 라벨 */
+  --ink-muted: #7a7580;        /* 12px 이상 설명문 */
+  --ink-secondary: #66626e;    /* 11px 이하 보조 텍스트 (고정) */
+  --ink-placeholder: #a29ba8;  /* 플레이스홀더 전용 (고정) */
+  --ink-inactive: #9a95a0;     /* 비활성 탭 */
+
+  /* accent (라벤더 미스트) */
+  --accent: #5f5486;
+  --accent-tint: #efedfd;
+  --accent-tint-border: #cdc6e0;
+
+  /* lines */
+  --line: #e5dfd6;
+  --line-strong: #d9d1c6;
+  --line-soft: #efeae2;
+  --line-separator: #e0d9cf;
+  --line-dashed: #cfc7bb;
+  --line-focus: #23212a;
+
+  /* status / brand */
+  --error: #a04a4a;
+  --kakao-bg: #fee500;
+  --kakao-ink: #191600;
+
+  /* type */
+  --font-base: Pretendard, 'Noto Sans KR', system-ui, sans-serif;
+  --fs-caption: 10px;  --fs-micro: 10.5px; --fs-small: 11px; --fs-label: 11.5px;
+  --fs-body: 12.5px;   --fs-control: 13.5px; --fs-title3: 15px; --fs-title2: 17px;
+  --fs-title1: 20px;   --fs-display: 21px; --fs-hero: 23px;
+  --fw-regular: 400; --fw-medium: 500; --fw-semibold: 600;
+  --ls-heading: -0.025em; --ls-title: -0.02em; --ls-button: -0.01em;
+
+  /* space & radius */
+  --space-screen-x: 18px;
+  --radius-chip: 4px; --radius-input: 8px; --radius-button: 10px; --radius-card: 12px; --radius-pill: 999px;
+}
