@@ -54,11 +54,11 @@ export function HomeGuestScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.bottom}>
-        <PrimaryButton label="시작하기" onPress={() => navigation.navigate('Signup')} />
-        <View style={styles.loginRow}>
-          <Text style={styles.loginPrompt}>이미 계정이 있으신가요? </Text>
-          <TextLink weight="semibold" color={color.accent.base} underline onPress={() => navigation.navigate('Login')}>
-            로그인
+        <PrimaryButton label="시작하기" onPress={() => navigation.navigate('Login')} />
+        <View style={styles.signupRow}>
+          <Text style={styles.signupPrompt}>계정이 없으신가요? </Text>
+          <TextLink weight="semibold" color={color.accent.base} underline onPress={() => navigation.navigate('Signup')}>
+            회원가입
           </TextLink>
         </View>
       </View>
@@ -140,13 +140,13 @@ const styles = StyleSheet.create({
     paddingBottom: 22,
     gap: space[5],
   },
-  loginRow: {
+  signupRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: space[2],
   },
-  loginPrompt: {
+  signupPrompt: {
     ...textStyle({ size: 'label', weight: 'regular', color: color.ink.muted }),
   },
 });
