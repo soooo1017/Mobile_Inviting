@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Invitation App Walkthrough</title>
+<meta name="description" content="A. 앱 공통 화면 핸드오프의 클릭형 프로토타입 — 실제 스크린샷 위에서 화면 이동을 확인합니다." />
+<style>
+  :root{
+    --bg:#f4f2ef;
+    --panel:#ffffff;
+    --ink:#23212a;
+    --ink-muted:#7a7580;
+    --ink-secondary:#66626e;
+    --line:#e5dfd6;
+    --line-strong:#d9d1c6;
+    --accent:#5f5486;
+    --accent-tint:#efedfd;
+    --accent-tint-border:#cdc6e0;
+    --bezel:#1c1a20;
+    --bezel-edge:#302c38;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#1a1820;
+      --panel:#242130;
+      --ink:#f1eef7;
+      --ink-muted:#a49dae;
+      --ink-secondary:#b4adbc;
+      --line:#3a3546;
+      --line-strong:#4a4456;
+      --accent:#a89bd6;
+      --accent-tint:#332c48;
+      --accent-tint-border:#4a4066;
+      --bezel:#0c0b10;
+      --bezel-edge:#232030;
+      color-scheme: dark;
+    }
+  }
+
+  *{ box-sizing: border-box; }
+  html, body{ height: 100%; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+    padding-inline: 20px;
+    padding-block: 28px;
+    display:flex;
+    justify-content:center;
+  }
+  img{ max-width:100%; }
+  [hidden]{ display:none !important; }
+
+  .stage{
+    width:100%;
+    max-width:920px;
+    display:flex;
+    gap:32px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+
+  .phone-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+    flex:0 0 auto;
+    margin-inline:auto;
+  }
+  .phone{
+    position:relative;
+    width:min(78vw,300px);
+    aspect-ratio: 640 / 1244;
+    background: var(--bezel);
+    border-radius: 46px;
+    padding: 12px;
+    box-shadow: 0 1px 0 var(--bezel-edge) inset, 0 24px 48px -20px rgba(0,0,0,.45);
+  }
+  .phone::before{
+    content:"";
+    position:absolute;
+    top:22px; left:50%; transform:translateX(-50%);
+    width:34%; height:3.2%;
+    background:var(--bezel-edge);
+    border-radius:999px;
+    z-index:3;
+  }
+  .screen{
+    position:relative;
+    width:100%; height:100%;
+    border-radius:34px;
+    overflow:hidden;
+    background:#f4f2ef;
+  }
+  .screen img{
+    display:block;
+    width:100%; height:100%;
+    object-fit:cover;
+    user-select:none;
+    -webkit-user-drag:none;
+  }
+  .hotspot{
+    position:absolute;
+    cursor:pointer;
+    border-radius:10px;
+    outline:none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hotspot:hover, .hotspot:focus-visible{
+    background: rgba(95,84,134,.16);
+    box-shadow: 0 0 0 1.5px rgba(95,84,134,.55) inset;
+  }
+  .hint{
+    font-size:12px;
+    color: var(--ink-muted);
+    text-align:center;
+  }
+
+  .panel{
+    flex:1 1 280px;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    padding-top:4px;
+  }
+  .eyebrow{
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color: var(--accent);
+  }
+  h1{
+    margin:2px 0 0;
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .lede{
+    margin:0;
+    font-size:13.5px;
+    line-height:1.6;
+    color: var(--ink-secondary);
+    max-width:52ch;
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px 16px;
+  }
+  .now-label{
+    font-size:10.5px;
+    font-weight:600;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:var(--ink-muted);
+  }
+  .now-value{
+    margin-top:4px;
+    font-size:16px;
+    font-weight:700;
+  }
+  .now-desc{
+    margin-top:3px;
+    font-size:12.5px;
+    color:var(--ink-secondary);
+  }
+
+  .controls{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+  }
+  button.ctl{
+    font: inherit;
+    font-size:12.5px;
+    font-weight:600;
+    padding:9px 14px;
+    border-radius:9px;
+    border:1px solid var(--line-strong);
+    background:var(--panel);
+    color:var(--ink);
+    cursor:pointer;
+  }
+  button.ctl:hover{ background: var(--accent-tint); border-color:var(--accent-tint-border); color:var(--accent); }
+  button.ctl:disabled{ opacity:.4; cursor:default; background:var(--panel); color:var(--ink); }
+
+  .trail{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    font-size:11px;
+  }
+  .trail span{
+    padding:3px 8px;
+    border-radius:999px;
+    background:var(--accent-tint);
+    color:var(--accent);
+    font-weight:600;
+  }
+  .trail span.current{
+    background:var(--accent);
+    color:#fff;
+  }
+
+  .map summary{
+    cursor:pointer;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--ink-secondary);
+    padding:2px 0;
+  }
+  .map pre{
+    margin:8px 0 0;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size:10.5px;
+    line-height:1.6;
+    color:var(--ink-secondary);
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+  }
+
+  footer{
+    font-size:11.5px;
+    color:var(--ink-muted);
+  }
+  footer a{ color: var(--accent); }
+
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:28px;
+    transform:translate(-50%,12px);
+    background:var(--ink);
+    color:var(--bg);
+    font-size:12.5px;
+    font-weight:500;
+    padding:10px 16px;
+    border-radius:10px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;
+    z-index:10;
+    max-width: min(90vw, 360px);
+    text-align:center;
+  }
+  .toast.show{
+    opacity:1;
+    transform:translate(-50%,0);
+  }
+
+  @media (max-width: 640px){
+    .stage{ gap:22px; }
+    h1{ font-size:19px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="phone-col">
+    <div class="phone">
+      <div class="screen" id="screen">
+        <img id="screenImg" alt="" />
+      </div>
+    </div>
+    <p class="hint" id="hint">화면을 탭해서 이동해보세요</p>
+  </div>
+
+  <div class="panel">
+    <div>
+      <div class="eyebrow">Handoff prototype · A. 앱 공통 화면</div>
+      <h1>클릭으로 넘겨보는 초대장 앱</h1>
+      <p class="lede">핸드오프 스펙의 실제 화면 스크린샷 위에, 문서의 &ldquo;Interactions &amp; Navigation&rdquo; 흐름대로 탭 영역을 얹은 프로토타입입니다. 코드가 아니라 화면 전환 확인용입니다.</p>
+    </div>
+
+    <div class="card">
+      <div class="now-label">현재 화면</div>
+      <div class="now-value" id="nowValue">A1 · 스플래시</div>
+      <div class="now-desc" id="nowDesc">앱을 시작할 때 브랜드를 보여주는 화면</div>
+      <div class="controls">
+        <button class="ctl" id="backBtn">← 뒤로</button>
+        <button class="ctl" id="resetBtn">처음으로</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="now-label" style="margin-bottom:8px;">지나온 화면</div>
+      <div class="trail" id="trail"></div>
+    </div>
+
+    <details class="map">
+      <summary>전체 이동 규칙 보기</summary>
+      <pre>A1 --(자동)--&gt; A2
+A2 --시작하기--&gt; A5      A2 --로그인--&gt; A4
+A4 --로그인--&gt; A7(오류)  A7 --로그인--&gt; A3(성공)
+A4 --카카오/Apple--&gt; A3
+A4 --비밀번호 찾기--&gt; A6-1   A4 --회원가입--&gt; A5
+A6-1 --링크 보내기--&gt; A6-2   A6-2 --돌아가기--&gt; A4
+A5 --가입하고 시작하기--&gt; A3
+A7 --비밀번호 찾기--&gt; A6-1   A7 --회원가입--&gt; A5</pre>
+    </details>
+
+    <footer>
+      실제 구현은 <a href="https://github.com/soooo1017/Wedding_Mobile_Inviting/tree/main/mobile">mobile/</a> (React Native · Expo), 디자인 스펙은
+      <a href="https://github.com/soooo1017/Wedding_Mobile_Inviting/tree/main/docs/design">docs/design/</a>에 있습니다.
+    </footer>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var SCREENS = {
+    A1: {
+      label: "A1 · 스플래시",
+      desc: "앱을 시작할 때 브랜드를 보여주는 화면",
+      img: "screens/A1-splash.png",
+      autoAdvance: { to: "A2", delay: 1600 },
+      hotspots: [
+        { x:0, y:0, w:100, h:100, action:{ type:"nav", to:"A2" } }
+      ]
+    },
+    A2: {
+      label: "A2 · 홈 (로그인 전)",
+      desc: "처음 온 사용자에게 서비스를 소개하는 화면",
+      img: "screens/A2-home-guest.png",
+      hotspots: [
+        { x:5.5, y:86, w:89, h:7, action:{ type:"nav", to:"A5" } },
+        { x:18, y:93.5, w:64, h:4.5, action:{ type:"nav", to:"A4" } }
+      ]
+    },
+    A3: {
+      label: "A3 · 홈 (로그인 후)",
+      desc: "진행 중인 초대장으로 바로 이동하는 화면",
+      img: "screens/A3-home.png",
+      hotspots: [
+        { x:84, y:7, w:10, h:4.5, action:{ type:"toast", msg:"마이 화면은 다음 핸드오프에서 준비돼요" } },
+        { x:6, y:42.5, w:43, h:5, action:{ type:"toast", msg:"에디터(B 파트)는 다음 핸드오프에서 준비돼요" } },
+        { x:51, y:42.5, w:43, h:5, action:{ type:"toast", msg:"관리 화면은 다음 핸드오프에서 준비돼요" } },
+        { x:6, y:52, w:88, h:6, action:{ type:"toast", msg:"응답 상세는 다음 핸드오프에서 준비돼요" } },
+        { x:6, y:59.5, w:88, h:6, action:{ type:"toast", msg:"블록 편집 이동은 다음 핸드오프에서 준비돼요" } },
+        { x:0, y:94, w:33.3, h:6, action:{ type:"toast", msg:"이미 홈이에요" } },
+        { x:33.3, y:94, w:33.3, h:6, action:{ type:"toast", msg:"내 초대장 목록은 다음 핸드오프에서 준비돼요" } },
+        { x:66.6, y:94, w:33.4, h:6, action:{ type:"toast", msg:"마이 화면은 다음 핸드오프에서 준비돼요" } }
+      ]
+    },
+    A4: {
+      label: "A4 · 로그인",
+      desc: "이메일/비밀번호 또는 간편 로그인",
+      img: "screens/A4-login.png",
+      hotspots: [
+        { x:4, y:6, w:8, h:3.4, action:{ type:"back" } },
+        { x:5.5, y:37, w:89, h:5, action:{ type:"nav", to:"A7" } },
+        { x:5.5, y:51, w:41, h:5, action:{ type:"nav", to:"A3" } },
+        { x:53, y:51, w:41, h:5, action:{ type:"nav", to:"A3" } },
+        { x:14, y:58.5, w:36, h:2.5, action:{ type:"nav", to:"A6-1" } },
+        { x:54, y:58.5, w:22, h:2.5, action:{ type:"nav", to:"A5" } }
+      ]
+    },
+    A5: {
+      label: "A5 · 회원가입",
+      desc: "이메일/비밀번호와 약관 동의",
+      img: "screens/A5-signup.png",
+      hotspots: [
+        { x:4, y:6, w:8, h:3.4, action:{ type:"back" } },
+        { x:5.5, y:91, w:89, h:5.2, action:{ type:"nav", to:"A3" } }
+      ]
+    },
+    "A6-1": {
+      label: "A6-1 · 비밀번호 찾기",
+      desc: "가입한 이메일로 재설정 링크 요청",
+      img: "screens/A6-1-reset-request.png",
+      hotspots: [
+        { x:4, y:6, w:8, h:3.4, action:{ type:"back" } },
+        { x:5.5, y:38.5, w:89, h:5, action:{ type:"nav", to:"A6-2" } }
+      ]
+    },
+    "A6-2": {
+      label: "A6-2 · 발송 완료",
+      desc: "재설정 링크를 이메일로 보낸 뒤 안내",
+      img: "screens/A6-2-reset-sent.png",
+      hotspots: [
+        { x:4, y:6, w:8, h:3.4, action:{ type:"back" } },
+        { x:5.5, y:83, w:89, h:5, action:{ type:"nav", to:"A4" } },
+        { x:22, y:91.5, w:56, h:3, action:{ type:"toast", msg:"60초 뒤에 다시 보낼 수 있어요" } }
+      ]
+    },
+    A7: {
+      label: "A7 · 로그인 오류",
+      desc: "A4와 같은 화면, 인라인 오류 상태",
+      img: "screens/A7-login-error.png",
+      hotspots: [
+        { x:4, y:6, w:8, h:3.4, action:{ type:"back" } },
+        { x:5.5, y:41.5, w:89, h:5, action:{ type:"nav", to:"A3" } },
+        { x:14, y:49.5, w:36, h:2.5, action:{ type:"nav", to:"A6-1" } },
+        { x:54, y:49.5, w:22, h:2.5, action:{ type:"nav", to:"A5" } }
+      ]
+    }
+  };
+
+  var screenImg = document.getElementById("screenImg");
+  var screenEl = document.getElementById("screen");
+  var nowValue = document.getElementById("nowValue");
+  var nowDesc = document.getElementById("nowDesc");
+  var trailEl = document.getElementById("trail");
+  var hintEl = document.getElementById("hint");
+  var toastEl = document.getElementById("toast");
+  var backBtn = document.getElementById("backBtn");
+  var resetBtn = document.getElementById("resetBtn");
+
+  var history = [];
+  var current = null;
+  var autoTimer = null;
+  var toastTimer = null;
+
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove("show"); }, 1800);
+  }
+
+  function renderHotspots(id){
+    var nodes = screenEl.querySelectorAll(".hotspot");
+    nodes.forEach(function(n){ n.remove(); });
+    SCREENS[id].hotspots.forEach(function(h){
+      var el = document.createElement("div");
+      el.className = "hotspot";
+      el.style.left = h.x + "%";
+      el.style.top = h.y + "%";
+      el.style.width = h.w + "%";
+      el.style.height = h.h + "%";
+      el.tabIndex = 0;
+      el.setAttribute("role", "button");
+      el.addEventListener("click", function(){ runAction(h.action); });
+      el.addEventListener("keydown", function(e){
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); runAction(h.action); }
+      });
+      screenEl.appendChild(el);
+    });
+  }
+
+  function runAction(action){
+    if (action.type === "nav") { goTo(action.to, true); }
+    else if (action.type === "toast") { showToast(action.msg); }
+    else if (action.type === "back") { goBack(); }
+  }
+
+  function renderTrail(){
+    var items = history.concat([current]);
+    trailEl.innerHTML = "";
+    items.forEach(function(id, i){
+      var span = document.createElement("span");
+      span.textContent = id;
+      if (i === items.length - 1) span.classList.add("current");
+      trailEl.appendChild(span);
+    });
+  }
+
+  function goTo(id, pushHistory){
+    if (!SCREENS[id]) return;
+    clearTimeout(autoTimer);
+    if (pushHistory && current) history.push(current);
+    current = id;
+    var s = SCREENS[id];
+    screenImg.src = s.img;
+    screenImg.alt = s.label;
+    nowValue.textContent = s.label;
+    nowDesc.textContent = s.desc;
+    hintEl.textContent = id === "A1" ? "곧 자동으로 다음 화면으로 넘어가요" : "화면을 탭해서 이동해보세요";
+    renderHotspots(id);
+    renderTrail();
+    backBtn.disabled = history.length === 0;
+    if (s.autoAdvance) {
+      autoTimer = setTimeout(function(){ goTo(s.autoAdvance.to, true); }, s.autoAdvance.delay);
+    }
+  }
+
+  function goBack(){
+    if (history.length === 0) return;
+    var prev = history.pop();
+    clearTimeout(autoTimer);
+    current = prev;
+    var s = SCREENS[prev];
+    screenImg.src = s.img;
+    screenImg.alt = s.label;
+    nowValue.textContent = s.label;
+    nowDesc.textContent = s.desc;
+    renderHotspots(prev);
+    renderTrail();
+    backBtn.disabled = history.length === 0;
+  }
+
+  backBtn.addEventListener("click", goBack);
+  resetBtn.addEventListener("click", function(){
+    history = [];
+    goTo("A1", false);
+  });
+
+  goTo("A1", false);
+})();
+</script>
+</body>
+</html>
