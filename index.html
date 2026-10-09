@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Invitation App Walkthrough</title>
-<meta name="description" content="A. 앱 공통 화면 핸드오프의 클릭형 프로토타입 — 실제 스크린샷 위에서 화면 이동을 확인합니다." />
+<meta name="description" content="A. 앱 공통 화면 + B. 프로젝트 목록·생성 핸드오프의 클릭형 프로토타입 — 실제 스크린샷 위에서 화면 이동을 확인합니다." />
 <style>
   :root{
     --bg:#f4f2ef;
@@ -231,6 +231,25 @@
     color:var(--ink-secondary);
     padding:2px 0;
   }
+  .jumpGroup{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:8px;
+  }
+  button.jump{
+    font: inherit;
+    font-size:11px;
+    font-weight:600;
+    padding:5px 9px;
+    border-radius:7px;
+    border:1px solid var(--line-strong);
+    background:var(--panel);
+    color:var(--ink-secondary);
+    cursor:pointer;
+  }
+  button.jump:hover{ background: var(--accent-tint); border-color:var(--accent-tint-border); color:var(--accent); }
+  button.jump.current{ background:var(--accent); border-color:var(--accent); color:#fff; }
   .map pre{
     margin:8px 0 0;
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
@@ -290,9 +309,9 @@
 
   <div class="panel">
     <div>
-      <div class="eyebrow">Handoff prototype · A. 앱 공통 화면</div>
+      <div class="eyebrow">Handoff prototype · A. 앱 공통 + B. 프로젝트 목록·생성</div>
       <h1>클릭으로 넘겨보는 초대장 앱</h1>
-      <p class="lede">핸드오프 스펙의 실제 화면 스크린샷 위에, 문서의 &ldquo;Interactions &amp; Navigation&rdquo; 흐름대로 탭 영역을 얹은 프로토타입입니다. 코드가 아니라 화면 전환 확인용입니다.</p>
+      <p class="lede">핸드오프 스펙의 실제 화면 스크린샷 위에, 문서의 &ldquo;Interactions &amp; Navigation&rdquo; 흐름대로 탭 영역을 얹은 프로토타입입니다. 코드가 아니라 화면 전환 확인용입니다. 아직 디자인되지 않은 화면(에디터 등)으로 가는 동작은 토스트로 대신 안내돼요.</p>
     </div>
 
     <div class="card">
@@ -319,7 +338,17 @@ A4 --카카오/Apple--&gt; A3
 A4 --비밀번호 찾기--&gt; A6-1   A4 --회원가입--&gt; A5
 A6-1 --링크 보내기--&gt; A6-2   A6-2 --돌아가기--&gt; A4
 A5 --가입하고 시작하기--&gt; A3
-A7 --비밀번호 찾기--&gt; A6-1   A7 --회원가입--&gt; A5</pre>
+A7 --비밀번호 찾기--&gt; A6-1   A7 --회원가입--&gt; A5
+
+B6p/q/B6r --탭--&gt; B6s/B6t(액션 시트)   B6p --+새 초대장--&gt; B7a
+B7a --기타--&gt; B7d   B7a/B7d --다음--&gt; B7b(또는 B7c)
+B7b/B7c --다음--&gt; B7e --다음--&gt; B8 --제작 시작하기--&gt; (B9, 준비 중)</pre>
+    </details>
+
+    <details class="map">
+      <summary>화면 바로가기 (전체 목록)</summary>
+      <div class="jumpGroup" id="jumpA"></div>
+      <div class="jumpGroup" id="jumpB" style="margin-top:10px;"></div>
     </details>
 
     <footer>
@@ -372,7 +401,7 @@ A7 --비밀번호 찾기--&gt; A6-1   A7 --회원가입--&gt; A5</pre>
         { x:6, y:52, w:88, h:6, action:{ type:"toast", msg:"응답 상세는 다음 핸드오프에서 준비돼요" } },
         { x:6, y:59.5, w:88, h:6, action:{ type:"toast", msg:"블록 편집 이동은 다음 핸드오프에서 준비돼요" } },
         { x:0, y:94, w:33.3, h:6, action:{ type:"toast", msg:"이미 홈이에요" } },
-        { x:33.3, y:94, w:33.3, h:6, action:{ type:"toast", msg:"내 초대장 목록은 다음 핸드오프에서 준비돼요" } },
+        { x:33.3, y:94, w:33.3, h:6, action:{ type:"nav", to:"B6p" } },
         { x:66.6, y:94, w:33.4, h:6, action:{ type:"toast", msg:"마이 화면은 다음 핸드오프에서 준비돼요" } }
       ]
     },
@@ -427,8 +456,260 @@ A7 --비밀번호 찾기--&gt; A6-1   A7 --회원가입--&gt; A5</pre>
         { x:14, y:49.5, w:36, h:2.5, action:{ type:"nav", to:"A6-1" } },
         { x:54, y:49.5, w:22, h:2.5, action:{ type:"nav", to:"A5" } }
       ]
+    },
+
+    // ---- B. 프로젝트 목록 · 생성 ----
+
+    B6p: {
+      label: "B6p · 내 초대장 (자세한 카드형)",
+      desc: "기본 보기. 카드를 탭하면 액션 시트가 열려요",
+      img: "screens/B6p-list-detail.png",
+      hotspots: listHeaderHotspots().concat([
+        { x:6, y:34, w:88, h:26, action:{ type:"nav", to:"B6s" } },
+        { x:6, y:61, w:88, h:27, action:{ type:"nav", to:"B6s" } }
+      ]).concat(tabHotspots("list"))
+    },
+    B6q: {
+      label: "B6q · 내 초대장 (썸네일 카드형)",
+      desc: "2열 그리드. 정보는 최소로만 보여줘요",
+      img: "screens/B6q-list-thumb.png",
+      hotspots: listHeaderHotspots().concat([
+        { x:5.9, y:33.8, w:42.2, h:31.3, action:{ type:"nav", to:"B6s" } },
+        { x:51.9, y:33.8, w:42.2, h:31.3, action:{ type:"nav", to:"B6s" } },
+        { x:5.9, y:69, w:42.2, h:25, action:{ type:"nav", to:"B6t" } },
+        { x:51.9, y:69, w:42.2, h:25, action:{ type:"nav", to:"B6s" } }
+      ]).concat(tabHotspots("list"))
+    },
+    B6r: {
+      label: "B6r · 내 초대장 (리스트형)",
+      desc: "텍스트 중심의 한 줄 요약 보기",
+      img: "screens/B6r-list-text.png",
+      hotspots: listHeaderHotspots().concat([
+        { x:6, y:34, w:88, h:13, action:{ type:"nav", to:"B6s" } },
+        { x:6, y:47, w:88, h:13, action:{ type:"nav", to:"B6s" } },
+        { x:6, y:60, w:88, h:11, action:{ type:"nav", to:"B6t" } },
+        { x:6, y:71, w:88, h:11, action:{ type:"nav", to:"B6s" } }
+      ]).concat(tabHotspots("list"))
+    },
+    B6b: {
+      label: "B6b · 빈 상태",
+      desc: "아직 만든 초대장이 없을 때",
+      img: "screens/B6b-empty.png",
+      hotspots: [
+        { x:85, y:5, w:12, h:6, action:{ type:"toast", msg:"마이 화면은 다음 핸드오프에서 준비돼요" } },
+        { x:6, y:89, w:88, h:5.5, action:{ type:"nav", to:"B7a" } }
+      ].concat(tabHotspots("list"))
+    },
+    B6e: {
+      label: "B6e · 검색 결과",
+      desc: "프로젝트명 부분 일치, 일치 구간 강조",
+      img: "screens/B6e-search.png",
+      hotspots: [
+        { x:6, y:13, w:77, h:5, action:{ type:"toast", msg:"실제로는 입력한 글자 그대로 좁혀져요" } },
+        { x:83.5, y:14.5, w:8, h:3, action:{ type:"nav", to:"B6p" } },
+        { x:57, y:21, w:38, h:4, action:{ type:"nav", to:"B7a" } },
+        { x:85, y:5, w:12, h:6, action:{ type:"toast", msg:"마이 화면은 다음 핸드오프에서 준비돼요" } },
+        { x:6, y:34, w:88, h:26, action:{ type:"nav", to:"B6s" } }
+      ].concat(tabHotspots("list"))
+    },
+    B6f: {
+      label: "B6f · 필터",
+      desc: "상태 · 행사 월 · 행사 종류 · 지역, 모두 다중 선택",
+      img: "screens/B6f-filter.png",
+      hotspots: [
+        { x:0, y:0, w:100, h:31, action:{ type:"back" } },
+        { x:88, y:31, w:8, h:3.2, action:{ type:"back" } },
+        { x:6, y:93, w:22, h:5, action:{ type:"toast", msg:"필터가 초기화돼요" } },
+        { x:31, y:93, w:63, h:5.5, action:{ type:"back" } }
+      ]
+    },
+    B6g: {
+      label: "B6g · 정렬",
+      desc: "단일 선택. 고르면 바로 닫혀요",
+      img: "screens/B6g-sort.png",
+      hotspots: [
+        { x:0, y:0, w:100, h:55, action:{ type:"back" } },
+        { x:88, y:55, w:8, h:3.2, action:{ type:"back" } },
+        { x:6, y:62, w:88, h:7, action:{ type:"toastNav", msg:"최근 수정순으로 정렬했어요", to:"B6p" } },
+        { x:6, y:70, w:88, h:7, action:{ type:"toastNav", msg:"최근 행사순으로 정렬했어요", to:"B6p" } },
+        { x:6, y:79, w:88, h:7, action:{ type:"toastNav", msg:"오래된 행사순으로 정렬했어요", to:"B6p" } },
+        { x:6, y:88, w:88, h:5, action:{ type:"toastNav", msg:"최근 만든순으로 정렬했어요", to:"B6p" } },
+        { x:6, y:93, w:88, h:6, action:{ type:"toastNav", msg:"이름순으로 정렬했어요", to:"B6p" } }
+      ]
+    },
+    B6i: {
+      label: "B6i · 결과 없음",
+      desc: "검색어나 필터 조건에 맞는 초대장이 없을 때",
+      img: "screens/B6i-no-result.png",
+      hotspots: [
+        { x:83.5, y:14.5, w:8, h:3, action:{ type:"nav", to:"B6p" } },
+        { x:6, y:33, w:17, h:3.5, action:{ type:"toast", msg:"필터가 해제돼요" } },
+        { x:25, y:33, w:11, h:3.5, action:{ type:"nav", to:"B6p" } },
+        { x:36, y:72.5, w:28, h:5, action:{ type:"nav", to:"B6p" } }
+      ].concat(tabHotspots("list"))
+    },
+    B6s: {
+      label: "B6s · 액션 시트 (감사 페이지 설정됨)",
+      desc: "카드를 탭하면 열려요. 설정 박스는 상태와 무관하게 항상 보여요",
+      img: "screens/B6s-sheet-thanks-on.png",
+      hotspots: [
+        { x:0, y:0, w:100, h:26, action:{ type:"back" } },
+        { x:6, y:42, w:43, h:9, action:{ type:"toast", msg:"에디터(B9)는 다음 핸드오프에서 준비돼요" } },
+        { x:51, y:42, w:43, h:9, action:{ type:"toast", msg:"관리 화면은 다음 핸드오프에서 준비돼요" } },
+        { x:6, y:71, w:43, h:4.5, action:{ type:"toast", msg:"기간 변경 시트는 다음 핸드오프에서 제공돼요" } },
+        { x:51, y:71, w:43, h:4.5, action:{ type:"toast", msg:"에디터(B9)는 다음 핸드오프에서 준비돼요" } },
+        { x:6, y:81, w:88, h:4.5, action:{ type:"toast", msg:"미리보기는 다음 핸드오프에서 제공돼요" } },
+        { x:6, y:87, w:88, h:4.5, action:{ type:"toast", msg:"링크를 복사했어요" } },
+        { x:6, y:92.5, w:88, h:5.5, action:{ type:"nav", to:"B6l" } }
+      ]
+    },
+    B6t: {
+      label: "B6t · 액션 시트 (감사 페이지 미설정)",
+      desc: "감사 페이지를 설정하지 않은 상태",
+      img: "screens/B6t-sheet-thanks-off.png",
+      hotspots: [
+        { x:0, y:0, w:100, h:30, action:{ type:"back" } },
+        { x:6, y:45, w:43, h:9, action:{ type:"toast", msg:"에디터(B9)는 다음 핸드오프에서 준비돼요" } },
+        { x:51, y:45, w:43, h:9, action:{ type:"toast", msg:"관리 화면은 다음 핸드오프에서 준비돼요" } },
+        { x:6, y:74.5, w:43, h:4.5, action:{ type:"toast", msg:"기간 설정 시트는 다음 핸드오프에서 제공돼요" } },
+        { x:51, y:74.5, w:43, h:4.5, action:{ type:"toast", msg:"에디터(B9)는 다음 핸드오프에서 준비돼요" } },
+        { x:6, y:84.5, w:88, h:4.5, action:{ type:"toast", msg:"미리보기는 다음 핸드오프에서 제공돼요" } },
+        { x:6, y:90.5, w:88, h:4.5, action:{ type:"toast", msg:"링크를 복사했어요" } },
+        { x:6, y:95.5, w:88, h:4.3, action:{ type:"nav", to:"B6m" } }
+      ]
+    },
+    B6l: {
+      label: "B6l · 삭제 확인 (작성중)",
+      desc: "아직 공유하지 않은 초대장의 삭제 확인",
+      img: "screens/B6l-delete-draft.png",
+      hotspots: [
+        { x:0, y:0, w:100, h:100, action:{ type:"back" } },
+        { x:13.75, y:59.6, w:34.7, h:6.9, action:{ type:"back" } },
+        { x:51.6, y:59.6, w:34.4, h:6.9, action:{ type:"nav", to:"B6o" } }
+      ]
+    },
+    B6m: {
+      label: "B6m · 삭제 확인 (공유중, 미확인)",
+      desc: "공유 중인 초대장은 체크박스를 확인해야 삭제할 수 있어요",
+      img: "screens/B6m-delete-shared.png",
+      hotspots: [
+        { x:0, y:0, w:100, h:100, action:{ type:"back" } },
+        { x:13.75, y:60, w:70, h:3.5, action:{ type:"toast", msg:"응답 데이터 내려받기는 다음 핸드오프에서 제공돼요" } },
+        { x:13.75, y:65.5, w:70, h:5.5, action:{ type:"nav", to:"B6n" } },
+        { x:13.75, y:75.4, w:34.7, h:5.9, action:{ type:"back" } },
+        { x:51.6, y:75.4, w:34.4, h:5.9, action:{ type:"toast", msg:"확인 체크박스를 먼저 선택해주세요" } }
+      ]
+    },
+    B6n: {
+      label: "B6n · 삭제 확인 (공유중, 확인됨)",
+      desc: "체크하면 삭제하기 버튼이 활성화돼요",
+      img: "screens/B6n-delete-shared-checked.png",
+      hotspots: [
+        { x:0, y:0, w:100, h:100, action:{ type:"back" } },
+        { x:13.75, y:60, w:70, h:3.5, action:{ type:"toast", msg:"응답 데이터 내려받기는 다음 핸드오프에서 제공돼요" } },
+        { x:13.75, y:65.5, w:70, h:5.5, action:{ type:"nav", to:"B6m" } },
+        { x:13.75, y:75.4, w:34.7, h:5.9, action:{ type:"back" } },
+        { x:51.6, y:75.4, w:34.4, h:5.9, action:{ type:"nav", to:"B6o" } }
+      ]
+    },
+    B6o: {
+      label: "B6o · 삭제 완료",
+      desc: "토스트를 보여준 뒤 목록으로 돌아가요",
+      img: "screens/B6o-deleted-toast.png",
+      autoAdvance: { to: "B6p", delay: 2000 },
+      hotspots: [
+        { x:0, y:0, w:100, h:100, action:{ type:"nav", to:"B6p" } }
+      ]
+    },
+    B7a: {
+      label: "B7a · 새 초대장 · 행사 유형",
+      desc: "1/4 단계. 유형에 따라 다음 단계 입력 칸 이름이 바뀌어요",
+      img: "screens/B7a-type.png",
+      hotspots: [
+        { x:5.9, y:5.6, w:7.8, h:3.6, action:{ type:"nav", to:"B6p" } },
+        { x:5.9, y:27.8, w:42.5, h:8.8, onClick: function(){ selectedEventType = "wedding"; showToast("결혼식을 선택했어요"); } },
+        { x:51.6, y:27.8, w:42.5, h:8.8, onClick: function(){ selectedEventType = "dol"; showToast("돌잔치를 선택했어요"); } },
+        { x:5.9, y:38.6, w:42.5, h:8.8, onClick: function(){ selectedEventType = "wedding"; showToast("백일을 선택했어요"); } },
+        { x:51.6, y:38.6, w:42.5, h:8.8, onClick: function(){ selectedEventType = "wedding"; showToast("생일파티를 선택했어요"); } },
+        { x:5.9, y:48.6, w:42.5, h:8.8, onClick: function(){ selectedEventType = "wedding"; showToast("집들이를 선택했어요"); } },
+        { x:51.6, y:48.6, w:42.5, h:8.8, onClick: function(){ selectedEventType = "wedding"; showToast("개업식을 선택했어요"); } },
+        { x:5.9, y:58.7, w:42.5, h:8.8, onClick: function(){ selectedEventType = "wedding"; showToast("동창회를 선택했어요"); } },
+        { x:51.6, y:58.7, w:42.5, h:8.8, action:{ type:"nav", to:"B7d" } },
+        { x:6, y:94.7, w:88, h:5, onClick: function(){ goTo(selectedEventType === "dol" ? "B7c" : "B7b", true); } }
+      ]
+    },
+    B7d: {
+      label: "B7d · 행사 유형 · 기타",
+      desc: "기타 선택 시 행사 이름을 직접 입력해요",
+      img: "screens/B7d-type-other.png",
+      hotspots: [
+        { x:5.9, y:5.6, w:7.8, h:3.6, action:{ type:"nav", to:"B7a" } },
+        { x:6, y:94.7, w:88, h:5, action:{ type:"nav", to:"B7b" } }
+      ]
+    },
+    B7b: {
+      label: "B7b · 기본 정보 (결혼식)",
+      desc: "2/4 단계. 주인공 · 일시 · 장소",
+      img: "screens/B7b-info-wedding.png",
+      onEnter: function(){ lastInfoScreen = "B7b"; },
+      hotspots: [
+        { x:5.9, y:5.6, w:7.8, h:3.6, action:{ type:"nav", to:"B7a" } },
+        { x:6, y:94.7, w:88, h:5, action:{ type:"nav", to:"B7e" } }
+      ]
+    },
+    B7c: {
+      label: "B7c · 기본 정보 (돌잔치)",
+      desc: "유형에 따라 주인공 칸 이름만 바뀌어요 (아이 · 부모님)",
+      img: "screens/B7c-info-dol.png",
+      onEnter: function(){ lastInfoScreen = "B7c"; },
+      hotspots: [
+        { x:5.9, y:5.6, w:7.8, h:3.6, action:{ type:"nav", to:"B7a" } },
+        { x:6, y:94.7, w:88, h:5, action:{ type:"nav", to:"B7e" } }
+      ]
+    },
+    B7e: {
+      label: "B7e · 감사 페이지 설정",
+      desc: "3/4 단계. 설정 여부와 공개 기간(1~7일)",
+      img: "screens/B7e-thanks.png",
+      hotspots: [
+        { x:5.9, y:5.6, w:7.8, h:3.6, onClick: function(){ goTo(lastInfoScreen, true); } },
+        { x:6, y:94.7, w:88, h:5, action:{ type:"nav", to:"B8" } }
+      ]
+    },
+    B8: {
+      label: "B8 · 테마 선택",
+      desc: "4/4 단계. 앱 UI가 아니라 결과물에만 적용돼요",
+      img: "screens/B8-theme.png",
+      hotspots: [
+        { x:5.9, y:5.6, w:7.8, h:3.6, action:{ type:"nav", to:"B7e" } },
+        { x:6, y:94.7, w:88, h:5, action:{ type:"toast", msg:"에디터(B9)는 다음 핸드오프에서 준비돼요" } }
+      ]
     }
   };
+
+  var selectedEventType = "wedding";
+  var lastInfoScreen = "B7b";
+
+  function listHeaderHotspots(){
+    return [
+      { x:85, y:5, w:12, h:6, action:{ type:"toast", msg:"마이 화면은 다음 핸드오프에서 준비돼요" } },
+      { x:6, y:13, w:88, h:5, action:{ type:"nav", to:"B6e" } },
+      { x:57, y:21, w:38, h:4, action:{ type:"nav", to:"B7a" } },
+      { x:6, y:27, w:19, h:4.5, action:{ type:"nav", to:"B6f" } },
+      { x:27, y:27, w:24, h:4.5, action:{ type:"nav", to:"B6g" } },
+      { x:67, y:27, w:8.7, h:4.5, action:{ type:"nav", to:"B6p" } },
+      { x:75.7, y:27, w:8.7, h:4.5, action:{ type:"nav", to:"B6q" } },
+      { x:84.4, y:27, w:8.7, h:4.5, action:{ type:"nav", to:"B6r" } }
+    ];
+  }
+
+  function tabHotspots(current){
+    return [
+      { x:0, y:94, w:33.3, h:6, action:{ type:"nav", to:"A3" } },
+      { x:33.3, y:94, w:33.3, h:6, action: current === "list" ? { type:"toast", msg:"이미 여기예요" } : { type:"nav", to:"B6p" } },
+      { x:66.6, y:94, w:33.4, h:6, action:{ type:"toast", msg:"마이 화면은 다음 핸드오프에서 준비돼요" } }
+    ];
+  }
 
   var screenImg = document.getElementById("screenImg");
   var screenEl = document.getElementById("screen");
@@ -479,9 +760,9 @@ A7 --비밀번호 찾기--&gt; A6-1   A7 --회원가입--&gt; A5</pre>
       el.style.height = h.h + "%";
       el.tabIndex = 0;
       el.setAttribute("role", "button");
-      el.addEventListener("click", function(){ runAction(h.action); });
+      el.addEventListener("click", function(){ if (h.onClick) { h.onClick(); } else { runAction(h.action); } });
       el.addEventListener("keydown", function(e){
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); runAction(h.action); }
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (h.onClick) { h.onClick(); } else { runAction(h.action); } }
       });
       screenEl.appendChild(el);
     });
@@ -491,6 +772,7 @@ A7 --비밀번호 찾기--&gt; A6-1   A7 --회원가입--&gt; A5</pre>
     if (action.type === "nav") { goTo(action.to, true); }
     else if (action.type === "toast") { showToast(action.msg); }
     else if (action.type === "back") { goBack(); }
+    else if (action.type === "toastNav") { showToast(action.msg); goTo(action.to, true); }
   }
 
   function renderTrail(){
@@ -517,7 +799,9 @@ A7 --비밀번호 찾기--&gt; A6-1   A7 --회원가입--&gt; A5</pre>
     hintEl.textContent = id === "A1" ? "곧 자동으로 다음 화면으로 넘어가요" : "화면을 탭해서 이동해보세요";
     renderHotspots(id);
     renderTrail();
+    renderJumpHighlight();
     backBtn.disabled = history.length === 0;
+    if (s.onEnter) s.onEnter();
     if (s.autoAdvance) {
       autoTimer = setTimeout(function(){ goTo(s.autoAdvance.to, true); }, s.autoAdvance.delay);
     }
@@ -535,7 +819,44 @@ A7 --비밀번호 찾기--&gt; A6-1   A7 --회원가입--&gt; A5</pre>
     nowDesc.textContent = s.desc;
     renderHotspots(prev);
     renderTrail();
+    renderJumpHighlight();
     backBtn.disabled = history.length === 0;
+    if (s.onEnter) s.onEnter();
+  }
+
+  var ORDER_A = ["A1","A2","A3","A4","A7","A5","A6-1","A6-2"];
+  var ORDER_B = ["B6p","B6q","B6r","B6b","B6e","B6f","B6g","B6i","B6s","B6t","B6l","B6m","B6n","B6o","B7a","B7d","B7b","B7c","B7e","B8"];
+  var jumpButtons = {};
+
+  function buildJumpPanel(){
+    var jumpA = document.getElementById("jumpA");
+    var jumpB = document.getElementById("jumpB");
+    ORDER_A.forEach(function(id){
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "jump";
+      btn.textContent = id;
+      btn.title = SCREENS[id].label;
+      btn.addEventListener("click", function(){ history = []; goTo(id, false); });
+      jumpButtons[id] = btn;
+      jumpA.appendChild(btn);
+    });
+    ORDER_B.forEach(function(id){
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "jump";
+      btn.textContent = id;
+      btn.title = SCREENS[id].label;
+      btn.addEventListener("click", function(){ history = []; goTo(id, false); });
+      jumpButtons[id] = btn;
+      jumpB.appendChild(btn);
+    });
+  }
+
+  function renderJumpHighlight(){
+    Object.keys(jumpButtons).forEach(function(id){
+      jumpButtons[id].classList.toggle("current", id === current);
+    });
   }
 
   backBtn.addEventListener("click", goBack);
@@ -544,6 +865,7 @@ A7 --비밀번호 찾기--&gt; A6-1   A7 --회원가입--&gt; A5</pre>
     goTo("A1", false);
   });
 
+  buildJumpPanel();
   goTo("A1", false);
 })();
 </script>
