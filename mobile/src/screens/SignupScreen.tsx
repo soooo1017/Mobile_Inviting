@@ -51,7 +51,7 @@ export function SignupScreen({ navigation }: Props) {
     setLoading(true);
     await signup(email, password);
     setLoading(false);
-    navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Home' }] }));
+    navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' }] }));
   };
 
   return (

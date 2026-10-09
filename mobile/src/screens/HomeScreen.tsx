@@ -1,34 +1,32 @@
 import { Pressable, Text, View, StyleSheet } from 'react-native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../navigation/types';
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 import { useAuth } from '../state/AuthContext';
+import { useProjects } from '../state/ProjectsContext';
 import { Placeholder } from '../components/Placeholder';
 import { StatusChip } from '../components/StatusChip';
 import { color, radius, space } from '../theme/tokens';
 import { textStyle, tnum } from '../theme/typography';
+import { eventTypeMeta, STATUS_LABEL } from '../types/project';
+import { dDayNumber, formatDday, formatEventDateTime, getProjectStatus } from '../utils/projectStatus';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
+type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
-// Mock data — there's no backend yet, so the "current project" and its D-day
-// are hard-coded to match the handoff screenshots until the editor (B) and
-// project APIs exist.
-const MOCK_PROJECT = {
-  status: 'sharing' as 'sharing' | 'past',
-  eventType: '결혼식',
-  dDay: 142,
-  title: '김지원 · 이민석',
-  dateTime: '2026. 5. 16. 토 12:30',
-  venue: '그랜드 하얏트 서울 3F',
-};
-
-// The editor (B), 관리 화면, and 내 초대장/마이 tabs aren't part of this
-// handoff package yet — these are stubs until that navigation exists.
+// 마이 화면, 알림 행 상세는 아직 설계되지 않은 영역이라 스텁으로 남겨둔다.
 const notImplemented = () => {};
 
-export function HomeScreen({ navigation }: Props) {
+export function HomeScreen(_props: Props) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { auth } = useAuth();
-  const hasProject = true;
+  const { projects } = useProjects();
   const userName = auth.user?.name ?? '게스트';
+
+  const current = [...projects].sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  )[0];
+  const status = current ? getProjectStatus(current) : null;
 
   return (
     <View style={styles.screen}>
@@ -41,34 +39,42 @@ export function HomeScreen({ navigation }: Props) {
 
       <View style={styles.body}>
         <Text style={styles.greeting}>
-          {userName}님,{'\n'}행사까지 {MOCK_PROJECT.dDay}일 남았어요
+          {userName}님,
+          {'\n'}
+          {current ? `행사까지 ${Math.max(dDayNumber(current.eventAt), 0)}일 남았어요` : '첫 초대장을 만들어보세요'}
         </Text>
 
-        {hasProject ? (
+        {current && status ? (
           <View style={styles.projectCard}>
             <View style={styles.projectMain}>
               <View style={styles.thumb} />
               <View style={styles.projectInfo}>
                 <View style={styles.metaRow}>
-                  <StatusChip>{MOCK_PROJECT.status === 'sharing' ? '공유중' : '감사 페이지'}</StatusChip>
-                  <Text style={styles.metaText}>{MOCK_PROJECT.eventType}</Text>
+                  <StatusChip>{STATUS_LABEL[status]}</StatusChip>
+                  <Text style={styles.metaText}>{eventTypeMeta(current.eventType).label}</Text>
                   <Text style={styles.metaDot}>·</Text>
-                  <Text style={[styles.metaText, tnum]}>D-{MOCK_PROJECT.dDay}</Text>
+                  <Text style={[styles.metaText, tnum]}>{formatDday(current.eventAt)}</Text>
                 </View>
-                <Text style={styles.projectTitle}>{MOCK_PROJECT.title}</Text>
+                <Text style={styles.projectTitle}>{current.title}</Text>
                 <Text style={[styles.projectDetail, tnum]}>
-                  {MOCK_PROJECT.dateTime}
+                  {formatEventDateTime(current.eventAt)}
                   {'\n'}
-                  {MOCK_PROJECT.venue}
+                  {current.venue?.name ?? ''}
                 </Text>
               </View>
             </View>
             <View style={styles.projectActions}>
-              <Pressable style={styles.projectAction} onPress={notImplemented}>
+              <Pressable
+                style={styles.projectAction}
+                onPress={() => navigation.navigate('EditorPlaceholder', { projectId: current.id })}
+              >
                 <Text style={styles.projectActionLabel}>편집</Text>
               </Pressable>
               <View style={styles.projectActionDivider} />
-              <Pressable style={styles.projectAction} onPress={notImplemented}>
+              <Pressable
+                style={styles.projectAction}
+                onPress={() => navigation.navigate('ManagePlaceholder', { projectId: current.id })}
+              >
                 <Text style={[styles.projectActionLabel, styles.projectActionAccent]}>관리</Text>
               </Pressable>
             </View>
@@ -84,12 +90,6 @@ export function HomeScreen({ navigation }: Props) {
           <NotificationRow title="아직 비어 있는 블록 2개" subtitle="오시는 길 · 마음 전하기" onPress={notImplemented} />
         </View>
       </View>
-
-      <View style={styles.tabBar}>
-        <TabBarItem label="홈" active />
-        <TabBarItem label="내 초대장" onPress={notImplemented} />
-        <TabBarItem label="마이" inactive onPress={notImplemented} />
-      </View>
     </View>
   );
 }
@@ -102,15 +102,6 @@ function NotificationRow({ title, subtitle, onPress }: { title: string; subtitle
         <Text style={styles.notificationSubtitle}>{subtitle}</Text>
       </View>
       <Text style={styles.chevron}>›</Text>
-    </Pressable>
-  );
-}
-
-function TabBarItem({ label, active, inactive, onPress }: { label: string; active?: boolean; inactive?: boolean; onPress?: () => void }) {
-  const color_ = active ? color.accent.base : inactive ? color.ink.inactive : color.ink.primary;
-  return (
-    <Pressable style={styles.tabBarItem} onPress={onPress}>
-      <Text style={[styles.tabBarLabel, { color: color_ }, active && { fontFamily: 'Pretendard-SemiBold' }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -148,7 +139,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.bg.surface,
     borderWidth: 1,
     borderColor: color.line.default,
-    borderRadius: radius.card,
+    borderRadius: radius.cardHome,
   },
   projectMain: {
     flexDirection: 'row',
@@ -240,20 +231,5 @@ const styles = StyleSheet.create({
   chevron: {
     color: color.ink.placeholder,
     fontSize: 16,
-  },
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: color.bg.tabbar,
-    borderTopWidth: 1,
-    borderTopColor: color.line.default,
-  },
-  tabBarItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingTop: 12,
-    paddingBottom: 16,
-  },
-  tabBarLabel: {
-    ...textStyle({ size: 'small', weight: 'medium' }),
   },
 });

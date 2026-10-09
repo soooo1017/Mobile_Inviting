@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.bg.surface,
     borderWidth: 1,
     borderColor: color.line.default,
-    borderRadius: radius.card,
+    borderRadius: radius.cardHome,
     padding: 5,
   },
   previewImage: {

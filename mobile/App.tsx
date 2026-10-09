@@ -6,6 +6,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import * as SplashScreenModule from 'expo-splash-screen';
 import { AuthProvider } from './src/state/AuthContext';
+import { ProjectsProvider } from './src/state/ProjectsContext';
+import { NewProjectDraftProvider } from './src/state/NewProjectDraftContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { color } from './src/theme/tokens';
 
@@ -32,9 +34,13 @@ export default function App() {
     <View style={styles.root} onLayout={onLayout}>
       <SafeAreaProvider>
         <AuthProvider>
-          <NavigationContainer>
-            <RootNavigator />
-          </NavigationContainer>
+          <ProjectsProvider>
+            <NewProjectDraftProvider>
+              <NavigationContainer>
+                <RootNavigator />
+              </NavigationContainer>
+            </NewProjectDraftProvider>
+          </ProjectsProvider>
         </AuthProvider>
         <StatusBar style="dark" />
       </SafeAreaProvider>

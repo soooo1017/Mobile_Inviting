@@ -21,7 +21,7 @@ export function SplashScreen({ navigation }: Props) {
 
   useEffect(() => {
     if (minTimeElapsed && auth.status !== 'unknown') {
-      navigation.replace(auth.status === 'authed' ? 'Home' : 'HomeGuest');
+      navigation.replace(auth.status === 'authed' ? 'MainTabs' : 'HomeGuest');
     }
   }, [minTimeElapsed, auth.status, navigation]);
 

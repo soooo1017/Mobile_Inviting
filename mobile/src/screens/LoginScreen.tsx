@@ -25,7 +25,7 @@ export function LoginScreen({ navigation }: Props) {
   const [error, setError] = useState(false);
 
   const goToHome = () => {
-    navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Home' }] }));
+    navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' }] }));
   };
 
   const handleLogin = async () => {
