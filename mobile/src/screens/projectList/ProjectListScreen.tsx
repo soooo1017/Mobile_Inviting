@@ -25,7 +25,6 @@ import { ProjectDetailCard, ProjectThumbCard, ProjectListRow } from './ProjectCa
 import { FilterSheet } from './FilterSheet';
 import { SortSheet } from './SortSheet';
 import { ActionSheet } from './ActionSheet';
-import { RenameDialog } from './RenameDialog';
 import { DeleteDialog } from './DeleteDialog';
 import { PeriodSheet } from './PeriodSheet';
 
@@ -33,7 +32,7 @@ type Props = BottomTabScreenProps<MainTabParamList, 'ProjectList'>;
 
 export function ProjectListScreen(_props: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { projects, deleteProject, renameProject, duplicateProject, setThanksSettings } = useProjects();
+  const { projects, deleteProject, setThanksSettings } = useProjects();
 
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
@@ -43,7 +42,6 @@ export function ProjectListScreen(_props: Props) {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [sortSheetOpen, setSortSheetOpen] = useState(false);
   const [actionProjectId, setActionProjectId] = useState<string | null>(null);
-  const [renameProjectId, setRenameProjectId] = useState<string | null>(null);
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
   const [periodProjectId, setPeriodProjectId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ visible: boolean; message: string; tone: 'error' | 'success' }>({
@@ -77,12 +75,6 @@ export function ProjectListScreen(_props: Props) {
     await Clipboard.setStringAsync(`https://invite.app/i/${project.id}`);
     setActionProjectId(null);
     showToast('링크를 복사했어요');
-  };
-
-  const handleDuplicate = (project: Project) => {
-    duplicateProject(project.id);
-    setActionProjectId(null);
-    showToast('초대장을 복제했어요');
   };
 
   const handleConfirmDelete = () => {
@@ -200,17 +192,9 @@ export function ProjectListScreen(_props: Props) {
         onManage={() => { if (actionProject) navigation.navigate('ManagePlaceholder', { projectId: actionProject.id }); setActionProjectId(null); }}
         onPreview={() => { setActionProjectId(null); showToast('미리보기는 다음 핸드오프에서 제공됩니다'); }}
         onCopyLink={() => actionProject && handleCopyLink(actionProject)}
-        onRename={() => { setRenameProjectId(actionProjectId); setActionProjectId(null); }}
-        onDuplicate={() => actionProject && handleDuplicate(actionProject)}
         onDelete={() => { setDeleteProjectId(actionProjectId); setActionProjectId(null); }}
         onThanksPeriod={() => { setPeriodProjectId(actionProjectId); setActionProjectId(null); }}
         onThanksEdit={() => { if (actionProject) navigation.navigate('EditorPlaceholder', { projectId: actionProject.id, tab: 'thanks' }); setActionProjectId(null); }}
-      />
-      <RenameDialog
-        visible={renameProjectId != null}
-        initialValue={projects.find((p) => p.id === renameProjectId)?.title ?? ''}
-        onCancel={() => setRenameProjectId(null)}
-        onSave={(title) => { if (renameProjectId) renameProject(renameProjectId, title); setRenameProjectId(null); }}
       />
       <DeleteDialog
         visible={deleteProjectId != null}

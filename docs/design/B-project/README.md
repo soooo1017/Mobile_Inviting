@@ -92,7 +92,7 @@ type Project = {
 - **③ 리스트형**:
   - 흰 박스 하나(radius 10) 안에 행, 행 사이 1px `--line-soft`.
   - 행 padding 14. 좌측은 제목 14px/600, `유형 · 일시` / 장소 11px, 안내 한 줄. 우측은 상태칩과 D-day.
-- **카드/행 버튼 없음**: 어떤 보기든 항목을 탭하면 B6j 액션 시트가 열린다.
+- **카드/행 버튼 없음**: 어떤 보기든 항목을 탭하면 B6s/B6t 액션 시트가 열린다.
 - **B6b 빈 상태**: 초대장이 0개일 때 안내와 [+ 새 초대장 만들기].
 
 ### B6-2 검색 · 필터 · 정렬
@@ -113,14 +113,14 @@ type Project = {
   - 적용된 필터는 툴바 아래에 칩(`--accent-tint`, ✕로 개별 해제)으로 보여주고, 끝에 `초기화` 텍스트 링크를 둔다.
 - 보기 방법·정렬은 기기에 저장해 유지하는 것을 권장한다. 필터는 세션 단위.
 
-### B6-3 행사 탭 → 액션 시트 (B6j 기본 / B6s 감사 설정됨 / B6t 미설정)
+### B6-3 행사 탭 → 액션 시트 (B6s 감사 설정됨 / B6t 미설정)
 위에서부터:
 1. 그랩바
 2. 상태칩 · 유형 · D-day, 제목 15px/600
 3. 2분할 큰 버튼(gap 8, padding 14 0, radius 10):
    - **[편집]**: `--select` 배경, 흰 글씨, 부제 `블록 · 디자인`(`--on-select-sub`) → B9
    - **[관리]**: 흰 배경, 1px `--select`, `--select` 글씨, 부제 `응답 · 공유 · 설정` → E21
-4. **감사 페이지 설정 박스**(B6s/B6t, 흰 배경, 1px `--line`, radius 10, padding 14, gap 10):
+4. **감사 페이지 설정 박스**(항상 표시, 흰 배경, 1px `--line`, radius 10, padding 14, gap 10):
    - 헤더: `감사 페이지 설정` 13px/600, 우측 상태 버튼(radius 6, padding 5 9, 11px/600)
      - 설정: `--success` / `--success-tint` / `--success-border`
      - 미설정: `--error` / `--error-tint` / `--error-border`
@@ -132,7 +132,7 @@ type Project = {
      - `행사 종료일 이후에는 초대장 접속이 불가합니다.` / `행사에 참석해주신 분들에게 감사 인사를 드리고 싶으시면 감사 페이지를 설정해주세요.`
      - 버튼 [기간 설정] [감사 페이지 편집]
    - [기간 변경/설정]은 기간 선택 시트(1~7일, B7e와 같은 UI) 또는 E22로 연결한다.
-5. 메뉴 행(15px 18 padding, 13.5px/500, 행 사이 `--line-soft`): 미리보기 · 공유 링크 복사 · (이름 바꾸기 · 복제하기 — B6j)
+5. 메뉴 행(15px 18 padding, 13.5px/500, 행 사이 `--line-soft`): 미리보기 · 공유 링크 복사
 6. 구분선 뒤 **삭제하기**(`--error`) → B6-4
 
 ### B6-4 삭제 (B6l / B6m / B6n / B6o)
@@ -196,7 +196,7 @@ type Project = {
 ```
 A3/탭바 ─▶ B6 목록
 B6 [+ 새 초대장 만들기] ─▶ B7a ─▶ (B7d) ─▶ B7b ─▶ B7e ─▶ B8 ─제작 시작하기─▶ B9
-B6 항목 탭 ─▶ B6j/B6s/B6t 시트 ─[편집]▶ B9  ─[관리]▶ E21
+B6 항목 탭 ─▶ B6s/B6t 시트 ─[편집]▶ B9  ─[관리]▶ E21
                                 ─[기간 설정/변경]▶ 기간 시트 or E22
                                 ─[감사 페이지 편집]▶ B9 (감사페이지 탭)
                                 ─삭제하기▶ B6l | B6m→B6n ─▶ B6o
@@ -220,5 +220,5 @@ B6 [필터] ─▶ B6f   B6 정렬 ─▶ B6g   검색 입력 ─▶ B6e / 0건 
 
 ## Files
 - `reference/B 프로젝트 목록.dc.html`, `reference/support.js`
-- `screenshots/` — 화면별 PNG(2x): `B6p-list-detail` `B6q-list-thumb` `B6r-list-text` `B6b-empty` `B6e-search` `B6f-filter` `B6g-sort` `B6i-no-result` `B6j-sheet` `B6s-sheet-thanks-on` `B6t-sheet-thanks-off` `B6l-delete-draft` `B6m-delete-shared` `B6n-delete-shared-checked` `B6o-deleted-toast` `B7a-type` `B7d-type-other` `B7b-info-wedding` `B7c-info-dol` `B7e-thanks` `B8-theme`
+- `screenshots/` — 화면별 PNG(2x): `B6p-list-detail` `B6q-list-thumb` `B6r-list-text` `B6b-empty` `B6e-search` `B6f-filter` `B6g-sort` `B6i-no-result` `B6s-sheet-thanks-on` `B6t-sheet-thanks-off` `B6l-delete-draft` `B6m-delete-shared` `B6n-delete-shared-checked` `B6o-deleted-toast` `B7a-type` `B7d-type-other` `B7b-info-wedding` `B7c-info-dol` `B7e-thanks` `B8-theme`
 - `../tokens.json`, `../tokens.css` (v0.2.0)

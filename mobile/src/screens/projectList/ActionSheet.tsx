@@ -15,8 +15,6 @@ type Props = {
   onManage: () => void;
   onPreview: () => void;
   onCopyLink: () => void;
-  onRename: () => void;
-  onDuplicate: () => void;
   onDelete: () => void;
   onThanksPeriod: () => void;
   onThanksEdit: () => void;
@@ -30,8 +28,6 @@ export function ActionSheet({
   onManage,
   onPreview,
   onCopyLink,
-  onRename,
-  onDuplicate,
   onDelete,
   onThanksPeriod,
   onThanksEdit,
@@ -39,7 +35,6 @@ export function ActionSheet({
   if (!project) return <BottomSheet visible={visible} onClose={onClose}><View /></BottomSheet>;
 
   const status = getProjectStatus(project);
-  const showThanksBox = status === 'draft' || status === 'shared';
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
@@ -64,15 +59,11 @@ export function ActionSheet({
         </Pressable>
       </View>
 
-      {showThanksBox ? (
-        <ThanksBox project={project} onPeriod={onThanksPeriod} onEdit={onThanksEdit} />
-      ) : null}
+      <ThanksBox project={project} onPeriod={onThanksPeriod} onEdit={onThanksEdit} />
 
       <View style={styles.menu}>
         <MenuRow label="미리보기" onPress={onPreview} first />
         <MenuRow label="공유 링크 복사" onPress={onCopyLink} />
-        <MenuRow label="이름 바꾸기" onPress={onRename} />
-        <MenuRow label="복제하기" subtitle="블록 구성만 복사, 응답 데이터는 제외" onPress={onDuplicate} />
       </View>
 
       <View style={styles.deleteWrap}>

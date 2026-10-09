@@ -111,8 +111,6 @@ type ProjectsContextValue = {
   getProject: (id: string) => Project | undefined;
   createProject: (input: NewProjectInput) => Project;
   deleteProject: (id: string) => void;
-  renameProject: (id: string, title: string) => void;
-  duplicateProject: (id: string) => Project;
   setThanksSettings: (id: string, thanks: Project['thanks']) => void;
 };
 
@@ -141,26 +139,8 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         return project;
       },
       deleteProject: (id) => setProjects((prev) => prev.filter((p) => p.id !== id)),
-      renameProject: (id, title) =>
-        setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, title, updatedAt: new Date().toISOString() } : p))),
       setThanksSettings: (id, thanks) =>
         setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, thanks, updatedAt: new Date().toISOString() } : p))),
-      duplicateProject: (id) => {
-        const source = projects.find((p) => p.id === id);
-        if (!source) throw new Error(`Project ${id} not found`);
-        const now = new Date().toISOString();
-        const copy: Project = {
-          ...source,
-          id: `p${nextId++}`,
-          title: `${source.title} 사본`,
-          shared: false,
-          counts: { rsvp: 0, guestbook: 0 },
-          updatedAt: now,
-          createdAt: now,
-        };
-        setProjects((prev) => [copy, ...prev]);
-        return copy;
-      },
     }),
     [projects],
   );
