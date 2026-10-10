@@ -4,6 +4,7 @@ import { SplashScreen } from '../screens/SplashScreen';
 import { HomeGuestScreen } from '../screens/HomeGuestScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { SignupScreen } from '../screens/SignupScreen';
+import { SignupSentScreen } from '../screens/SignupSentScreen';
 import { ResetRequestScreen } from '../screens/ResetRequestScreen';
 import { ResetSentScreen } from '../screens/ResetSentScreen';
 import { MainTabs } from './MainTabs';
@@ -24,6 +25,7 @@ export function RootNavigator() {
       <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
+      <Stack.Screen name="SignupSent" component={SignupSentScreen} />
       <Stack.Screen name="ResetRequest" component={ResetRequestScreen} />
       <Stack.Screen name="ResetSent" component={ResetSentScreen} />
       <Stack.Screen name="NewProjectType" component={NewProjectTypeScreen} />

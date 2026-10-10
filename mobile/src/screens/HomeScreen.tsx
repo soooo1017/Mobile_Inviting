@@ -21,7 +21,7 @@ export function HomeScreen(_props: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { auth } = useAuth();
   const { projects } = useProjects();
-  const userName = auth.user?.name ?? '게스트';
+  const userName = auth.user?.username ?? '게스트';
 
   const current = [...projects].sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),

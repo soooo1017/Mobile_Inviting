@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, Text, View, StyleSheet } from 'react-native';
+import { Alert, Pressable, Text, View, StyleSheet } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
@@ -17,12 +17,13 @@ import { textStyle } from '../theme/typography';
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 export function LoginScreen({ navigation }: Props) {
-  const { login, loginWithProvider } = useAuth();
-  const [email, setEmail] = useState('');
+  const { login } = useAuth();
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('아이디 또는 비밀번호가 맞지 않습니다.');
 
   const goToHome = () => {
     navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' }] }));
@@ -31,19 +32,22 @@ export function LoginScreen({ navigation }: Props) {
   const handleLogin = async () => {
     if (loading) return;
     setLoading(true);
-    const result = await login(email, password);
+    const result = await login(username, password);
     setLoading(false);
     if (result.ok) {
       goToHome();
-    } else {
-      setError(true);
+      return;
     }
+    setErrorMessage(
+      result.error === 'email_not_confirmed'
+        ? '이메일 인증을 먼저 완료해주세요.'
+        : '아이디 또는 비밀번호가 맞지 않습니다.',
+    );
+    setError(true);
   };
 
-  const handleSocial = async (provider: 'kakao' | 'apple') => {
-    if (loading) return;
-    await loginWithProvider(provider);
-    goToHome();
+  const handleSocial = (provider: 'kakao' | 'apple') => {
+    Alert.alert(provider === 'kakao' ? '카카오 로그인' : 'Apple 로그인', '준비 중이에요. 곧 지원할 예정이에요.');
   };
 
   return (
@@ -54,14 +58,13 @@ export function LoginScreen({ navigation }: Props) {
 
         <View style={styles.fields}>
           <TextField
-            placeholder="이메일"
-            value={email}
+            placeholder="아이디"
+            value={username}
             onChangeText={(v) => {
-              setEmail(v);
+              setUsername(v);
               setError(false);
             }}
             autoCapitalize="none"
-            keyboardType="email-address"
             error={error}
           />
           <TextField
@@ -82,7 +85,7 @@ export function LoginScreen({ navigation }: Props) {
             <View style={styles.errorDot}>
               <Text style={styles.errorMark}>!</Text>
             </View>
-            <Text style={styles.errorText}>이메일 또는 비밀번호가 맞지 않습니다.</Text>
+            <Text style={styles.errorText}>{errorMessage}</Text>
           </View>
         ) : null}
 

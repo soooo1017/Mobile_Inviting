@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
-import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../state/AuthContext';
@@ -17,11 +16,15 @@ import { textStyle } from '../theme/typography';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Signup'>;
 
+const USERNAME_RE = /^[a-zA-Z0-9_]{4,20}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_RE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+const USERNAME_CHECK_DEBOUNCE_MS = 400;
 
 export function SignupScreen({ navigation }: Props) {
-  const { signup } = useAuth();
+  const { signup, isUsernameAvailable } = useAuth();
+  const [username, setUsername] = useState('');
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -30,11 +33,28 @@ export function SignupScreen({ navigation }: Props) {
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeMarketing, setAgreeMarketing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const usernameFormatValid = USERNAME_RE.test(username);
   const emailValid = EMAIL_RE.test(email);
   const passwordValid = PASSWORD_RE.test(password);
   const confirmMismatch = confirmTouched && confirm.length > 0 && confirm !== password;
   const confirmValid = confirm.length > 0 && confirm === password;
+
+  useEffect(() => {
+    // onChangeText already resets usernameAvailable to null on every keystroke,
+    // so an invalid format just means "don't start a check" — nothing to reset here.
+    if (!usernameFormatValid) return;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const available = await isUsernameAvailable(username);
+      if (!cancelled) setUsernameAvailable(available);
+    }, USERNAME_CHECK_DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [username, usernameFormatValid, isUsernameAvailable]);
 
   const agreeAll = agreeTerms && agreePrivacy && agreeMarketing;
   const toggleAll = () => {
@@ -44,14 +64,26 @@ export function SignupScreen({ navigation }: Props) {
     setAgreeMarketing(next);
   };
 
-  const canSubmit = emailValid && passwordValid && confirmValid && agreeTerms && agreePrivacy;
+  const canSubmit =
+    usernameFormatValid && usernameAvailable === true && emailValid && passwordValid && confirmValid && agreeTerms && agreePrivacy;
 
   const handleSubmit = async () => {
     if (!canSubmit || loading) return;
     setLoading(true);
-    await signup(email, password);
+    setSubmitError(null);
+    const result = await signup(username, email, password);
     setLoading(false);
-    navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' }] }));
+    if (!result.ok) {
+      if (result.error === 'username_taken') {
+        setUsernameAvailable(false);
+      } else if (result.error === 'email_taken') {
+        setSubmitError('이미 가입된 이메일이에요.');
+      } else {
+        setSubmitError('가입 중 문제가 발생했어요. 다시 시도해주세요.');
+      }
+      return;
+    }
+    navigation.navigate('SignupSent', { email });
   };
 
   return (
@@ -59,6 +91,29 @@ export function SignupScreen({ navigation }: Props) {
       <BackButton onPress={() => navigation.goBack()} />
       <View style={styles.content}>
         <ScreenTitle>회원가입</ScreenTitle>
+
+        <View style={styles.field}>
+          <FieldLabel>아이디</FieldLabel>
+          <TextField
+            placeholder="영문·숫자·_ 4~20자"
+            value={username}
+            onChangeText={(v) => {
+              setUsername(v);
+              setUsernameAvailable(null);
+            }}
+            autoCapitalize="none"
+            error={usernameFormatValid && usernameAvailable === false}
+          />
+          {!usernameFormatValid && username.length > 0 ? (
+            <HelperText error>영문, 숫자, _만 사용해 4~20자로 입력해주세요</HelperText>
+          ) : usernameAvailable === false ? (
+            <HelperText error>이미 사용 중인 아이디예요</HelperText>
+          ) : usernameAvailable === true ? (
+            <HelperText>사용할 수 있는 아이디예요</HelperText>
+          ) : (
+            <HelperText>로그인할 때 이 아이디를 사용해요</HelperText>
+          )}
+        </View>
 
         <View style={styles.field}>
           <FieldLabel>이메일</FieldLabel>
@@ -69,6 +124,7 @@ export function SignupScreen({ navigation }: Props) {
             autoCapitalize="none"
             keyboardType="email-address"
           />
+          <HelperText>가입 확인 메일을 받을 주소예요</HelperText>
         </View>
 
         <View style={styles.field}>
@@ -112,6 +168,7 @@ export function SignupScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.bottom}>
+        {submitError ? <HelperText error>{submitError}</HelperText> : null}
         <PrimaryButton label="가입하고 시작하기" onPress={handleSubmit} disabled={!canSubmit} loading={loading} />
       </View>
     </View>

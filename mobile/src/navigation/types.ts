@@ -4,6 +4,7 @@ export type RootStackParamList = {
   MainTabs: undefined;
   Login: undefined;
   Signup: undefined;
+  SignupSent: { email: string };
   ResetRequest: undefined;
   ResetSent: { email: string };
   NewProjectType: undefined;
