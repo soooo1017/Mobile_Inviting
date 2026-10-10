@@ -342,7 +342,9 @@ A7 --비밀번호 찾기--&gt; A6-1   A7 --회원가입--&gt; A5
 
 B6p/q/B6r --탭--&gt; B6s/B6t(액션 시트)   B6p --+새 초대장--&gt; B7a
 B7a --기타--&gt; B7d   B7a/B7d --다음--&gt; B7b(또는 B7c)
-B7b/B7c --다음--&gt; B7e --다음--&gt; B8 --제작 시작하기--&gt; (B9, 준비 중)</pre>
+B7b/B7c --다음--&gt; B7e --다음--&gt; B8 --제작 시작하기--&gt; (B9, 준비 중)
+B7 어느 단계든 ←/OS뒤로가기 --&gt; B7f(나가기 확인)
+B6m/B6n --데이터 내려받기--&gt; B6u --다음--&gt; B6u2/B6u3 --다운로드--&gt; B6v --&gt; B6w</pre>
     </details>
 
     <details class="map">
@@ -493,12 +495,9 @@ B7b/B7c --다음--&gt; B7e --다음--&gt; B8 --제작 시작하기--&gt; (B9, �
     },
     B6b: {
       label: "B6b · 빈 상태",
-      desc: "아직 만든 초대장이 없을 때",
+      desc: "아직 만든 초대장이 없을 때. 핸드오프 #4: 상단(검색·개수·필터·정렬·보기)은 목록과 동일하게 유지하고, 하단 큰 버튼은 없어졌어요",
       img: "screens/B6b-empty.png",
-      hotspots: [
-        { x:83.69, y:2.91, w:12, h:6, action:{ type:"toast", msg:"마이 화면은 다음 핸드오프에서 준비돼요" } },
-        { x:4.69, y:88.34, w:90.47, h:5.72, action:{ type:"nav", to:"B7a" } }
-      ].concat(tabHotspots("list"))
+      hotspots: listHeaderHotspots().concat(tabHotspots("list"))
     },
     B6e: {
       label: "B6e · 검색 결과",
@@ -550,32 +549,30 @@ B7b/B7c --다음--&gt; B7e --다음--&gt; B8 --제작 시작하기--&gt; (B9, �
     },
     B6s: {
       label: "B6s · 액션 시트 (감사 페이지 설정됨)",
-      desc: "카드를 탭하면 열려요. 설정 박스는 상태와 무관하게 항상 보여요",
+      desc: "핸드오프 #4: 기간 변경 버튼이 빠지고 [감사 페이지 편집] 하나만 남았어요(기간 설정은 B9 감사페이지 탭에서)",
       img: "screens/B6s-sheet-thanks-on.png",
       hotspots: [
         { x:0, y:0, w:100, h:26, action:{ type:"back" } },
         { x:4.69, y:41.32, w:45, h:8.22, action:{ type:"toast", msg:"에디터(B9)는 다음 핸드오프에서 준비돼요" } },
         { x:49.59, y:40.59, w:43, h:9, action:{ type:"toast", msg:"관리 화면은 다음 핸드오프에서 준비돼요" } },
-        { x:9.37, y:70.34, w:24.08, h:4.6, action:{ type:"toast", msg:"기간 변경 시트는 다음 핸드오프에서 제공돼요" } },
-        { x:51, y:71, w:43, h:4.5, action:{ type:"toast", msg:"에디터(B9)는 다음 핸드오프에서 준비돼요" } },
-        { x:6, y:81, w:88, h:4.5, action:{ type:"toast", msg:"미리보기는 다음 핸드오프에서 제공돼요" } },
-        { x:6, y:87, w:88, h:4.5, action:{ type:"toast", msg:"링크를 복사했어요" } },
-        { x:5.92, y:90.26, w:88, h:5.5, action:{ type:"nav", to:"B6l" } }
+        { x:3.89, y:69.34, w:38, h:4, action:{ type:"toast", msg:"에디터(B9)는 다음 핸드오프에서 준비돼요" } },
+        { x:6, y:78.9, w:88, h:6.6, action:{ type:"toast", msg:"미리보기는 다음 핸드오프에서 제공돼요" } },
+        { x:6, y:85.6, w:88, h:6.6, action:{ type:"toast", msg:"링크를 복사했어요" } },
+        { x:6, y:93.2, w:88, h:6.5, action:{ type:"nav", to:"B6l" } }
       ]
     },
     B6t: {
       label: "B6t · 액션 시트 (감사 페이지 미설정)",
-      desc: "감사 페이지를 설정하지 않은 상태",
+      desc: "핸드오프 #4: 기간 설정 버튼이 빠지고 [감사 페이지 편집] 하나만 남았어요",
       img: "screens/B6t-sheet-thanks-off.png",
       hotspots: [
         { x:0, y:0, w:100, h:30, action:{ type:"back" } },
         { x:4.69, y:44.29, w:45, h:5.88, action:{ type:"toast", msg:"에디터(B9)는 다음 핸드오프에서 준비돼요" } },
         { x:49.69, y:44.29, w:45.47, h:5.88, action:{ type:"toast", msg:"관리 화면은 다음 핸드오프에서 준비돼요" } },
-        { x:4.69, y:73.79, w:45.47, h:3.55, action:{ type:"toast", msg:"기간 설정 시트는 다음 핸드오프에서 제공돼요" } },
-        { x:49.69, y:73.79, w:45.47, h:3.55, action:{ type:"toast", msg:"에디터(B9)는 다음 핸드오프에서 준비돼요" } },
-        { x:6, y:83.68, w:88, h:4.5, action:{ type:"toast", msg:"미리보기는 다음 핸드오프에서 제공돼요" } },
-        { x:5.92, y:90.76, w:88, h:4.5, action:{ type:"toast", msg:"링크를 복사했어요" } },
-        { x:6, y:95.5, w:88, h:4.3, action:{ type:"nav", to:"B6m" } }
+        { x:3.89, y:69.34, w:38, h:4, action:{ type:"toast", msg:"에디터(B9)는 다음 핸드오프에서 준비돼요" } },
+        { x:6, y:78.9, w:88, h:6.6, action:{ type:"toast", msg:"미리보기는 다음 핸드오프에서 제공돼요" } },
+        { x:6, y:85.6, w:88, h:6.6, action:{ type:"toast", msg:"링크를 복사했어요" } },
+        { x:6, y:93.2, w:88, h:6.5, action:{ type:"nav", to:"B6m" } }
       ]
     },
     B6l: {
@@ -590,11 +587,11 @@ B7b/B7c --다음--&gt; B7e --다음--&gt; B8 --제작 시작하기--&gt; (B9, �
     },
     B6m: {
       label: "B6m · 삭제 확인 (공유중, 미확인)",
-      desc: "공유 중인 초대장은 체크박스를 확인해야 삭제할 수 있어요",
+      desc: "공유 중인 초대장은 체크박스를 확인해야 삭제할 수 있어요. 핸드오프 #4: 링크가 '데이터 내려받기'로 바뀌고 실제 내려받기 시트로 연결돼요",
       img: "screens/B6m-delete-shared.png",
       hotspots: [
         { x:0, y:0, w:100, h:100, action:{ type:"back" } },
-        { x:13.75, y:60, w:70, h:3.5, action:{ type:"toast", msg:"응답 데이터 내려받기는 다음 핸드오프에서 제공돼요" } },
+        { x:4.29, y:57.12, w:35, h:4, action:{ type:"nav", to:"B6u" } },
         { x:13.75, y:65.5, w:70, h:5.5, action:{ type:"nav", to:"B6n" } },
         { x:12.81, y:74.68, w:36.88, h:4.6, action:{ type:"back" } },
         { x:50.31, y:74.68, w:36.88, h:4.6, action:{ type:"toast", msg:"확인 체크박스를 먼저 선택해주세요" } }
@@ -602,11 +599,11 @@ B7b/B7c --다음--&gt; B7e --다음--&gt; B8 --제작 시작하기--&gt; (B9, �
     },
     B6n: {
       label: "B6n · 삭제 확인 (공유중, 확인됨)",
-      desc: "체크하면 삭제하기 버튼이 활성화돼요",
+      desc: "체크하면 삭제하기 버튼이 활성화돼요. 체크 표시는 삭제 맥락이라 선택색 대신 붉은색(--error)이에요",
       img: "screens/B6n-delete-shared-checked.png",
       hotspots: [
         { x:0, y:0, w:100, h:100, action:{ type:"back" } },
-        { x:13.75, y:60, w:70, h:3.5, action:{ type:"toast", msg:"응답 데이터 내려받기는 다음 핸드오프에서 제공돼요" } },
+        { x:4.29, y:57.12, w:35, h:4, action:{ type:"nav", to:"B6u" } },
         { x:13.75, y:65.5, w:70, h:5.5, action:{ type:"nav", to:"B6m" } },
         { x:12.81, y:74.68, w:36.88, h:4.6, action:{ type:"back" } },
         { x:50.31, y:74.68, w:36.88, h:4.6, action:{ type:"nav", to:"B6o" } }
@@ -621,12 +618,84 @@ B7b/B7c --다음--&gt; B7e --다음--&gt; B8 --제작 시작하기--&gt; (B9, �
         { x:0, y:0, w:100, h:100, action:{ type:"nav", to:"B6p" } }
       ]
     },
+    B6u: {
+      label: "B6u · 데이터 내려받기 (1/2 항목 선택)",
+      desc: "핸드오프 #4 신규. 감사 페이지 미설정 초대장이면 그 항목은 아예 숨겨요(B6u0). 하나도 체크 안 하면 [다음]이 비활성돼요",
+      img: "screens/B6u-download-items.png",
+      hotspots: [
+        { x:87.84, y:43.98, w:9, h:4.5, action:{ type:"nav", to:"B6m" } },
+        { x:4.69, y:54.6, w:90.47, h:8.85, action:{ type:"toast", msg:"초대장 포함 여부를 바꿔요" } },
+        { x:4.69, y:63.45, w:90.47, h:8.85, action:{ type:"toast", msg:"감사 페이지 포함 여부를 바꿔요" } },
+        { x:3.59, y:73.51, w:90.47, h:8.85, action:{ type:"toast", msg:"RSVP 응답 포함 여부를 바꿔요" } },
+        { x:1.95, y:82.55, w:90.47, h:8.85, action:{ type:"toast", msg:"방명록 포함 여부를 바꿔요" } },
+        { x:4.68, y:92.44, w:90.64, h:7.56, action:{ type:"nav", to:"B6u2" } }
+      ]
+    },
+    B6u0: {
+      label: "B6u0 · 데이터 내려받기 (하나도 선택 안 함)",
+      desc: "항목을 하나도 체크하지 않으면 [다음]이 opacity 0.45로 비활성돼요. 감사 페이지 미설정 초대장이라 그 항목 자체가 없어요",
+      img: "screens/B6u0-download-empty.png",
+      hotspots: [
+        { x:87.84, y:52.82, w:9, h:4.5, action:{ type:"back" } },
+        { x:4.69, y:63.45, w:90.47, h:8.85, action:{ type:"toast", msg:"초대장 포함 여부를 바꿔요" } },
+        { x:3.59, y:73.51, w:90.47, h:8.85, action:{ type:"toast", msg:"RSVP 응답 포함 여부를 바꿔요" } },
+        { x:1.95, y:82.55, w:90.47, h:8.85, action:{ type:"toast", msg:"방명록 포함 여부를 바꿔요" } },
+        { x:4.69, y:93.1, w:90.47, h:6.7, action:{ type:"toast", msg:"하나 이상 선택해야 다음으로 이동할 수 있어요" } }
+      ]
+    },
+    B6u2: {
+      label: "B6u2 · 데이터 내려받기 (2/2 파일 형식)",
+      desc: "1단계 선택에 따라 그룹이 조건부로 보여요. 선택 파일을 ZIP 하나로 묶어 내려받아요",
+      img: "screens/B6u2-download-format.png",
+      hotspots: [
+        { x:3.54, y:47.05, w:9, h:5, action:{ type:"nav", to:"B6u" } },
+        { x:87.84, y:46.94, w:9, h:5, action:{ type:"nav", to:"B6m" } },
+        { x:4.68, y:58.92, w:44.54, h:7.07, action:{ type:"toast", msg:"이미지(.png)를 선택했어요" } },
+        { x:51, y:59.77, w:43, h:5.8, action:{ type:"toast", msg:"PDF(.pdf)를 선택했어요" } },
+        { x:4.68, y:71.3, w:44.54, h:7.07, action:{ type:"toast", msg:"엑셀(.xlsx)을 선택했어요" } },
+        { x:51.16, y:72.14, w:43, h:5.8, action:{ type:"toast", msg:"CSV(.csv)를 선택했어요" } },
+        { x:4.68, y:92.44, w:90.64, h:7.56, action:{ type:"nav", to:"B6v" } }
+      ]
+    },
+    B6u3: {
+      label: "B6u3 · 데이터 내려받기 (RSVP만 CSV로)",
+      desc: "항목 선택에 따라 그룹이 하나만 보일 수도 있어요 — 여긴 RSVP 응답만 CSV로 선택한 예시예요",
+      img: "screens/B6u3-download-format-data.png",
+      hotspots: [
+        { x:4.69, y:46.3, w:4.38, h:6.27, action:{ type:"nav", to:"B6u" } },
+        { x:90.93, y:46.3, w:5.32, h:6.27, action:{ type:"nav", to:"B6m" } },
+        { x:5.29, y:72.14, w:43, h:5.8, action:{ type:"toast", msg:"엑셀(.xlsx)을 선택했어요" } },
+        { x:49.69, y:71.3, w:45.47, h:7.07, action:{ type:"toast", msg:"CSV(.csv)를 선택했어요" } },
+        { x:4.68, y:92.44, w:90.64, h:7.56, action:{ type:"nav", to:"B6v" } }
+      ]
+    },
+    B6v: {
+      label: "B6v · OS 공유 창",
+      desc: "iOS/Android 기본 share sheet. 디자인은 참고용이라 실제 공유 동작은 연결하지 않았어요 — 아무 곳이나 탭하면 완료로 넘어가요",
+      img: "screens/B6v-share-sheet.png",
+      hotspots: [
+        { x:0, y:0, w:100, h:100, action:{ type:"nav", to:"B6w" } }
+      ]
+    },
+    B6w: {
+      label: "B6w · 데이터 내려받기 완료",
+      desc: "삭제 다이얼로그로 돌아가고, 하단에 '데이터를 내려받았어요' 토스트 + [열기] 링크가 떠요(3초)",
+      img: "screens/B6w-download-done.png",
+      hotspots: [
+        { x:0, y:0, w:100, h:100, action:{ type:"back" } },
+        { x:13.83, y:56.88, w:70, h:4.5, action:{ type:"nav", to:"B6u" } },
+        { x:13.75, y:65.5, w:70, h:5.5, action:{ type:"toast", msg:"체크하면 삭제하기가 활성화돼요" } },
+        { x:12.81, y:74.68, w:36.88, h:4.6, action:{ type:"back" } },
+        { x:50.31, y:74.68, w:36.88, h:4.6, action:{ type:"toast", msg:"확인 체크박스를 먼저 선택해주세요" } },
+        { x:75, y:87.27, w:20, h:4.5, action:{ type:"toast", msg:"파일 열기는 다음 핸드오프에서 제공됩니다" } }
+      ]
+    },
     B7a: {
       label: "B7a · 새 초대장 · 행사 유형",
       desc: "1/4 단계. 유형에 따라 다음 단계 입력 칸 이름이 바뀌어요",
       img: "screens/B7a-type.png",
       hotspots: [
-        { x:6.41, y:5.76, w:7.8, h:3.6, action:{ type:"nav", to:"B6p" } },
+        { x:6.41, y:5.76, w:7.8, h:3.6, action:{ type:"nav", to:"B7f" } },
         { x:4.68, y:27.09, w:44.85, h:10.13, onClick: function(){ selectedEventType = "wedding"; showToast("결혼식을 선택했어요"); } },
         { x:50.31, y:27.09, w:45, h:10.13, onClick: function(){ selectedEventType = "dol"; showToast("돌잔치를 선택했어요"); } },
         { x:4.68, y:37.94, w:44.85, h:10.05, onClick: function(){ selectedEventType = "wedding"; showToast("백일을 선택했어요"); } },
@@ -643,7 +712,7 @@ B7b/B7c --다음--&gt; B7e --다음--&gt; B8 --제작 시작하기--&gt; (B9, �
       desc: "기타 선택 시 행사 이름을 직접 입력해요",
       img: "screens/B7d-type-other.png",
       hotspots: [
-        { x:6.41, y:5.76, w:7.8, h:3.6, action:{ type:"nav", to:"B7a" } },
+        { x:6.41, y:5.76, w:7.8, h:3.6, action:{ type:"nav", to:"B7f" } },
         { x:4.69, y:94.05, w:90.47, h:5.95, action:{ type:"nav", to:"B7b" } }
       ]
     },
@@ -653,7 +722,7 @@ B7b/B7c --다음--&gt; B7e --다음--&gt; B8 --제작 시작하기--&gt; (B9, �
       img: "screens/B7b-info-wedding.png",
       onEnter: function(){ lastInfoScreen = "B7b"; },
       hotspots: [
-        { x:6.41, y:5.76, w:7.8, h:3.6, action:{ type:"nav", to:"B7a" } },
+        { x:6.41, y:5.76, w:7.8, h:3.6, action:{ type:"nav", to:"B7f" } },
         { x:4.69, y:94.05, w:90.47, h:5.95, action:{ type:"nav", to:"B7e" } }
       ]
     },
@@ -663,7 +732,7 @@ B7b/B7c --다음--&gt; B7e --다음--&gt; B8 --제작 시작하기--&gt; (B9, �
       img: "screens/B7c-info-dol.png",
       onEnter: function(){ lastInfoScreen = "B7c"; },
       hotspots: [
-        { x:6.41, y:5.76, w:7.8, h:3.6, action:{ type:"nav", to:"B7a" } },
+        { x:6.41, y:5.76, w:7.8, h:3.6, action:{ type:"nav", to:"B7f" } },
         { x:4.69, y:94.05, w:90.47, h:5.95, action:{ type:"nav", to:"B7e" } }
       ]
     },
@@ -672,7 +741,7 @@ B7b/B7c --다음--&gt; B7e --다음--&gt; B8 --제작 시작하기--&gt; (B9, �
       desc: "3/4 단계. 설정 여부와 공개 기간(1~7일)",
       img: "screens/B7e-thanks.png",
       hotspots: [
-        { x:6.41, y:5.76, w:7.8, h:3.6, onClick: function(){ goTo(lastInfoScreen, true); } },
+        { x:6.41, y:5.76, w:7.8, h:3.6, action:{ type:"nav", to:"B7f" } },
         { x:4.69, y:94.05, w:90.47, h:5.95, action:{ type:"nav", to:"B8" } }
       ]
     },
@@ -681,8 +750,27 @@ B7b/B7c --다음--&gt; B7e --다음--&gt; B8 --제작 시작하기--&gt; (B9, �
       desc: "4/4 단계. 앱 UI가 아니라 결과물에만 적용돼요",
       img: "screens/B8-theme.png",
       hotspots: [
-        { x:6.41, y:5.76, w:7.8, h:3.6, action:{ type:"nav", to:"B7e" } },
+        { x:6.41, y:5.76, w:7.8, h:3.6, action:{ type:"nav", to:"B7f" } },
         { x:4.69, y:94.05, w:90.47, h:5.95, action:{ type:"toast", msg:"에디터(B9)는 다음 핸드오프에서 준비돼요" } }
+      ]
+    },
+    B7f: {
+      label: "B7f · 나가기 확인",
+      desc: "핸드오프 #4 신규. 생성 중 어느 단계에서든 ←/OS 뒤로가기 시 떠요. [계속 작성]은 모달만 닫고, [그만두기]는 뒤로가기를 그대로 진행해요",
+      img: "screens/B7f-exit-confirm.png",
+      hotspots: [
+        { x:0, y:0, w:100, h:100, action:{ type:"back" } },
+        { x:7.3, y:52.26, w:44, h:6.9, action:{ type:"back" } },
+        { x:50.31, y:52.01, w:36.89, h:8.2, onClick: function(){
+            var from = history[history.length - 1];
+            var target = (from === "B7a" || from === "B7d") ? "B6p"
+              : (from === "B7b" || from === "B7c") ? "B7a"
+              : (from === "B7e") ? lastInfoScreen
+              : (from === "B8") ? "B7e"
+              : "B6p";
+            history = [];
+            goTo(target, false);
+          } }
       ]
     }
   };
@@ -825,7 +913,7 @@ B7b/B7c --다음--&gt; B7e --다음--&gt; B8 --제작 시작하기--&gt; (B9, �
   }
 
   var ORDER_A = ["A1","A2","A3","A4","A7","A5","A6-1","A6-2"];
-  var ORDER_B = ["B6p","B6q","B6r","B6b","B6e","B6f","B6g","B6i","B6s","B6t","B6l","B6m","B6n","B6o","B7a","B7d","B7b","B7c","B7e","B8"];
+  var ORDER_B = ["B6p","B6q","B6r","B6b","B6e","B6f","B6g","B6i","B6s","B6t","B6l","B6m","B6n","B6o","B6u","B6u0","B6u2","B6u3","B6v","B6w","B7a","B7d","B7b","B7c","B7e","B8","B7f"];
   var jumpButtons = {};
 
   function buildJumpPanel(){
