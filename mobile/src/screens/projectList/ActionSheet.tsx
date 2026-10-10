@@ -16,7 +16,6 @@ type Props = {
   onPreview: () => void;
   onCopyLink: () => void;
   onDelete: () => void;
-  onThanksPeriod: () => void;
   onThanksEdit: () => void;
 };
 
@@ -29,7 +28,6 @@ export function ActionSheet({
   onPreview,
   onCopyLink,
   onDelete,
-  onThanksPeriod,
   onThanksEdit,
 }: Props) {
   if (!project) return <BottomSheet visible={visible} onClose={onClose}><View /></BottomSheet>;
@@ -59,7 +57,7 @@ export function ActionSheet({
         </Pressable>
       </View>
 
-      <ThanksBox project={project} onPeriod={onThanksPeriod} onEdit={onThanksEdit} />
+      <ThanksBox project={project} onEdit={onThanksEdit} />
 
       <View style={styles.menu}>
         <MenuRow label="미리보기" onPress={onPreview} first />
@@ -75,7 +73,7 @@ export function ActionSheet({
   );
 }
 
-function ThanksBox({ project, onPeriod, onEdit }: { project: Project; onPeriod: () => void; onEdit: () => void }) {
+function ThanksBox({ project, onEdit }: { project: Project; onEdit: () => void }) {
   const enabled = project.thanks.enabled;
   const period = formatThanksPeriod(project);
 
@@ -96,9 +94,6 @@ function ThanksBox({ project, onPeriod, onEdit }: { project: Project; onPeriod: 
           : '행사 종료일 이후에는 초대장 접속이 불가합니다.\n행사에 참석해주신 분들에게 감사 인사를 드리고 싶으시면 감사 페이지를 설정해주세요.'}
       </Text>
       <View style={styles.thanksButtons}>
-        <Pressable style={styles.thanksButton} onPress={onPeriod}>
-          <Text style={styles.thanksButtonLabel}>{enabled ? '기간 변경' : '기간 설정'}</Text>
-        </Pressable>
         <Pressable style={styles.thanksButton} onPress={onEdit}>
           <Text style={styles.thanksButtonLabel}>감사 페이지 편집</Text>
         </Pressable>
@@ -213,14 +208,13 @@ const styles = StyleSheet.create({
   },
   thanksButtons: {
     flexDirection: 'row',
-    gap: space[4],
   },
   thanksButton: {
-    flex: 1,
     borderWidth: 1,
     borderColor: color.line.chip,
     borderRadius: 8,
     paddingVertical: space[4],
+    paddingHorizontal: space[6],
     alignItems: 'center',
   },
   thanksButtonLabel: {

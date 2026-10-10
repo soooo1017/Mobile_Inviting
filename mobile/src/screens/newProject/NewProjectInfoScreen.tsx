@@ -14,6 +14,7 @@ import { color, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { eventTypeMeta, SIDO_LIST, type MapLink } from '../../types/project';
 import { formatEventDateTime } from '../../utils/projectStatus';
+import { ExitConfirmGate } from './ExitConfirmGate';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NewProjectInfo'>;
 
@@ -134,6 +135,7 @@ export function NewProjectInfoScreen({ navigation }: Props) {
       <View style={styles.footer}>
         <PrimaryButton label="다음" onPress={() => navigation.navigate('NewProjectThanks')} disabled={!canProceed} />
       </View>
+      <ExitConfirmGate />
     </View>
   );
 }

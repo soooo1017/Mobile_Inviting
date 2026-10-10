@@ -7,21 +7,28 @@ import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import type { Project } from '../../types/project';
 import { getProjectStatus } from '../../utils/projectStatus';
+import { DownloadSheet } from './DownloadSheet';
 
 type Props = {
   visible: boolean;
   project: Project | null;
   onCancel: () => void;
   onConfirm: () => void;
+  onDataDownloaded: () => void;
 };
 
-export function DeleteDialog({ visible, project, onCancel, onConfirm }: Props) {
+export function DeleteDialog({ visible, project, onCancel, onConfirm, onDataDownloaded }: Props) {
   const [acknowledged, setAcknowledged] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+  const [downloadSheetOpen, setDownloadSheetOpen] = useState(false);
   const [wasVisible, setWasVisible] = useState(visible);
 
   if (visible !== wasVisible) {
     setWasVisible(visible);
-    if (visible) setAcknowledged(false);
+    if (visible) {
+      setAcknowledged(false);
+      setDownloaded(false);
+    }
   }
 
   if (!project) return null;
@@ -43,32 +50,50 @@ export function DeleteDialog({ visible, project, onCancel, onConfirm }: Props) {
   }
 
   return (
-    <ConfirmDialog
-      visible={visible}
-      title="공유 중인 초대장이에요. 정말 삭제할까요?"
-      confirmLabel="삭제하기"
-      onCancel={onCancel}
-      onConfirm={onConfirm}
-      confirmDisabled={!acknowledged}
-    >
-      <Text style={styles.body}>초대장을 받은 사람들은 더 이상 링크를 열 수 없어요.</Text>
+    <>
+      <ConfirmDialog
+        visible={visible}
+        title="공유 중인 초대장이에요. 정말 삭제할까요?"
+        confirmLabel="삭제하기"
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+        confirmDisabled={!acknowledged}
+      >
+        <Text style={styles.body}>초대장을 받은 사람들은 더 이상 링크를 열 수 없어요.</Text>
 
-      <View style={styles.infoBox}>
-        <InfoRow label="초대장 이름" value={project.title} />
-        <InfoRow label="공유 링크" value="즉시 열리지 않음" valueColor={color.status.error} />
-        <InfoRow label="RSVP 응답" value={`${project.counts.rsvp}건 삭제`} />
-        <InfoRow label="방명록" value={`${project.counts.guestbook}건 삭제`} />
-      </View>
+        <View style={styles.infoBox}>
+          <InfoRow label="초대장 이름" value={project.title} />
+          <InfoRow label="공유 링크" value="즉시 열리지 않음" valueColor={color.status.error} />
+          <InfoRow label="RSVP 응답" value={`${project.counts.rsvp}건 삭제`} />
+          <InfoRow label="방명록" value={`${project.counts.guestbook}건 삭제`} />
+        </View>
 
-      <TextLink size="label" weight="semibold" color={color.accent.base} underline onPress={() => {}}>
-        응답 데이터 먼저 내려받기
-      </TextLink>
+        {downloaded ? (
+          <TextLink size="label" weight="semibold" color={color.accent.base} underline onPress={() => setDownloadSheetOpen(true)}>
+            ✓ 내려받기 완료 · 다시 내려받기
+          </TextLink>
+        ) : (
+          <TextLink size="label" weight="semibold" color={color.accent.base} underline onPress={() => setDownloadSheetOpen(true)}>
+            데이터 내려받기
+          </TextLink>
+        )}
 
-      <View style={styles.ackRow}>
-        <Checkbox checked={acknowledged} onPress={() => setAcknowledged((v) => !v)} />
-        <Text style={styles.ackLabel}>공유 링크와 응답 데이터가 함께 삭제되는 것을 확인했어요</Text>
-      </View>
-    </ConfirmDialog>
+        <View style={styles.ackRow}>
+          <Checkbox checked={acknowledged} onPress={() => setAcknowledged((v) => !v)} tone="error" />
+          <Text style={styles.ackLabel}>공유 링크와 응답 데이터가 함께 삭제되는 것을 확인했어요</Text>
+        </View>
+      </ConfirmDialog>
+
+      <DownloadSheet
+        visible={downloadSheetOpen}
+        project={project}
+        onClose={() => setDownloadSheetOpen(false)}
+        onDownloaded={() => {
+          setDownloaded(true);
+          onDataDownloaded();
+        }}
+      />
+    </>
   );
 }
 

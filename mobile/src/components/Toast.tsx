@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Animated, Text, View, StyleSheet } from 'react-native';
+import { Animated, Pressable, Text, View, StyleSheet } from 'react-native';
 import { color, motion, radius, space } from '../theme/tokens';
 import { textStyle } from '../theme/typography';
 
@@ -8,9 +8,11 @@ type Props = {
   message: string;
   onHide: () => void;
   tone?: 'error' | 'success';
+  actionLabel?: string;
+  onAction?: () => void;
 };
 
-export function Toast({ visible, message, onHide, tone = 'error' }: Props) {
+export function Toast({ visible, message, onHide, tone = 'error', actionLabel, onAction }: Props) {
   const [opacity] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
@@ -28,11 +30,21 @@ export function Toast({ visible, message, onHide, tone = 'error' }: Props) {
   const bg = tone === 'error' ? color.status.error : color.status.success;
 
   return (
-    <Animated.View style={[styles.wrap, { opacity, backgroundColor: bg }]} pointerEvents="none">
-      <View style={styles.icon}>
-        <Text style={styles.iconMark}>✓</Text>
+    <Animated.View
+      style={[styles.wrap, { opacity, backgroundColor: bg }]}
+      pointerEvents={actionLabel ? 'box-none' : 'none'}
+    >
+      <View style={styles.left}>
+        <View style={styles.icon}>
+          <Text style={styles.iconMark}>✓</Text>
+        </View>
+        <Text style={styles.message}>{message}</Text>
       </View>
-      <Text style={styles.message}>{message}</Text>
+      {actionLabel ? (
+        <Pressable onPress={onAction} hitSlop={8}>
+          <Text style={styles.action}>{actionLabel}</Text>
+        </Pressable>
+      ) : null}
     </Animated.View>
   );
 }
@@ -48,7 +60,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[6],
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: space[4],
+  },
+  left: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[4],
+    flexShrink: 1,
+  },
+  action: {
+    ...textStyle({ size: 'label', weight: 'semibold', color: '#ffffff' }),
+    textDecorationLine: 'underline',
   },
   icon: {
     width: 18,

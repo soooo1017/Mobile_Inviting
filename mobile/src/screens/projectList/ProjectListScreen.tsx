@@ -26,13 +26,12 @@ import { FilterSheet } from './FilterSheet';
 import { SortSheet } from './SortSheet';
 import { ActionSheet } from './ActionSheet';
 import { DeleteDialog } from './DeleteDialog';
-import { PeriodSheet } from './PeriodSheet';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'ProjectList'>;
 
 export function ProjectListScreen(_props: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { projects, deleteProject, setThanksSettings } = useProjects();
+  const { projects, deleteProject } = useProjects();
 
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
@@ -43,8 +42,13 @@ export function ProjectListScreen(_props: Props) {
   const [sortSheetOpen, setSortSheetOpen] = useState(false);
   const [actionProjectId, setActionProjectId] = useState<string | null>(null);
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
-  const [periodProjectId, setPeriodProjectId] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ visible: boolean; message: string; tone: 'error' | 'success' }>({
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    tone: 'error' | 'success';
+    actionLabel?: string;
+    onAction?: () => void;
+  }>({
     visible: false,
     message: '',
     tone: 'success',
@@ -61,10 +65,12 @@ export function ProjectListScreen(_props: Props) {
 
   const actionProject = projects.find((p) => p.id === actionProjectId) ?? null;
   const deleteProjectTarget = projects.find((p) => p.id === deleteProjectId) ?? null;
-  const periodProject = projects.find((p) => p.id === periodProjectId) ?? null;
 
-  const showToast = (message: string, tone: 'error' | 'success' = 'success') =>
-    setToast({ visible: true, message, tone });
+  const showToast = (
+    message: string,
+    tone: 'error' | 'success' = 'success',
+    action?: { label: string; onPress: () => void },
+  ) => setToast({ visible: true, message, tone, actionLabel: action?.label, onAction: action?.onPress });
 
   const removeStatusFilter = () => setFilters((f) => ({ ...f, status: 'all' }));
   const removeMonthFilter = (m: string) => setFilters((f) => ({ ...f, months: f.months.filter((x) => x !== m) }));
@@ -83,6 +89,13 @@ export function ProjectListScreen(_props: Props) {
     const title = deleteProjectTarget.title;
     setDeleteProjectId(null);
     showToast(`'${title}'을 삭제했어요`, 'error');
+  };
+
+  const handleDataDownloaded = () => {
+    showToast('데이터를 내려받았어요', 'success', {
+      label: '열기',
+      onPress: () => showToast('파일 열기는 다음 핸드오프에서 제공됩니다'),
+    });
   };
 
   return (
@@ -162,7 +175,7 @@ export function ProjectListScreen(_props: Props) {
         ) : null}
 
         {projects.length === 0 ? (
-          <EmptyState onCreate={() => navigation.navigate('NewProjectType')} />
+          <EmptyState />
         ) : sorted.length === 0 ? (
           <NoResultState onReset={() => { setFilters(EMPTY_FILTERS); setQuery(''); }} />
         ) : (
@@ -193,7 +206,6 @@ export function ProjectListScreen(_props: Props) {
         onPreview={() => { setActionProjectId(null); showToast('미리보기는 다음 핸드오프에서 제공됩니다'); }}
         onCopyLink={() => actionProject && handleCopyLink(actionProject)}
         onDelete={() => { setDeleteProjectId(actionProjectId); setActionProjectId(null); }}
-        onThanksPeriod={() => { setPeriodProjectId(actionProjectId); setActionProjectId(null); }}
         onThanksEdit={() => { if (actionProject) navigation.navigate('EditorPlaceholder', { projectId: actionProject.id, tab: 'thanks' }); setActionProjectId(null); }}
       />
       <DeleteDialog
@@ -201,15 +213,17 @@ export function ProjectListScreen(_props: Props) {
         project={deleteProjectTarget}
         onCancel={() => setDeleteProjectId(null)}
         onConfirm={handleConfirmDelete}
-      />
-      <PeriodSheet
-        visible={periodProjectId != null}
-        project={periodProject}
-        onClose={() => setPeriodProjectId(null)}
-        onSave={(thanks) => { if (periodProjectId) setThanksSettings(periodProjectId, thanks); setPeriodProjectId(null); }}
+        onDataDownloaded={handleDataDownloaded}
       />
 
-      <Toast visible={toast.visible} message={toast.message} tone={toast.tone} onHide={() => setToast((t) => ({ ...t, visible: false }))} />
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        tone={toast.tone}
+        actionLabel={toast.actionLabel}
+        onAction={toast.onAction}
+        onHide={() => setToast((t) => ({ ...t, visible: false }))}
+      />
     </View>
   );
 }
@@ -243,15 +257,12 @@ function RemovableChip({ label, onRemove }: { label: string; onRemove: () => voi
   );
 }
 
-function EmptyState({ onCreate }: { onCreate: () => void }) {
+function EmptyState() {
   return (
     <View style={styles.emptyWrap}>
       <Placeholder width={120} height={150} label="" />
       <Text style={styles.emptyTitle}>아직 만든 초대장이 없어요</Text>
-      <Text style={styles.emptyDesc}>행사 유형과 일시만 입력하면{'\n'}블록을 쌓아 5분 만에 완성할 수 있어요.</Text>
-      <Pressable style={styles.emptyButton} onPress={onCreate}>
-        <Text style={styles.emptyButtonLabel}>+ 새 초대장 만들기</Text>
-      </Pressable>
+      <Text style={styles.emptyDesc}>상단의 [+ 새 초대장 만들기]로{'\n'}첫 초대장을 시작해 보세요.</Text>
     </View>
   );
 }
@@ -514,16 +525,6 @@ const styles = StyleSheet.create({
     ...textStyle({ size: 'body', weight: 'regular', color: color.ink.muted }),
     textAlign: 'center',
     lineHeight: 12.5 * 1.6,
-  },
-  emptyButton: {
-    marginTop: space[6],
-    backgroundColor: color.ink.primary,
-    borderRadius: radius.button,
-    paddingVertical: space[6],
-    paddingHorizontal: space[9],
-  },
-  emptyButtonLabel: {
-    ...textStyle({ size: 'control', weight: 'semibold', color: color.ink.onPrimary }),
   },
   noResultIcon: {
     width: 64,

@@ -9,6 +9,7 @@ import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { thanksEndDate, thanksStartDate, formatMonthDay } from '../../utils/projectStatus';
 import type { ThanksSettings } from '../../types/project';
+import { ExitConfirmGate } from './ExitConfirmGate';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NewProjectThanks'>;
 
@@ -73,6 +74,7 @@ export function NewProjectThanksScreen({ navigation }: Props) {
       <View style={styles.footer}>
         <PrimaryButton label="다음" onPress={() => navigation.navigate('ThemeSelect')} />
       </View>
+      <ExitConfirmGate />
     </View>
   );
 }

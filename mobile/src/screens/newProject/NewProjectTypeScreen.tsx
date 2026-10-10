@@ -12,6 +12,7 @@ import { PrimaryButton } from '../../components/PrimaryButton';
 import { color, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { EVENT_TYPES, eventTypeMeta } from '../../types/project';
+import { ExitConfirmGate } from './ExitConfirmGate';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NewProjectType'>;
 
@@ -72,6 +73,7 @@ export function NewProjectTypeScreen({ navigation }: Props) {
       <View style={styles.footer}>
         <PrimaryButton label="다음" onPress={() => navigation.navigate('NewProjectInfo')} disabled={!canProceed} />
       </View>
+      <ExitConfirmGate />
     </View>
   );
 }
