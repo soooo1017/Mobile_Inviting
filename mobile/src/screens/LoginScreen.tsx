@@ -96,34 +96,30 @@ export function LoginScreen({ navigation }: Props) {
           <PrimaryButton label="로그인" onPress={handleLogin} loading={loading} />
         </View>
 
-        {!error && (
-          <>
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerLabel}>간편 로그인</Text>
-              <View style={styles.dividerLine} />
-            </View>
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerLabel}>간편 로그인</Text>
+          <View style={styles.dividerLine} />
+        </View>
 
-            <View style={styles.socialRow}>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => handleSocial('kakao')}
-                style={[styles.socialButton, styles.kakaoButton]}
-              >
-                <KakaoIcon />
-                <Text style={styles.kakaoLabel}>카카오</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => handleSocial('apple')}
-                style={[styles.socialButton, styles.appleButton]}
-              >
-                <AppleIcon />
-                <Text style={styles.appleLabel}>Apple</Text>
-              </Pressable>
-            </View>
-          </>
-        )}
+        <View style={styles.socialRow}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => handleSocial('kakao')}
+            style={[styles.socialButton, styles.kakaoButton]}
+          >
+            <KakaoIcon />
+            <Text style={styles.kakaoLabel}>카카오</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => handleSocial('apple')}
+            style={[styles.socialButton, styles.appleButton]}
+          >
+            <AppleIcon />
+            <Text style={styles.appleLabel}>Apple</Text>
+          </Pressable>
+        </View>
 
         <View style={styles.linkRow}>
           <TextLink
