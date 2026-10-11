@@ -18,6 +18,8 @@ import { textStyle } from '../theme/typography';
 type Props = NativeStackScreenProps<RootStackParamList, 'Signup'>;
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{4,20}$/;
+const NICKNAME_MIN = 2;
+const NICKNAME_MAX = 12;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_RE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 const USERNAME_CHECK_DEBOUNCE_MS = 400;
@@ -26,6 +28,7 @@ export function SignupScreen({ navigation }: Props) {
   const { signup, isUsernameAvailable } = useAuth();
   const [username, setUsername] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -37,6 +40,8 @@ export function SignupScreen({ navigation }: Props) {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const usernameFormatValid = USERNAME_RE.test(username);
+  const nicknameTrimmed = nickname.trim();
+  const nicknameValid = nicknameTrimmed.length >= NICKNAME_MIN && nicknameTrimmed.length <= NICKNAME_MAX;
   const emailValid = EMAIL_RE.test(email);
   const passwordValid = PASSWORD_RE.test(password);
   const confirmMismatch = confirmTouched && confirm.length > 0 && confirm !== password;
@@ -66,13 +71,20 @@ export function SignupScreen({ navigation }: Props) {
   };
 
   const canSubmit =
-    usernameFormatValid && usernameAvailable === true && emailValid && passwordValid && confirmValid && agreeTerms && agreePrivacy;
+    usernameFormatValid &&
+    usernameAvailable === true &&
+    nicknameValid &&
+    emailValid &&
+    passwordValid &&
+    confirmValid &&
+    agreeTerms &&
+    agreePrivacy;
 
   const handleSubmit = async () => {
     if (!canSubmit || loading) return;
     setLoading(true);
     setSubmitError(null);
-    const result = await signup(username, email, password);
+    const result = await signup(username, nicknameTrimmed, email, password);
     setLoading(false);
     if (!result.ok) {
       if (result.error === 'username_taken') {
@@ -114,6 +126,12 @@ export function SignupScreen({ navigation }: Props) {
           ) : (
             <HelperText>로그인할 때 이 아이디를 사용해요</HelperText>
           )}
+        </View>
+
+        <View style={styles.field}>
+          <FieldLabel>닉네임</FieldLabel>
+          <TextField placeholder="2~12자로 입력해주세요" value={nickname} onChangeText={setNickname} />
+          <HelperText>다른 사람에게 보여지는 이름이에요</HelperText>
         </View>
 
         <View style={styles.field}>

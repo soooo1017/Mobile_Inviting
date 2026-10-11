@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase';
 export type AuthUser = {
   id: string;
   username: string;
+  /** Falls back to the username for accounts created before nicknames existed. */
+  nickname: string;
   email: string;
 };
 
@@ -25,6 +27,7 @@ type AuthContextValue = {
   /** Creates the account; Supabase sends a verification email, and sign-in is blocked until it's confirmed. */
   signup: (
     username: string,
+    nickname: string,
     email: string,
     password: string,
   ) => Promise<{ ok: true } | { ok: false; error: SignupError }>;
@@ -41,7 +44,9 @@ function userFromSession(session: Session | null): AuthUser | undefined {
   if (!session?.user) return undefined;
   const username = session.user.user_metadata?.username;
   if (typeof username !== 'string' || !username) return undefined;
-  return { id: session.user.id, username, email: session.user.email ?? '' };
+  const nicknameMeta = session.user.user_metadata?.nickname;
+  const nickname = typeof nicknameMeta === 'string' && nicknameMeta ? nicknameMeta : username;
+  return { id: session.user.id, username, nickname, email: session.user.email ?? '' };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -88,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) return false;
         return Boolean(data);
       },
-      async signup(username, email, password) {
+      async signup(username, nickname, email, password) {
         const { data: available, error: availError } = await supabase.rpc('is_username_available', {
           p_username: username,
         });
@@ -98,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { username } },
+          options: { data: { username, nickname } },
         });
         if (error) {
           if (error.message.toLowerCase().includes('already registered')) {

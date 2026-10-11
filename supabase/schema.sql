@@ -4,14 +4,20 @@
 -- and login resolves the typed username to its email behind the scenes before
 -- calling the normal email/password sign-in.
 
--- 1) One row per auth user, holding their chosen username.
+-- 1) One row per auth user, holding their chosen username and display nickname.
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   username text not null,
+  nickname text,
   created_at timestamptz not null default now()
 );
 
+-- Adds the column for projects created before nicknames existed, without
+-- touching their existing username/created_at data.
+alter table public.profiles add column if not exists nickname text;
+
 -- Case-insensitive uniqueness ("Jiwon" and "jiwon" are the same username).
+-- Nicknames are purely for display, so they're allowed to repeat.
 create unique index if not exists profiles_username_lower_idx
   on public.profiles (lower(username));
 
@@ -31,7 +37,7 @@ create policy "profiles: update own"
   using (auth.uid() = id);
 
 -- 2) Auto-create the profile row right after a new auth user is created,
--- using the username passed in signUp()'s `options.data.username`.
+-- using the username/nickname passed in signUp()'s `options.data`.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -39,8 +45,8 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, username)
-  values (new.id, new.raw_user_meta_data ->> 'username');
+  insert into public.profiles (id, username, nickname)
+  values (new.id, new.raw_user_meta_data ->> 'username', new.raw_user_meta_data ->> 'nickname');
   return new;
 end;
 $$;
