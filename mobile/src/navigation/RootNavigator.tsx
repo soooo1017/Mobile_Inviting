@@ -14,6 +14,14 @@ import { NewProjectThanksScreen } from '../screens/newProject/NewProjectThanksSc
 import { ThemeSelectScreen } from '../screens/newProject/ThemeSelectScreen';
 import { EditorPlaceholderScreen } from '../screens/EditorPlaceholderScreen';
 import { ManagePlaceholderScreen } from '../screens/ManagePlaceholderScreen';
+import { NicknameEditScreen } from '../screens/myPage/NicknameEditScreen';
+import { PasswordChangeScreen } from '../screens/myPage/PasswordChangeScreen';
+import { NotificationSettingsScreen } from '../screens/myPage/NotificationSettingsScreen';
+import { SocialAccountsScreen } from '../screens/myPage/SocialAccountsScreen';
+import { AccountDeletionScreen } from '../screens/myPage/AccountDeletionScreen';
+import { InquiryScreen } from '../screens/myPage/InquiryScreen';
+import { TermsScreen } from '../screens/myPage/TermsScreen';
+import { PrivacyPolicyScreen } from '../screens/myPage/PrivacyPolicyScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -34,6 +42,14 @@ export function RootNavigator() {
       <Stack.Screen name="ThemeSelect" component={ThemeSelectScreen} />
       <Stack.Screen name="EditorPlaceholder" component={EditorPlaceholderScreen} />
       <Stack.Screen name="ManagePlaceholder" component={ManagePlaceholderScreen} />
+      <Stack.Screen name="NicknameEdit" component={NicknameEditScreen} />
+      <Stack.Screen name="PasswordChange" component={PasswordChangeScreen} />
+      <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+      <Stack.Screen name="SocialAccounts" component={SocialAccountsScreen} />
+      <Stack.Screen name="AccountDeletion" component={AccountDeletionScreen} />
+      <Stack.Screen name="Inquiry" component={InquiryScreen} />
+      <Stack.Screen name="Terms" component={TermsScreen} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
     </Stack.Navigator>
   );
 }

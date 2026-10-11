@@ -13,6 +13,14 @@ export type RootStackParamList = {
   ThemeSelect: undefined;
   EditorPlaceholder: { projectId: string; tab?: 'invite' | 'thanks' };
   ManagePlaceholder: { projectId: string };
+  NicknameEdit: undefined;
+  PasswordChange: undefined;
+  NotificationSettings: undefined;
+  SocialAccounts: undefined;
+  AccountDeletion: undefined;
+  Inquiry: { tab?: 'form' | 'history' };
+  Terms: undefined;
+  PrivacyPolicy: undefined;
 };
 
 export type MainTabParamList = {

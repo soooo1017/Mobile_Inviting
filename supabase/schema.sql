@@ -88,3 +88,72 @@ as $$
 $$;
 
 grant execute on function public.email_for_username(text) to anon;
+
+-- 5) My Page: notification preferences. One row per user, upserted lazily
+-- from the app the first time they open 알림 설정 (no row yet just means
+-- "use the defaults shown in the UI" — nothing backfills existing users).
+create table if not exists public.notification_preferences (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  rsvp_alerts boolean not null default true,
+  guestbook_alerts boolean not null default true,
+  thanks_transition_alerts boolean not null default true,
+  event_schedule_alerts boolean not null default false,
+  marketing_alerts boolean not null default false,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.notification_preferences enable row level security;
+
+drop policy if exists "notification_preferences: select own" on public.notification_preferences;
+create policy "notification_preferences: select own"
+  on public.notification_preferences for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "notification_preferences: upsert own" on public.notification_preferences;
+create policy "notification_preferences: insert own"
+  on public.notification_preferences for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "notification_preferences: update own" on public.notification_preferences;
+create policy "notification_preferences: update own"
+  on public.notification_preferences for update
+  using (auth.uid() = user_id);
+
+-- 6) My Page: 회원 탈퇴 사유. Deliberately has no foreign key to auth.users —
+-- the whole point is that this row survives the account it came from being
+-- deleted, so product can see *why* people left. No select policy: this is
+-- a write-only log the project owner reads from the Supabase dashboard, not
+-- something the app reads back.
+create table if not exists public.account_deletion_feedback (
+  id uuid primary key default gen_random_uuid(),
+  reason text not null,
+  detail text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.account_deletion_feedback enable row level security;
+
+drop policy if exists "account_deletion_feedback: insert" on public.account_deletion_feedback;
+create policy "account_deletion_feedback: insert"
+  on public.account_deletion_feedback for insert
+  with check (auth.role() = 'authenticated');
+
+-- 7) My Page: 회원 탈퇴. Deleting a row from auth.users isn't something an
+-- "authenticated" client can do directly, and the service-role key that
+-- normally allows it must never ship inside the mobile app. A SECURITY
+-- DEFINER function sidesteps that: it runs with the privileges of whoever
+-- created it (the project owner, via the SQL Editor), and only ever
+-- touches the caller's own row (auth.uid()), so granting EXECUTE to
+-- "authenticated" is safe — it's a self-delete, not an admin delete.
+create or replace function public.delete_own_account()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from auth.users where id = auth.uid();
+end;
+$$;
+
+grant execute on function public.delete_own_account() to authenticated;

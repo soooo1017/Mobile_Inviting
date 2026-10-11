@@ -19,6 +19,8 @@ type AuthState = {
 
 export type LoginError = 'invalid_credentials' | 'email_not_confirmed' | 'unknown';
 export type SignupError = 'username_taken' | 'email_taken' | 'unknown';
+export type PasswordChangeError = 'invalid_current_password' | 'unknown';
+export type DeleteAccountError = 'invalid_password' | 'unknown';
 
 type AuthContextValue = {
   auth: AuthState;
@@ -33,6 +35,18 @@ type AuthContextValue = {
   ) => Promise<{ ok: true } | { ok: false; error: SignupError }>;
   /** For live "이미 사용 중인 아이디예요" validation while typing, before submitting. */
   isUsernameAvailable: (username: string) => Promise<boolean>;
+  updateNickname: (nickname: string) => Promise<{ ok: true } | { ok: false; error: 'unknown' }>;
+  /** Re-verifies currentPassword via sign-in before applying newPassword. */
+  changePassword: (
+    currentPassword: string,
+    newPassword: string,
+  ) => Promise<{ ok: true } | { ok: false; error: PasswordChangeError }>;
+  /** Re-verifies password, logs the reason (survives the deleted account), then deletes the account. */
+  deleteAccount: (
+    password: string,
+    reason: string,
+    detail: string,
+  ) => Promise<{ ok: true } | { ok: false; error: DeleteAccountError }>;
   logout: () => Promise<void>;
   /** Resolves once the persisted session (if any) has been restored. */
   bootstrap: () => Promise<void>;
@@ -118,6 +132,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           return { ok: false, error: 'unknown' };
         }
+        return { ok: true };
+      },
+      async updateNickname(nickname) {
+        const { data, error } = await supabase.auth.updateUser({ data: { nickname } });
+        if (error || !data.user) return { ok: false, error: 'unknown' };
+        // Keep profiles.nickname in sync too — the app itself only reads the
+        // auth metadata above, but profiles is the record other tooling (and
+        // any future admin view) would look at.
+        await supabase.from('profiles').update({ nickname }).eq('id', data.user.id);
+        return { ok: true };
+      },
+      async changePassword(currentPassword, newPassword) {
+        if (!auth.user) return { ok: false, error: 'unknown' };
+        const { error: verifyError } = await supabase.auth.signInWithPassword({
+          email: auth.user.email,
+          password: currentPassword,
+        });
+        if (verifyError) return { ok: false, error: 'invalid_current_password' };
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) return { ok: false, error: 'unknown' };
+        return { ok: true };
+      },
+      async deleteAccount(password, reason, detail) {
+        if (!auth.user) return { ok: false, error: 'unknown' };
+        const { error: verifyError } = await supabase.auth.signInWithPassword({
+          email: auth.user.email,
+          password,
+        });
+        if (verifyError) return { ok: false, error: 'invalid_password' };
+        // Logged before the delete call: this table has no FK to auth.users,
+        // so the row survives the account it's about.
+        await supabase.from('account_deletion_feedback').insert({ reason, detail: detail || null });
+        const { error } = await supabase.rpc('delete_own_account');
+        if (error) return { ok: false, error: 'unknown' };
+        await supabase.auth.signOut();
         return { ok: true };
       },
       async logout() {
