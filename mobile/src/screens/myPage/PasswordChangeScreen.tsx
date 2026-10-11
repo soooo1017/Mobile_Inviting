@@ -67,6 +67,8 @@ export function PasswordChangeScreen({ navigation }: Props) {
               }}
               placeholder="현재 비밀번호를 입력해주세요"
               secureTextEntry={!showPasswords}
+              autoCapitalize="none"
+              autoCorrect={false}
               error={currentError}
               rightElement={
                 <TextLink size="small" color={color.ink.secondary} onPress={() => setShowPasswords((v) => !v)}>
@@ -87,6 +89,8 @@ export function PasswordChangeScreen({ navigation }: Props) {
               }}
               placeholder="8자 이상 입력해주세요"
               secureTextEntry={!showPasswords}
+              autoCapitalize="none"
+              autoCorrect={false}
             />
             <HelperText>영문, 숫자를 포함해 8자 이상으로 설정해주세요.</HelperText>
           </View>
@@ -101,6 +105,8 @@ export function PasswordChangeScreen({ navigation }: Props) {
               }}
               placeholder="새 비밀번호를 다시 입력해주세요"
               secureTextEntry={!showPasswords}
+              autoCapitalize="none"
+              autoCorrect={false}
               error={matchError}
             />
             {matchError ? <HelperText error>새 비밀번호가 서로 달라요.</HelperText> : null}

@@ -76,6 +76,8 @@ export function LoginScreen({ navigation }: Props) {
               setError(false);
             }}
             secureTextEntry={!showPassword}
+            autoCapitalize="none"
+            autoCorrect={false}
             error={error}
             rightElement={<TextLink size="small" color={color.ink.secondary} onPress={() => setShowPassword((v) => !v)}>보기</TextLink>}
           />

@@ -102,6 +102,8 @@ export function AccountDeletionScreen({ navigation }: Props) {
             }}
             placeholder="비밀번호를 입력해주세요"
             secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
             error={passwordError}
           />
           {passwordError ? <HelperText error>비밀번호가 맞지 않아요.</HelperText> : null}

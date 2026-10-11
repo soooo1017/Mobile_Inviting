@@ -3,6 +3,7 @@ import { Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
+import { useAuth } from '../state/AuthContext';
 import { BackButton } from '../components/BackButton';
 import { ScreenTitle } from '../components/ScreenTitle';
 import { TextField } from '../components/TextField';
@@ -13,14 +14,14 @@ import { textStyle } from '../theme/typography';
 type Props = NativeStackScreenProps<RootStackParamList, 'ResetRequest'>;
 
 export function ResetRequestScreen({ navigation }: Props) {
+  const { requestPasswordReset } = useAuth();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSend = async () => {
     if (!email || loading) return;
     setLoading(true);
-    // No backend yet — simulate the request round-trip.
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    await requestPasswordReset(email);
     setLoading(false);
     navigation.navigate('ResetSent', { email });
   };

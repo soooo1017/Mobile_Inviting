@@ -21,6 +21,7 @@ export type LoginError = 'invalid_credentials' | 'email_not_confirmed' | 'unknow
 export type SignupError = 'username_taken' | 'email_taken' | 'unknown';
 export type PasswordChangeError = 'invalid_current_password' | 'unknown';
 export type DeleteAccountError = 'invalid_password' | 'unknown';
+export type ResetConfirmError = 'invalid_code' | 'unknown';
 
 type AuthContextValue = {
   auth: AuthState;
@@ -35,6 +36,14 @@ type AuthContextValue = {
   ) => Promise<{ ok: true } | { ok: false; error: SignupError }>;
   /** For live "이미 사용 중인 아이디예요" validation while typing, before submitting. */
   isUsernameAvailable: (username: string) => Promise<boolean>;
+  /** Sends a 6-digit recovery code by email. Always resolves ok (never reveals whether the email exists). */
+  requestPasswordReset: (email: string) => Promise<{ ok: true }>;
+  /** Verifies the emailed code, then sets newPassword and signs out so the user logs back in with it. */
+  confirmPasswordReset: (
+    email: string,
+    code: string,
+    newPassword: string,
+  ) => Promise<{ ok: true } | { ok: false; error: ResetConfirmError }>;
   updateNickname: (nickname: string) => Promise<{ ok: true } | { ok: false; error: 'unknown' }>;
   /** Re-verifies currentPassword via sign-in before applying newPassword. */
   changePassword: (
@@ -132,6 +141,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           return { ok: false, error: 'unknown' };
         }
+        return { ok: true };
+      },
+      async requestPasswordReset(email) {
+        await supabase.auth.resetPasswordForEmail(email);
+        return { ok: true };
+      },
+      async confirmPasswordReset(email, code, newPassword) {
+        const { error: verifyError } = await supabase.auth.verifyOtp({ email, token: code, type: 'recovery' });
+        if (verifyError) return { ok: false, error: 'invalid_code' };
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) return { ok: false, error: 'unknown' };
+        // verifyOtp leaves a signed-in recovery session; sign out so the user
+        // proves the new password works by logging back in with it.
+        await supabase.auth.signOut();
         return { ok: true };
       },
       async updateNickname(nickname) {

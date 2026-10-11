@@ -148,7 +148,14 @@ export function SignupScreen({ navigation }: Props) {
 
         <View style={styles.field}>
           <FieldLabel>비밀번호</FieldLabel>
-          <TextField placeholder="비밀번호" value={password} onChangeText={setPassword} secureTextEntry />
+          <TextField
+            placeholder="비밀번호"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
           <HelperText>영문·숫자 포함 8자 이상</HelperText>
         </View>
 
@@ -160,6 +167,8 @@ export function SignupScreen({ navigation }: Props) {
             onChangeText={setConfirm}
             onBlur={() => setConfirmTouched(true)}
             secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
             error={confirmMismatch}
           />
           {confirmMismatch ? <HelperText error>비밀번호가 일치하지 않아요</HelperText> : null}
