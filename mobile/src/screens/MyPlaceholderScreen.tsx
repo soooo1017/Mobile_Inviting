@@ -6,7 +6,7 @@ import { textStyle } from '../theme/typography';
 export function MyPlaceholderScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
-      <Text style={styles.title}>마이</Text>
+      <Text style={styles.title}>My Page</Text>
       <Text style={styles.body}>계정 설정, 알림, 포인트 내역은 다음 핸드오프에서 제공됩니다.</Text>
     </SafeAreaView>
   );

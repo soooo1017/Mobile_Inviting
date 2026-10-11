@@ -10,7 +10,7 @@ import { textStyle } from '../theme/typography';
 
 const LABEL: Record<string, string> = {
   Home: '홈',
-  My: '마이',
+  My: 'My Page',
 };
 
 const ICON: Record<string, typeof HomeTabIcon> = {
