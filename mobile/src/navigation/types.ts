@@ -17,6 +17,5 @@ export type RootStackParamList = {
 
 export type MainTabParamList = {
   Home: undefined;
-  ProjectList: undefined;
   My: undefined;
 };

@@ -27,22 +27,10 @@ export function HomeTabIcon({ size = 23, color, active }: Props) {
   );
 }
 
-export function InviteTabIcon({ size = 23, color, active }: Props) {
+export function PlusIcon({ size = 22, color }: { size?: number; color: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M4.5 6h15a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"
-        stroke={color}
-        strokeWidth={active ? 2.1 : 1.8}
-        strokeLinejoin="round"
-      />
-      <Path
-        d="m4 7 8 6.5L20 7"
-        stroke={color}
-        strokeWidth={active ? 2.1 : 1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <Path d="M12 5v14M5 12h14" stroke={color} strokeWidth={2.4} strokeLinecap="round" />
     </Svg>
   );
 }

@@ -28,7 +28,7 @@ import { SortSheet } from './SortSheet';
 import { ActionSheet } from './ActionSheet';
 import { DeleteDialog } from './DeleteDialog';
 
-type Props = BottomTabScreenProps<MainTabParamList, 'ProjectList'>;
+type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
 export function ProjectListScreen(_props: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
