@@ -106,8 +106,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           options: { data: { username, nickname } },
         });
         if (error) {
-          if (error.message.toLowerCase().includes('already registered')) {
+          const message = error.message.toLowerCase();
+          if (message.includes('already registered')) {
             return { ok: false, error: 'email_taken' };
+          }
+          // Two signups racing for the same not-yet-taken username both pass the
+          // availability check above; the DB's unique index is the real guard,
+          // and its violation surfaces here as this generic insert error.
+          if (message.includes('duplicate key') || message.includes('profiles_username_lower_idx')) {
+            return { ok: false, error: 'username_taken' };
           }
           return { ok: false, error: 'unknown' };
         }
