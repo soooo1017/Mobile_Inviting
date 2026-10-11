@@ -21,7 +21,13 @@ export type LoginError = 'invalid_credentials' | 'email_not_confirmed' | 'unknow
 export type SignupError = 'username_taken' | 'email_taken' | 'unknown';
 export type PasswordChangeError = 'invalid_current_password' | 'unknown';
 export type DeleteAccountError = 'invalid_password' | 'unknown';
-export type ResetConfirmError = 'invalid_code' | 'unknown';
+
+// The recovery email's link opens this page (hosted on the project's GitHub
+// Pages site, not in the app itself — Expo Go's own address changes every
+// dev session, so a deep link back into the app can't reliably round-trip).
+// The page completes the whole "set a new password" step in the browser
+// using the same Supabase project, then tells the user to log back in here.
+const PASSWORD_RESET_REDIRECT_URL = 'https://soooo1017.github.io/Wedding_Mobile_Inviting/reset-password.html';
 
 type AuthContextValue = {
   auth: AuthState;
@@ -36,14 +42,8 @@ type AuthContextValue = {
   ) => Promise<{ ok: true } | { ok: false; error: SignupError }>;
   /** For live "이미 사용 중인 아이디예요" validation while typing, before submitting. */
   isUsernameAvailable: (username: string) => Promise<boolean>;
-  /** Sends a 6-digit recovery code by email. Always resolves ok (never reveals whether the email exists). */
+  /** Emails a reset link to a page that completes the reset in-browser. Always resolves ok (never reveals whether the email exists). */
   requestPasswordReset: (email: string) => Promise<{ ok: true }>;
-  /** Verifies the emailed code, then sets newPassword and signs out so the user logs back in with it. */
-  confirmPasswordReset: (
-    email: string,
-    code: string,
-    newPassword: string,
-  ) => Promise<{ ok: true } | { ok: false; error: ResetConfirmError }>;
   updateNickname: (nickname: string) => Promise<{ ok: true } | { ok: false; error: 'unknown' }>;
   /** Re-verifies currentPassword via sign-in before applying newPassword. */
   changePassword: (
@@ -144,17 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { ok: true };
       },
       async requestPasswordReset(email) {
-        await supabase.auth.resetPasswordForEmail(email);
-        return { ok: true };
-      },
-      async confirmPasswordReset(email, code, newPassword) {
-        const { error: verifyError } = await supabase.auth.verifyOtp({ email, token: code, type: 'recovery' });
-        if (verifyError) return { ok: false, error: 'invalid_code' };
-        const { error } = await supabase.auth.updateUser({ password: newPassword });
-        if (error) return { ok: false, error: 'unknown' };
-        // verifyOtp leaves a signed-in recovery session; sign out so the user
-        // proves the new password works by logging back in with it.
-        await supabase.auth.signOut();
+        await supabase.auth.resetPasswordForEmail(email, { redirectTo: PASSWORD_RESET_REDIRECT_URL });
         return { ok: true };
       },
       async updateNickname(nickname) {
