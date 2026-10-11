@@ -27,6 +27,9 @@ export function NewProjectTypeScreen({ navigation }: Props) {
   }, []);
 
   const selectType = (type: (typeof EVENT_TYPES)[number]['type']) => {
+    if (type === draft.eventType) return;
+    // 행사 유형이 바뀌면 주인공 칸 이름(아버님/어머님 vs 아기 이름 등)도 달라지므로,
+    // 이전 단계(기본 정보)에서 입력해둔 이름은 더 이상 유효하지 않아 비운다.
     const meta = eventTypeMeta(type);
     update({ eventType: type, hosts: meta.hostLabels.map((label) => ({ label, name: '' })) });
   };

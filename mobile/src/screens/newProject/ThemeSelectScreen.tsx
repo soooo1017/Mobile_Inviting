@@ -11,7 +11,6 @@ import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { THEMES, eventTypeMeta } from '../../types/project';
 import { ProjectThumb } from '../projectList/ProjectThumb';
-import { ExitConfirmGate } from './ExitConfirmGate';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ThemeSelect'>;
 
@@ -68,7 +67,6 @@ export function ThemeSelectScreen({ navigation }: Props) {
       <View style={styles.footer}>
         <PrimaryButton label="제작 시작하기" onPress={handleStart} />
       </View>
-      <ExitConfirmGate />
     </SafeAreaView>
   );
 }
