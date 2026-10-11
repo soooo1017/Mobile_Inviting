@@ -144,11 +144,13 @@ export function LoginScreen({ navigation }: Props) {
         </View>
       </View>
 
-      {!error && (
-        <Text style={styles.notice}>
-          로그인하면 이용약관과 개인정보처리방침에{'\n'}동의한 것으로 봅니다.
-        </Text>
-      )}
+      <View style={styles.bottomArea}>
+        {!error && (
+          <Text style={styles.notice}>
+            로그인하면 이용약관과 개인정보처리방침에{'\n'}동의한 것으로 봅니다.
+          </Text>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -157,10 +159,12 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: color.bg.canvas,
-    justifyContent: 'space-between',
   },
   content: {
     paddingHorizontal: space.screenX,
+  },
+  bottomArea: {
+    marginTop: 'auto',
   },
   fields: {
     marginTop: space[8],
