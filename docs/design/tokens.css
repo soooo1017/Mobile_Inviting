@@ -1,4 +1,4 @@
-/* Invite App — Base Tokens v0.2.0 (tokens.json과 동일 값) */
+/* Invite App — Base Tokens v0.3.0 (tokens.json과 동일 값) */
 :root {
   /* background */
   --bg-canvas: #f4f2ef;
@@ -58,9 +58,9 @@
 
   /* type */
   --font-base: Pretendard, 'Noto Sans KR', system-ui, sans-serif;
-  --fs-caption: 10px;  --fs-micro: 10.5px; --fs-small: 11px; --fs-label: 11.5px; --fs-chip: 12px;
-  --fs-body: 12.5px;   --fs-button2: 13px; --fs-control: 13.5px; --fs-title3: 15px; --fs-modal-title: 16px;
-  --fs-title2: 17px;   --fs-step: 18px; --fs-list-title: 19px; --fs-title1: 20px; --fs-display: 21px; --fs-hero: 23px;
+  --fs-caption: 12px;  --fs-micro: 12.5px; --fs-small: 13px; --fs-label: 14px; --fs-chip: 14.5px;
+  --fs-body: 15px;     --fs-button2: 15.5px; --fs-control: 16px; --fs-title3: 18px; --fs-modal-title: 19px;
+  --fs-title2: 20.5px; --fs-step: 21.5px; --fs-list-title: 23px; --fs-title1: 24px; --fs-display: 25px; --fs-hero: 27.5px;
   --fw-regular: 400; --fw-medium: 500; --fw-semibold: 600;
   --ls-heading: -0.025em; --ls-title: -0.02em; --ls-button: -0.01em;
 
