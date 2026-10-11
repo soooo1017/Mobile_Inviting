@@ -19,6 +19,9 @@
     --accent-tint-border:#cdc6e0;
     --bezel:#1c1a20;
     --bezel-edge:#302c38;
+    --notice-bg:#fbf0db;
+    --notice-border:#e3c178;
+    --notice-ink:#6b4f17;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark){
@@ -35,6 +38,9 @@
       --accent-tint-border:#4a4066;
       --bezel:#0c0b10;
       --bezel-edge:#232030;
+      --notice-bg:#3a2e14;
+      --notice-border:#6b5322;
+      --notice-ink:#e8c988;
       color-scheme: dark;
     }
   }
@@ -162,6 +168,18 @@
     color: var(--ink-secondary);
     max-width:52ch;
   }
+
+  .stale-notice{
+    background: var(--notice-bg);
+    border:1px solid var(--notice-border);
+    border-radius:12px;
+    padding:12px 14px;
+    font-size:12.5px;
+    line-height:1.6;
+    color: var(--notice-ink);
+    max-width:52ch;
+  }
+  .stale-notice strong{ font-weight:700; }
 
   .card{
     background:var(--panel);
@@ -312,6 +330,7 @@
       <div class="eyebrow">Handoff prototype · A. 앱 공통 + B. 프로젝트 목록·생성</div>
       <h1>클릭으로 넘겨보는 초대장 앱</h1>
       <p class="lede">핸드오프 스펙의 실제 화면 스크린샷 위에, 문서의 &ldquo;Interactions &amp; Navigation&rdquo; 흐름대로 탭 영역을 얹은 프로토타입입니다. 코드가 아니라 화면 전환 확인용입니다. 아직 디자인되지 않은 화면(에디터 등)으로 가는 동작은 토스트로 대신 안내돼요.</p>
+      <p class="stale-notice">⚠️ <strong>이 프로토타입은 2026-10-10(핸드오프 #4) 시점 스크린샷에서 멈춰 있어요.</strong> 그 뒤 실제 앱(mobile/)에 추가된 변경 — 실제 로그인/회원가입 인증(아이디·닉네임·이메일 인증), 홈 탭이 내 초대장 목록으로 통합, 하단 탭 2개+가운데 버튼 구조, 보기 토글 아이콘 교체, 폰트·여백 확대 등 — 은 여기 반영되지 않았습니다. 새 스크린샷을 다시 찍기 전까지는 업데이트하지 않기로 했고, 최신 화면 구성은 <a href="https://github.com/soooo1017/Wedding_Mobile_Inviting/blob/claude/inspiring-mendel-ksvase/docs/SCREENS.md">docs/SCREENS.md</a>를 참고해주세요.</p>
     </div>
 
     <div class="card">
