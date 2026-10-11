@@ -105,9 +105,6 @@ export function ProjectListScreen(_props: Props) {
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.headerTitle}>내 초대장</Text>
-          <Pressable>
-            <View style={styles.avatar} />
-          </Pressable>
         </View>
 
         <View style={styles.searchBar}>
@@ -325,23 +322,12 @@ const styles = StyleSheet.create({
     paddingBottom: space[10],
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingTop: 16,
     paddingHorizontal: space.screenX,
     paddingBottom: space[6],
   },
   headerTitle: {
     ...textStyle({ size: 'listTitle', weight: 'semibold', color: color.ink.primary }),
-  },
-  avatar: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.circle,
-    backgroundColor: color.bg.placeholderFill,
-    borderWidth: 1,
-    borderColor: color.line.strong,
   },
   searchBar: {
     flexDirection: 'row',
