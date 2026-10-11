@@ -64,26 +64,26 @@ export const font = {
     medium: 'Pretendard-Medium',
     semibold: 'Pretendard-SemiBold',
   },
-  // Scaled ~1.4x from the original handoff spec — the original sizes
+  // Scaled ~1.2x from the original handoff spec — the original sizes
   // (body at 12.5, title1 at 20, ...) read too small on an actual device.
   size: {
-    caption: 14,
-    micro: 14.5,
-    small: 15.5,
-    label: 16,
-    chip: 17,
-    body: 17.5,
-    button2: 18,
-    control: 19,
-    title3: 21,
-    sheetTitle: 21,
-    modalTitle: 22.5,
-    title2: 24,
-    step: 25,
-    listTitle: 26.5,
-    title1: 28,
-    display: 29.5,
-    hero: 32,
+    caption: 12,
+    micro: 12.5,
+    small: 13,
+    label: 14,
+    chip: 14.5,
+    body: 15,
+    button2: 15.5,
+    control: 16,
+    title3: 18,
+    sheetTitle: 18,
+    modalTitle: 19,
+    title2: 20.5,
+    step: 21.5,
+    listTitle: 23,
+    title1: 24,
+    display: 25,
+    hero: 27.5,
   },
   weight: {
     regular: 400,
@@ -103,17 +103,21 @@ export const font = {
   },
 } as const;
 
+// Scaled ~1.3x from the original handoff spec, growing faster at the
+// larger steps (used for vertical rhythm between sections) than at the
+// smaller ones (icon/text micro-gaps), which were already tight enough.
+// screenX (horizontal screen margin) is left as-is — that wasn't the ask.
 export const space = {
-  1: 2,
-  2: 4,
-  3: 6,
-  4: 7,
-  5: 9,
-  6: 12,
-  7: 14,
-  8: 18,
-  9: 22,
-  10: 26,
+  1: 3,
+  2: 5,
+  3: 8,
+  4: 9,
+  5: 12,
+  6: 16,
+  7: 18,
+  8: 24,
+  9: 28,
+  10: 34,
   screenX: 18,
 } as const;
 

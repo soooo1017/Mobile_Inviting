@@ -22,6 +22,7 @@ import {
   type SortKey,
 } from '../../types/project';
 import { matchesFilters, matchesQuery, sortProjects, SORT_OPTIONS } from '../../utils/projectFilters';
+import { DetailViewIcon, ListViewIcon, ThumbViewIcon } from '../../components/icons/ViewToggleIcons';
 import { ProjectDetailCard, ProjectThumbCard, ProjectListRow } from './ProjectCards';
 import { FilterSheet } from './FilterSheet';
 import { SortSheet } from './SortSheet';
@@ -230,18 +231,18 @@ export function ProjectListScreen(_props: Props) {
 }
 
 function ViewToggle({ value, onChange }: { value: ListView; onChange: (v: ListView) => void }) {
-  const items: { key: ListView; icon: string }[] = [
-    { key: 'detail', icon: '▤' },
-    { key: 'thumb', icon: '▦' },
-    { key: 'list', icon: '≡' },
+  const items: { key: ListView; Icon: typeof DetailViewIcon }[] = [
+    { key: 'detail', Icon: DetailViewIcon },
+    { key: 'thumb', Icon: ThumbViewIcon },
+    { key: 'list', Icon: ListViewIcon },
   ];
   return (
     <View style={styles.viewToggle}>
-      {items.map((item) => {
-        const active = item.key === value;
+      {items.map(({ key, Icon }) => {
+        const active = key === value;
         return (
-          <Pressable key={item.key} onPress={() => onChange(item.key)} style={[styles.viewToggleItem, active && styles.viewToggleItemActive]}>
-            <Text style={[styles.viewToggleIcon, active && styles.viewToggleIconActive]}>{item.icon}</Text>
+          <Pressable key={key} onPress={() => onChange(key)} style={[styles.viewToggleItem, active && styles.viewToggleItemActive]}>
+            <Icon color={active ? color.ink.primary : color.ink.muted} />
           </Pressable>
         );
       })}
@@ -439,28 +440,21 @@ const styles = StyleSheet.create({
   viewToggle: {
     flexDirection: 'row',
     backgroundColor: color.bg.segment,
-    borderRadius: 8,
-    padding: 2,
-    gap: 2,
+    borderRadius: 10,
+    padding: 3,
+    gap: 3,
   },
   viewToggleItem: {
-    width: 28,
-    height: 28,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 6,
+    borderRadius: 8,
   },
   viewToggleItemActive: {
     backgroundColor: color.bg.surface,
     borderWidth: 1,
     borderColor: color.line.default,
-  },
-  viewToggleIcon: {
-    fontSize: 14,
-    color: color.ink.muted,
-  },
-  viewToggleIconActive: {
-    color: color.ink.primary,
   },
   activeFilterRow: {
     flexDirection: 'row',
