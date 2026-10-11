@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useCallback } from 'react';
 import { ScrollView, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { useNewProjectDraft } from '../../state/NewProjectDraftContext';
@@ -20,16 +21,16 @@ type Props = NativeStackScreenProps<RootStackParamList, 'NewProjectType'>;
 export function NewProjectTypeScreen({ navigation }: Props) {
   const { draft, update, reset } = useNewProjectDraft();
 
-  // 마법사의 시작점이라 진입할 때마다 이전 작성 내용을 비운다.
-  useEffect(() => {
-    reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // 마법사의 시작점이라, 처음 들어올 때든 2~4단계에서 뒤로가기로 돌아올 때든
+  // 이 화면이 포커스될 때마다 이전 작성 내용을 전부 비운다.
+  useFocusEffect(
+    useCallback(() => {
+      reset();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  );
 
   const selectType = (type: (typeof EVENT_TYPES)[number]['type']) => {
-    if (type === draft.eventType) return;
-    // 행사 유형이 바뀌면 주인공 칸 이름(아버님/어머님 vs 아기 이름 등)도 달라지므로,
-    // 이전 단계(기본 정보)에서 입력해둔 이름은 더 이상 유효하지 않아 비운다.
     const meta = eventTypeMeta(type);
     update({ eventType: type, hosts: meta.hostLabels.map((label) => ({ label, name: '' })) });
   };
