@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -54,7 +55,7 @@ export function NewProjectInfoScreen({ navigation }: Props) {
   const canProceed = draft.hosts.every((h) => h.name.trim().length > 0);
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <WizardHeader onBack={() => navigation.goBack()} step={2} stepLabel={`기본 정보 · ${typeLabel}`} />
       <ScrollView contentContainerStyle={styles.content}>
         <FieldLabel>주인공</FieldLabel>
@@ -136,7 +137,7 @@ export function NewProjectInfoScreen({ navigation }: Props) {
         <PrimaryButton label="다음" onPress={() => navigation.navigate('NewProjectThanks')} disabled={!canProceed} />
       </View>
       <ExitConfirmGate />
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { BackButton } from '../components/BackButton';
@@ -25,7 +26,7 @@ export function ResetRequestScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <BackButton onPress={() => navigation.goBack()} />
       <View style={styles.content}>
         <ScreenTitle>비밀번호 찾기</ScreenTitle>
@@ -40,7 +41,7 @@ export function ResetRequestScreen({ navigation }: Props) {
       <Text style={styles.notice}>
         카카오·Apple로 가입한 계정은{'\n'}해당 서비스에서 비밀번호를 관리합니다.
       </Text>
-    </View>
+    </SafeAreaView>
   );
 }
 

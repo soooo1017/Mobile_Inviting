@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
@@ -34,7 +35,7 @@ export function SignupSentScreen({ navigation, route }: Props) {
   };
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.center}>
         <View style={styles.icon}>
           <Text style={styles.iconMark}>✓</Text>
@@ -56,7 +57,7 @@ export function SignupSentScreen({ navigation, route }: Props) {
           {cooldown > 0 ? `메일이 오지 않았나요? 다시 보내기 (${cooldown}s)` : '메일이 오지 않았나요? 다시 보내기'}
         </TextLink>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

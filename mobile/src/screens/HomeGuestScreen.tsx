@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
@@ -17,7 +18,7 @@ export function HomeGuestScreen({ navigation }: Props) {
   const [activeChip, setActiveChip] = useState<(typeof CHIPS)[number]>('인사말');
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.top}>
         <Placeholder width={84} height={16} label="앱 이름" />
 
@@ -62,7 +63,7 @@ export function HomeGuestScreen({ navigation }: Props) {
           </TextLink>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

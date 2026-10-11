@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { useNavigation } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -99,7 +100,7 @@ export function ProjectListScreen(_props: Props) {
   };
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.headerTitle}>내 초대장</Text>
@@ -224,7 +225,7 @@ export function ProjectListScreen(_props: Props) {
         onAction={toast.onAction}
         onHide={() => setToast((t) => ({ ...t, visible: false }))}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

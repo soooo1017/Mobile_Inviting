@@ -1,4 +1,5 @@
 import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { useNewProjectDraft } from '../../state/NewProjectDraftContext';
@@ -31,7 +32,7 @@ export function NewProjectThanksScreen({ navigation }: Props) {
   const period = `${formatMonthDay(start.toISOString())} ~ ${formatMonthDay(end.toISOString())} (${days}일)`;
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <WizardHeader onBack={() => navigation.goBack()} step={3} stepLabel="감사 페이지" />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>행사 후 감사 페이지를{'\n'}보여줄까요?</Text>
@@ -75,7 +76,7 @@ export function NewProjectThanksScreen({ navigation }: Props) {
         <PrimaryButton label="다음" onPress={() => navigation.navigate('ThemeSelect')} />
       </View>
       <ExitConfirmGate />
-    </View>
+    </SafeAreaView>
   );
 }
 

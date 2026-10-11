@@ -1,4 +1,5 @@
 import { Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
@@ -17,7 +18,7 @@ export function EditorPlaceholderScreen({ navigation, route }: Props) {
   const project = getProject(route.params.projectId);
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <BackButton onPress={() => navigation.goBack()} />
       <View style={styles.body}>
         <Text style={styles.title}>에디터 준비 중</Text>
@@ -31,7 +32,7 @@ export function EditorPlaceholderScreen({ navigation, route }: Props) {
           onPress={() => navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' }] }))}
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

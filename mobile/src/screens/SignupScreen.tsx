@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../state/AuthContext';
@@ -87,7 +88,7 @@ export function SignupScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <BackButton onPress={() => navigation.goBack()} />
       <View style={styles.content}>
         <ScreenTitle>회원가입</ScreenTitle>
@@ -171,7 +172,7 @@ export function SignupScreen({ navigation }: Props) {
         {submitError ? <HelperText error>{submitError}</HelperText> : null}
         <PrimaryButton label="가입하고 시작하기" onPress={handleSubmit} disabled={!canSubmit} loading={loading} />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

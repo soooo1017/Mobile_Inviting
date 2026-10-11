@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal, Pressable, Text, View, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Checkbox } from '../../components/Checkbox';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { color, radius, space } from '../../theme/tokens';
@@ -34,6 +35,7 @@ function formatISODate(d: Date) {
 }
 
 export function DownloadSheet({ visible, project, onClose, onDownloaded }: Props) {
+  const insets = useSafeAreaInsets();
   const [step, setStep] = useState<1 | 2>(1);
   const [items, setItems] = useState<Items>(DEFAULT_ITEMS);
   const [imageFormat, setImageFormat] = useState<ImageFormat>('image');
@@ -80,7 +82,7 @@ export function DownloadSheet({ visible, project, onClose, onDownloaded }: Props
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose} />
-      <View style={styles.sheet}>
+      <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space[9]) }]}>
         <View style={styles.grabber} />
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -245,7 +247,6 @@ const styles = StyleSheet.create({
     backgroundColor: color.bg.sheet,
     borderTopLeftRadius: radius.sheet,
     borderTopRightRadius: radius.sheet,
-    paddingBottom: space[9],
   },
   grabber: {
     alignSelf: 'center',

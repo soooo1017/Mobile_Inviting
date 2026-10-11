@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Alert, Pressable, Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
@@ -51,7 +52,7 @@ export function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <BackButton onPress={() => navigation.goBack()} />
       <View style={styles.content}>
         <ScreenTitle>로그인</ScreenTitle>
@@ -146,7 +147,7 @@ export function LoginScreen({ navigation }: Props) {
           로그인하면 이용약관과 개인정보처리방침에{'\n'}동의한 것으로 봅니다.
         </Text>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 

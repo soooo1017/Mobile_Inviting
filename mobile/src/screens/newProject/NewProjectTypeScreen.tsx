@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { ScrollView, Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { useNewProjectDraft } from '../../state/NewProjectDraftContext';
@@ -33,7 +34,7 @@ export function NewProjectTypeScreen({ navigation }: Props) {
   const canProceed = draft.eventType !== 'other' || draft.customTypeName.trim().length > 0;
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <WizardHeader onBack={() => navigation.goBack()} step={1} stepLabel="행사 유형" />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>어떤 행사인가요?</Text>
@@ -74,7 +75,7 @@ export function NewProjectTypeScreen({ navigation }: Props) {
         <PrimaryButton label="다음" onPress={() => navigation.navigate('NewProjectInfo')} disabled={!canProceed} />
       </View>
       <ExitConfirmGate />
-    </View>
+    </SafeAreaView>
   );
 }
 

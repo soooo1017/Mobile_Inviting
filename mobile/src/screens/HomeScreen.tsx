@@ -1,4 +1,5 @@
 import { Pressable, Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -29,7 +30,7 @@ export function HomeScreen(_props: Props) {
   const status = current ? getProjectStatus(current) : null;
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top']}>
       <View style={styles.header}>
         <Placeholder width={84} height={16} label="앱 이름" />
         <Pressable onPress={notImplemented}>
@@ -90,7 +91,7 @@ export function HomeScreen(_props: Props) {
           <NotificationRow title="아직 비어 있는 블록 2개" subtitle="오시는 길 · 마음 전하기" onPress={notImplemented} />
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

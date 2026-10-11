@@ -1,4 +1,5 @@
 import { Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { useProjects } from '../state/ProjectsContext';
@@ -14,7 +15,7 @@ export function ManagePlaceholderScreen({ navigation, route }: Props) {
   const project = getProject(route.params.projectId);
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <BackButton onPress={() => navigation.goBack()} />
       <View style={styles.body}>
         <Text style={styles.title}>관리 화면 준비 중</Text>
@@ -23,7 +24,7 @@ export function ManagePlaceholderScreen({ navigation, route }: Props) {
           응답 현황·공유·프로젝트 설정(E21)은 다음 핸드오프에서 제공됩니다.
         </Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

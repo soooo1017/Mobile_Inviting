@@ -1,4 +1,5 @@
 import { Modal, Pressable, Text, View, StyleSheet, type ViewStyle } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, radius, space } from '../theme/tokens';
 import { textStyle } from '../theme/typography';
 
@@ -11,10 +12,11 @@ type Props = {
 };
 
 export function BottomSheet({ visible, onClose, title, children, maxHeight }: Props) {
+  const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose} />
-      <View style={[styles.sheet, maxHeight ? { maxHeight } : null]}>
+      <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space[9]) }, maxHeight ? { maxHeight } : null]}>
         <View style={styles.grabber} />
         {title ? (
           <View style={styles.header}>
@@ -43,7 +45,6 @@ const styles = StyleSheet.create({
     backgroundColor: color.bg.sheet,
     borderTopLeftRadius: radius.sheet,
     borderTopRightRadius: radius.sheet,
-    paddingBottom: space[9],
   },
   grabber: {
     alignSelf: 'center',

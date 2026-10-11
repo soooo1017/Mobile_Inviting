@@ -1,4 +1,5 @@
 import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -38,7 +39,7 @@ export function ThemeSelectScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.headerRow}>
         <BackButton onPress={() => navigation.goBack()} />
         <Text style={styles.headerTitle}>테마 선택</Text>
@@ -68,7 +69,7 @@ export function ThemeSelectScreen({ navigation }: Props) {
         <PrimaryButton label="제작 시작하기" onPress={handleStart} />
       </View>
       <ExitConfirmGate />
-    </View>
+    </SafeAreaView>
   );
 }
 
