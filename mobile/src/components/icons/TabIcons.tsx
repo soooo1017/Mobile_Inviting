@@ -27,10 +27,11 @@ export function HomeTabIcon({ size = 23, color, active }: Props) {
   );
 }
 
-export function PlusIcon({ size = 22, color }: { size?: number; color: string }) {
+export function PlusIcon({ size = 23, color }: { size?: number; color: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 5v14M5 12h14" stroke={color} strokeWidth={2.4} strokeLinecap="round" />
+      <Circle cx={12} cy={12} r={9.25} stroke={color} strokeWidth={1.8} />
+      <Path d="M12 8v8M8 12h8" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
     </Svg>
   );
 }

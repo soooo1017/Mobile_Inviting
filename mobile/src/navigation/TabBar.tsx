@@ -5,7 +5,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from './types';
 import { HomeTabIcon, PlusIcon, ProfileTabIcon } from '../components/icons/TabIcons';
-import { color, radius, space } from '../theme/tokens';
+import { color, space } from '../theme/tokens';
 import { textStyle } from '../theme/typography';
 
 const LABEL: Record<string, string> = {
@@ -50,11 +50,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, space[5]) }]}>
       {renderItem(0)}
-      <View style={styles.addSlot}>
-        <Pressable style={styles.addButton} onPress={() => rootNavigation.navigate('NewProjectType')}>
-          <PlusIcon color={color.ink.onPrimary} />
-        </Pressable>
-      </View>
+      <Pressable style={styles.item} onPress={() => rootNavigation.navigate('NewProjectType')}>
+        <PlusIcon color={color.ink.inactive} />
+      </Pressable>
       {renderItem(1)}
     </View>
   );
@@ -90,29 +88,5 @@ const styles = StyleSheet.create({
   },
   labelFocused: {
     fontFamily: 'Pretendard-SemiBold',
-  },
-  addSlot: {
-    width: 68,
-    alignItems: 'center',
-  },
-  addButton: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.circle,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: color.accent.base,
-    transform: [{ translateY: -16 }],
-    ...Platform.select({
-      ios: {
-        shadowColor: color.ink.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.18,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
   },
 });
