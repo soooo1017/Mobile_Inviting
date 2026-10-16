@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useRef, type ReactNode, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
+  View,
   type LayoutChangeEvent,
   type StyleProp,
   type ViewStyle,
@@ -12,9 +14,9 @@ import {
 
 const FOCUS_TOP_MARGIN = 16;
 
-// Field positions come from onLayout on views that sit directly inside the
-// form's first (top-aligned, unpadded) content view, so their y is also their
-// offset inside the scroll content.
+// Field positions come from onLayout, so register views whose parent starts at
+// the very top of the form's content (KeyboardAwareForm's children, or a view
+// that is its first, unpadded child) — then their y is their scroll offset.
 export function useKeyboardAwareForm() {
   const scrollRef = useRef<ScrollView>(null);
   const positions = useRef<Record<string, number>>({});
@@ -62,23 +64,48 @@ export function useKeyboardAwareForm() {
 }
 
 type Props = {
-  scrollRef: RefObject<ScrollView | null>;
+  scrollRef?: RefObject<ScrollView | null>;
   children: ReactNode;
   contentContainerStyle?: StyleProp<ViewStyle>;
+  /** Pinned below the scroll area; rides up with the keyboard instead of hiding behind it. */
+  footer?: ReactNode;
 };
 
-export function KeyboardAwareForm({ scrollRef, children, contentContainerStyle }: Props) {
+export function KeyboardAwareForm({ scrollRef, children, contentContainerStyle, footer }: Props) {
+  // KeyboardAvoidingView works out the keyboard overlap from its own frame,
+  // which is relative to its parent, not the screen. Measuring where the form
+  // actually sits on screen and passing that as the offset keeps the overlap
+  // right even when the form starts below a title or tabs.
+  const containerRef = useRef<View>(null);
+  const [windowTop, setWindowTop] = useState(0);
+  const measure = useCallback(() => {
+    containerRef.current?.measureInWindow((_x, y) => setWindowTop(y));
+  }, []);
+
   return (
-    <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={[styles.grow, contentContainerStyle]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <View ref={containerRef} style={styles.fill} onLayout={measure}>
+      <KeyboardAvoidingView
+        style={styles.fill}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={windowTop}
       >
-        {children}
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.grow}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Taps on anything that isn't itself a control (labels, padding, empty
+              space) land here and close the keyboard; buttons and inputs still
+              get their own taps on the first try thanks to persistTaps="handled". */}
+          <Pressable style={[styles.grow, contentContainerStyle]} onPress={Keyboard.dismiss} accessible={false}>
+            {children}
+          </Pressable>
+        </ScrollView>
+        {footer}
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 

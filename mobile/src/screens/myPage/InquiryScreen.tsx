@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Alert, Pressable, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -9,6 +9,7 @@ import { FieldLabel } from '../../components/FieldLabel';
 import { TextField } from '../../components/TextField';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { BottomSheet } from '../../components/BottomSheet';
+import { KeyboardAwareForm, useKeyboardAwareForm } from '../../components/KeyboardAwareForm';
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 
@@ -20,6 +21,7 @@ const TOPICS = ['이용 방법 문의', '오류·버그 신고', '디자인·테
 
 export function InquiryScreen({ route, navigation }: Props) {
   const [tab, setTab] = useState<Tab>(route.params?.tab ?? 'form');
+  const { scrollRef, fieldLayout, onFieldFocus } = useKeyboardAwareForm();
   const [topic, setTopic] = useState<string | null>(null);
   const [topicSheetOpen, setTopicSheetOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -51,7 +53,7 @@ export function InquiryScreen({ route, navigation }: Props) {
         </View>
 
         {tab === 'form' ? (
-          <ScrollView contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
+          <KeyboardAwareForm scrollRef={scrollRef} contentContainerStyle={styles.formScroll}>
             <View style={styles.field}>
               <FieldLabel>주제</FieldLabel>
               <Pressable onPress={() => setTopicSheetOpen(true)} style={styles.topicField}>
@@ -62,16 +64,22 @@ export function InquiryScreen({ route, navigation }: Props) {
               </Pressable>
             </View>
 
-            <View style={styles.field}>
+            <View style={styles.field} onLayout={fieldLayout('title')}>
               <FieldLabel>제목</FieldLabel>
-              <TextField value={title} onChangeText={setTitle} placeholder="제목을 입력해주세요" />
+              <TextField
+                value={title}
+                onChangeText={setTitle}
+                onFocus={() => onFieldFocus('title')}
+                placeholder="제목을 입력해주세요"
+              />
             </View>
 
-            <View style={styles.field}>
+            <View style={styles.field} onLayout={fieldLayout('content')}>
               <FieldLabel>문의 내용</FieldLabel>
               <TextField
                 value={content}
                 onChangeText={setContent}
+                onFocus={() => onFieldFocus('content')}
                 placeholder="문의하실 내용을 자세히 적어주세요"
                 multiline
                 style={styles.contentInput}
@@ -85,7 +93,7 @@ export function InquiryScreen({ route, navigation }: Props) {
             <View style={styles.buttonWrap}>
               <PrimaryButton label="문의 보내기" onPress={handleSubmit} disabled={!canSubmit} />
             </View>
-          </ScrollView>
+          </KeyboardAwareForm>
         ) : (
           <View style={styles.emptyWrap}>
             <Text style={styles.emptyTitle}>아직 문의 내역이 없어요</Text>

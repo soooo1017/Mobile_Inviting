@@ -11,6 +11,7 @@ import { TextField } from '../../components/TextField';
 import { TextLink } from '../../components/TextLink';
 import { HelperText } from '../../components/HelperText';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { KeyboardAwareForm, useKeyboardAwareForm } from '../../components/KeyboardAwareForm';
 import { color, space } from '../../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PasswordChange'>;
@@ -19,6 +20,7 @@ const MIN_LENGTH = 8;
 
 export function PasswordChangeScreen({ navigation }: Props) {
   const { changePassword } = useAuth();
+  const { scrollRef, fieldLayout, onFieldFocus } = useKeyboardAwareForm();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -53,70 +55,75 @@ export function PasswordChangeScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <BackButton onPress={() => navigation.goBack()} />
-      <View style={styles.content}>
-        <ScreenTitle>비밀번호 변경</ScreenTitle>
+      <KeyboardAwareForm scrollRef={scrollRef}>
+        <View style={styles.content}>
+          <ScreenTitle>비밀번호 변경</ScreenTitle>
 
-        <View style={styles.fields}>
-          <View>
-            <FieldLabel>현재 비밀번호</FieldLabel>
-            <TextField
-              value={currentPassword}
-              onChangeText={(v) => {
-                setCurrentPassword(v);
-                setCurrentError(false);
-              }}
-              placeholder="현재 비밀번호를 입력해주세요"
-              secureTextEntry={!showPasswords}
-              autoCapitalize="none"
-              autoCorrect={false}
-              error={currentError}
-              rightElement={
-                <TextLink size="small" color={color.ink.secondary} onPress={() => setShowPasswords((v) => !v)}>
-                  보기
-                </TextLink>
-              }
-            />
-            {currentError ? <HelperText error>현재 비밀번호가 맞지 않아요.</HelperText> : null}
+          <View style={styles.fields} onLayout={fieldLayout('fields')}>
+            <View>
+              <FieldLabel>현재 비밀번호</FieldLabel>
+              <TextField
+                value={currentPassword}
+                onChangeText={(v) => {
+                  setCurrentPassword(v);
+                  setCurrentError(false);
+                }}
+                placeholder="현재 비밀번호를 입력해주세요"
+                onFocus={() => onFieldFocus('fields')}
+                secureTextEntry={!showPasswords}
+                autoCapitalize="none"
+                autoCorrect={false}
+                error={currentError}
+                rightElement={
+                  <TextLink size="small" color={color.ink.secondary} onPress={() => setShowPasswords((v) => !v)}>
+                    보기
+                  </TextLink>
+                }
+              />
+              {currentError ? <HelperText error>현재 비밀번호가 맞지 않아요.</HelperText> : null}
+            </View>
+
+            <View>
+              <FieldLabel>새 비밀번호</FieldLabel>
+              <TextField
+                value={newPassword}
+                onChangeText={(v) => {
+                  setNewPassword(v);
+                  setMatchError(false);
+                }}
+                placeholder="8자 이상 입력해주세요"
+                onFocus={() => onFieldFocus('fields')}
+                secureTextEntry={!showPasswords}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <HelperText>영문, 숫자를 포함해 8자 이상으로 설정해주세요.</HelperText>
+            </View>
+
+            <View>
+              <FieldLabel>새 비밀번호 확인</FieldLabel>
+              <TextField
+                value={confirmPassword}
+                onChangeText={(v) => {
+                  setConfirmPassword(v);
+                  setMatchError(false);
+                }}
+                placeholder="새 비밀번호를 다시 입력해주세요"
+                onFocus={() => onFieldFocus('fields')}
+                secureTextEntry={!showPasswords}
+                autoCapitalize="none"
+                autoCorrect={false}
+                error={matchError}
+              />
+              {matchError ? <HelperText error>새 비밀번호가 서로 달라요.</HelperText> : null}
+            </View>
           </View>
 
-          <View>
-            <FieldLabel>새 비밀번호</FieldLabel>
-            <TextField
-              value={newPassword}
-              onChangeText={(v) => {
-                setNewPassword(v);
-                setMatchError(false);
-              }}
-              placeholder="8자 이상 입력해주세요"
-              secureTextEntry={!showPasswords}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            <HelperText>영문, 숫자를 포함해 8자 이상으로 설정해주세요.</HelperText>
-          </View>
-
-          <View>
-            <FieldLabel>새 비밀번호 확인</FieldLabel>
-            <TextField
-              value={confirmPassword}
-              onChangeText={(v) => {
-                setConfirmPassword(v);
-                setMatchError(false);
-              }}
-              placeholder="새 비밀번호를 다시 입력해주세요"
-              secureTextEntry={!showPasswords}
-              autoCapitalize="none"
-              autoCorrect={false}
-              error={matchError}
-            />
-            {matchError ? <HelperText error>새 비밀번호가 서로 달라요.</HelperText> : null}
+          <View style={styles.buttonWrap}>
+            <PrimaryButton label="변경하기" onPress={handleSave} loading={loading} disabled={!canSubmit} />
           </View>
         </View>
-
-        <View style={styles.buttonWrap}>
-          <PrimaryButton label="변경하기" onPress={handleSave} loading={loading} disabled={!canSubmit} />
-        </View>
-      </View>
+      </KeyboardAwareForm>
     </SafeAreaView>
   );
 }

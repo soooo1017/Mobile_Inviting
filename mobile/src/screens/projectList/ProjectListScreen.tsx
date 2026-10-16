@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View, StyleSheet } from 'react-native';
+import { Keyboard, Platform, Pressable, ScrollView, Text, TextInput, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { useNavigation } from '@react-navigation/native';
@@ -102,84 +102,92 @@ export function ProjectListScreen(_props: Props) {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>내 초대장</Text>
-        </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+      >
+        {/* Same as KeyboardAwareForm: a tap on empty space closes the search keyboard. */}
+        <Pressable style={styles.dismissArea} onPress={Keyboard.dismiss} accessible={false}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>내 초대장</Text>
+          </View>
 
-        <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>⌕</Text>
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="프로젝트명 검색"
-            placeholderTextColor={color.ink.placeholder}
-            style={styles.searchInput}
-          />
-          {query.length > 0 ? (
-            <Pressable onPress={() => setQuery('')} hitSlop={8}>
-              <Text style={styles.searchClear}>✕</Text>
-            </Pressable>
-          ) : null}
-        </View>
+          <View style={styles.searchBar}>
+            <Text style={styles.searchIcon}>⌕</Text>
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="프로젝트명 검색"
+              placeholderTextColor={color.ink.placeholder}
+              returnKeyType="search"
+              style={styles.searchInput}
+            />
+            {query.length > 0 ? (
+              <Pressable onPress={() => setQuery('')} hitSlop={8}>
+                <Text style={styles.searchClear}>✕</Text>
+              </Pressable>
+            ) : null}
+          </View>
 
-        <View style={styles.countRow}>
-          <Text style={styles.countText}>
-            {query ? `'${query}' 검색 결과 ${sorted.length}개` : `초대장 ${sorted.length}개`}
-          </Text>
-          <Pressable style={styles.newButton} onPress={() => navigation.navigate('NewProjectType')}>
-            <Text style={styles.newButtonLabel}>+ 새 초대장 만들기</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.toolbar}>
-          <View style={styles.toolbarLeft}>
-            <Pressable
-              style={[styles.filterButton, activeFilterCount > 0 && styles.filterButtonActive]}
-              onPress={() => setFilterSheetOpen(true)}
-            >
-              <Text style={[styles.filterLabel, activeFilterCount > 0 && styles.filterLabelActive]}>필터</Text>
-              {activeFilterCount > 0 ? (
-                <View style={styles.filterBadge}>
-                  <Text style={styles.filterBadgeLabel}>{activeFilterCount}</Text>
-                </View>
-              ) : null}
-            </Pressable>
-            <Pressable style={styles.sortButton} onPress={() => setSortSheetOpen(true)}>
-              <Text style={styles.sortLabel}>{sortLabel} ▾</Text>
+          <View style={styles.countRow}>
+            <Text style={styles.countText}>
+              {query ? `'${query}' 검색 결과 ${sorted.length}개` : `초대장 ${sorted.length}개`}
+            </Text>
+            <Pressable style={styles.newButton} onPress={() => navigation.navigate('NewProjectType')}>
+              <Text style={styles.newButtonLabel}>+ 새 초대장 만들기</Text>
             </Pressable>
           </View>
-          <ViewToggle value={view} onChange={setView} />
-        </View>
 
-        {activeFilterCount > 0 ? (
-          <View style={styles.activeFilterRow}>
-            {filters.status !== 'all' &&
-              filters.status.map((s) => (
-                <RemovableChip key={s} label={STATUS_LABEL[s]} onRemove={removeStatusFilter} />
+          <View style={styles.toolbar}>
+            <View style={styles.toolbarLeft}>
+              <Pressable
+                style={[styles.filterButton, activeFilterCount > 0 && styles.filterButtonActive]}
+                onPress={() => setFilterSheetOpen(true)}
+              >
+                <Text style={[styles.filterLabel, activeFilterCount > 0 && styles.filterLabelActive]}>필터</Text>
+                {activeFilterCount > 0 ? (
+                  <View style={styles.filterBadge}>
+                    <Text style={styles.filterBadgeLabel}>{activeFilterCount}</Text>
+                  </View>
+                ) : null}
+              </Pressable>
+              <Pressable style={styles.sortButton} onPress={() => setSortSheetOpen(true)}>
+                <Text style={styles.sortLabel}>{sortLabel} ▾</Text>
+              </Pressable>
+            </View>
+            <ViewToggle value={view} onChange={setView} />
+          </View>
+
+          {activeFilterCount > 0 ? (
+            <View style={styles.activeFilterRow}>
+              {filters.status !== 'all' &&
+                filters.status.map((s) => (
+                  <RemovableChip key={s} label={STATUS_LABEL[s]} onRemove={removeStatusFilter} />
+                ))}
+              {filters.months.map((m) => (
+                <RemovableChip key={m} label={`${Number(m.split('-')[1])}월`} onRemove={() => removeMonthFilter(m)} />
               ))}
-            {filters.months.map((m) => (
-              <RemovableChip key={m} label={`${Number(m.split('-')[1])}월`} onRemove={() => removeMonthFilter(m)} />
-            ))}
-            {filters.types.map((t) => (
-              <RemovableChip key={t} label={eventTypeMeta(t).label} onRemove={() => removeTypeFilter(t)} />
-            ))}
-            {filters.sido.map((s) => (
-              <RemovableChip key={s} label={s} onRemove={() => removeSidoFilter(s)} />
-            ))}
-            <Pressable onPress={() => setFilters(EMPTY_FILTERS)}>
-              <Text style={styles.resetLink}>초기화</Text>
-            </Pressable>
-          </View>
-        ) : null}
+              {filters.types.map((t) => (
+                <RemovableChip key={t} label={eventTypeMeta(t).label} onRemove={() => removeTypeFilter(t)} />
+              ))}
+              {filters.sido.map((s) => (
+                <RemovableChip key={s} label={s} onRemove={() => removeSidoFilter(s)} />
+              ))}
+              <Pressable onPress={() => setFilters(EMPTY_FILTERS)}>
+                <Text style={styles.resetLink}>초기화</Text>
+              </Pressable>
+            </View>
+          ) : null}
 
-        {projects.length === 0 ? (
-          <EmptyState />
-        ) : sorted.length === 0 ? (
-          <NoResultState onReset={() => { setFilters(EMPTY_FILTERS); setQuery(''); }} />
-        ) : (
-          <ListBody view={view} projects={sorted} onPressItem={(p) => setActionProjectId(p.id)} />
-        )}
+          {projects.length === 0 ? (
+            <EmptyState />
+          ) : sorted.length === 0 ? (
+            <NoResultState onReset={() => { setFilters(EMPTY_FILTERS); setQuery(''); }} />
+          ) : (
+            <ListBody view={view} projects={sorted} onPressItem={(p) => setActionProjectId(p.id)} />
+          )}
+        </Pressable>
       </ScrollView>
 
       <FilterSheet
@@ -319,7 +327,11 @@ const styles = StyleSheet.create({
     backgroundColor: color.bg.canvas,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingBottom: space[10],
+  },
+  dismissArea: {
+    flexGrow: 1,
   },
   header: {
     paddingTop: 16,

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -11,6 +11,7 @@ import { FieldLabel } from '../../components/FieldLabel';
 import { TextField } from '../../components/TextField';
 import { HelperText } from '../../components/HelperText';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { KeyboardAwareForm, useKeyboardAwareForm } from '../../components/KeyboardAwareForm';
 import { color, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { EVENT_TYPES, eventTypeMeta } from '../../types/project';
@@ -20,6 +21,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'NewProjectType'>;
 
 export function NewProjectTypeScreen({ navigation }: Props) {
   const { draft, update, reset } = useNewProjectDraft();
+  const { scrollRef, fieldLayout, onFieldFocus } = useKeyboardAwareForm();
 
   // 마법사의 시작점이라, 처음 들어올 때든 2~4단계에서 뒤로가기로 돌아올 때든
   // 이 화면이 포커스될 때마다 이전 작성 내용을 전부 비운다.
@@ -40,7 +42,15 @@ export function NewProjectTypeScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <WizardHeader onBack={() => navigation.goBack()} step={1} stepLabel="행사 유형" />
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardAwareForm
+        scrollRef={scrollRef}
+        contentContainerStyle={styles.content}
+        footer={
+          <View style={styles.footer}>
+            <PrimaryButton label="다음" onPress={() => navigation.navigate('NewProjectInfo')} disabled={!canProceed} />
+          </View>
+        }
+      >
         <Text style={styles.title}>어떤 행사인가요?</Text>
         <Text style={styles.desc}>
           유형에 따라 입력 칸 이름만 바뀌어요.{'\n'}블록과 문구는 모두 자유롭게 고칠 수 있어요.
@@ -63,21 +73,19 @@ export function NewProjectTypeScreen({ navigation }: Props) {
         </View>
 
         {draft.eventType === 'other' ? (
-          <View style={styles.customField}>
+          <View style={styles.customField} onLayout={fieldLayout('custom')}>
             <FieldLabel>행사 이름</FieldLabel>
             <TextField
               value={draft.customTypeName}
               onChangeText={(v) => update({ customTypeName: v })}
+              onFocus={() => onFieldFocus('custom')}
               placeholder="예: 송년회"
               autoFocus
             />
             <HelperText>프로젝트 목록에 표시돼요.</HelperText>
           </View>
         ) : null}
-      </ScrollView>
-      <View style={styles.footer}>
-        <PrimaryButton label="다음" onPress={() => navigation.navigate('NewProjectInfo')} disabled={!canProceed} />
-      </View>
+      </KeyboardAwareForm>
       <ExitConfirmGate />
     </SafeAreaView>
   );

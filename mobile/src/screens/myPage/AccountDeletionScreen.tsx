@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Pressable, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -12,6 +12,7 @@ import { TextField } from '../../components/TextField';
 import { HelperText } from '../../components/HelperText';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { KeyboardAwareForm, useKeyboardAwareForm } from '../../components/KeyboardAwareForm';
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 
@@ -28,6 +29,7 @@ const REASONS = [
 
 export function AccountDeletionScreen({ navigation }: Props) {
   const { deleteAccount } = useAuth();
+  const { scrollRef, fieldLayout, onFieldFocus } = useKeyboardAwareForm();
   const [reason, setReason] = useState<string | null>(null);
   const [detail, setDetail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,7 +58,7 @@ export function AccountDeletionScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <BackButton onPress={() => navigation.goBack()} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <KeyboardAwareForm scrollRef={scrollRef} contentContainerStyle={styles.content}>
         <ScreenTitle>회원 탈퇴</ScreenTitle>
         <Text style={styles.notice}>
           탈퇴하면 모든 초대장과 응답 데이터가 삭제되며{'\n'}복구할 수 없어요.
@@ -81,10 +83,11 @@ export function AccountDeletionScreen({ navigation }: Props) {
         </View>
 
         {detailRequired ? (
-          <View style={styles.field}>
+          <View style={styles.field} onLayout={fieldLayout('detail')}>
             <TextField
               value={detail}
               onChangeText={setDetail}
+              onFocus={() => onFieldFocus('detail')}
               placeholder="어떤 이유인지 알려주세요"
               multiline
               style={styles.detailInput}
@@ -92,7 +95,7 @@ export function AccountDeletionScreen({ navigation }: Props) {
           </View>
         ) : null}
 
-        <View style={styles.field}>
+        <View style={styles.field} onLayout={fieldLayout('password')}>
           <FieldLabel>비밀번호 확인</FieldLabel>
           <TextField
             value={password}
@@ -101,6 +104,7 @@ export function AccountDeletionScreen({ navigation }: Props) {
               setPasswordError(false);
             }}
             placeholder="비밀번호를 입력해주세요"
+            onFocus={() => onFieldFocus('password')}
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
@@ -112,7 +116,7 @@ export function AccountDeletionScreen({ navigation }: Props) {
         <View style={styles.buttonWrap}>
           <PrimaryButton label="탈퇴하기" onPress={() => setConfirmVisible(true)} disabled={!canSubmit} />
         </View>
-      </ScrollView>
+      </KeyboardAwareForm>
 
       <ConfirmDialog
         visible={confirmVisible}

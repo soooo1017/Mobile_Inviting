@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Pressable, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -11,6 +11,7 @@ import { TextField } from '../../components/TextField';
 import { HelperText } from '../../components/HelperText';
 import { SelectChip } from '../../components/SelectChip';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { KeyboardAwareForm, useKeyboardAwareForm } from '../../components/KeyboardAwareForm';
 import { color, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { eventTypeMeta, SIDO_LIST, type MapLink } from '../../types/project';
@@ -20,6 +21,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'NewProjectInfo'>;
 
 export function NewProjectInfoScreen({ navigation }: Props) {
   const { draft, update } = useNewProjectDraft();
+  const { scrollRef, fieldLayout, onFieldFocus } = useKeyboardAwareForm();
   const [showDate, setShowDate] = useState(false);
   const [showTime, setShowTime] = useState(false);
   const [venueText, setVenueText] = useState(draft.venue?.name ?? '');
@@ -56,13 +58,26 @@ export function NewProjectInfoScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <WizardHeader onBack={() => navigation.goBack()} step={2} stepLabel={`기본 정보 · ${typeLabel}`} />
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardAwareForm
+        scrollRef={scrollRef}
+        contentContainerStyle={styles.content}
+        footer={
+          <View style={styles.footer}>
+            <PrimaryButton label="다음" onPress={() => navigation.navigate('NewProjectThanks')} disabled={!canProceed} />
+          </View>
+        }
+      >
         <FieldLabel>주인공</FieldLabel>
-        <View style={styles.hostRow}>
+        <View style={styles.hostRow} onLayout={fieldLayout('hosts')}>
           {draft.hosts.map((h, i) => (
             <View key={h.label} style={styles.hostField}>
               <Text style={styles.hostLabel}>{h.label}</Text>
-              <TextField value={h.name} onChangeText={(v) => setHostName(i, v)} placeholder={h.label} />
+              <TextField
+                value={h.name}
+                onChangeText={(v) => setHostName(i, v)}
+                onFocus={() => onFieldFocus('hosts')}
+                placeholder={h.label}
+              />
             </View>
           ))}
         </View>
@@ -108,9 +123,14 @@ export function NewProjectInfoScreen({ navigation }: Props) {
           ) : null}
         </View>
 
-        <View style={styles.section}>
+        <View style={styles.section} onLayout={fieldLayout('venue')}>
           <FieldLabel>행사 장소</FieldLabel>
-          <TextField value={venueText} onChangeText={setVenueField} placeholder="장소명 또는 주소 검색" />
+          <TextField
+            value={venueText}
+            onChangeText={setVenueField}
+            onFocus={() => onFieldFocus('venue')}
+            placeholder="장소명 또는 주소 검색"
+          />
           {venueText ? (
             <View style={styles.sidoRow}>
               {SIDO_LIST.map((s) => (
@@ -131,10 +151,7 @@ export function NewProjectInfoScreen({ navigation }: Props) {
           </View>
           <HelperText>{'선택하지 않으면 장소 이름과 주소만 표시돼요.\n나중에 입력해도 괜찮아요.'}</HelperText>
         </View>
-      </ScrollView>
-      <View style={styles.footer}>
-        <PrimaryButton label="다음" onPress={() => navigation.navigate('NewProjectThanks')} disabled={!canProceed} />
-      </View>
+      </KeyboardAwareForm>
     </SafeAreaView>
   );
 }

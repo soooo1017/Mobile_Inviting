@@ -8,6 +8,8 @@ import { BackButton } from '../components/BackButton';
 import { ScreenTitle } from '../components/ScreenTitle';
 import { TextField } from '../components/TextField';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { KeyboardAwareForm } from '../components/KeyboardAwareForm';
+import { EmailDomainChips } from '../components/EmailDomainChips';
 import { color, space } from '../theme/tokens';
 import { textStyle } from '../theme/typography';
 
@@ -29,19 +31,29 @@ export function ResetRequestScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <BackButton onPress={() => navigation.goBack()} />
-      <View style={styles.content}>
-        <ScreenTitle>비밀번호 찾기</ScreenTitle>
-        <Text style={styles.description}>가입한 이메일로 재설정 링크를 보내드려요.</Text>
+      <KeyboardAwareForm contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <ScreenTitle>비밀번호 찾기</ScreenTitle>
+          <Text style={styles.description}>가입한 이메일로 재설정 링크를 보내드려요.</Text>
 
-        <View style={styles.field}>
-          <TextField placeholder="이메일" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+          <View style={styles.field}>
+            <TextField
+              placeholder="이메일"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+            />
+            <EmailDomainChips email={email} onSelect={setEmail} />
+          </View>
+          <PrimaryButton label="재설정 링크 보내기" onPress={handleSend} loading={loading} disabled={!email} />
         </View>
-        <PrimaryButton label="재설정 링크 보내기" onPress={handleSend} loading={loading} disabled={!email} />
-      </View>
 
-      <Text style={styles.notice}>
-        카카오·Apple로 가입한 계정은{'\n'}해당 서비스에서 비밀번호를 관리합니다.
-      </Text>
+        <Text style={styles.notice}>
+          카카오·Apple로 가입한 계정은{'\n'}해당 서비스에서 비밀번호를 관리합니다.
+        </Text>
+      </KeyboardAwareForm>
     </SafeAreaView>
   );
 }
@@ -50,6 +62,8 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: color.bg.canvas,
+  },
+  scrollContent: {
     justifyContent: 'space-between',
   },
   content: {

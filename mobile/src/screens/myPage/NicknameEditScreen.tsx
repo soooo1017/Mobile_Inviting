@@ -10,6 +10,7 @@ import { FieldLabel } from '../../components/FieldLabel';
 import { TextField } from '../../components/TextField';
 import { HelperText } from '../../components/HelperText';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { KeyboardAwareForm } from '../../components/KeyboardAwareForm';
 import { color, space } from '../../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NicknameEdit'>;
@@ -38,33 +39,35 @@ export function NicknameEditScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <BackButton onPress={() => navigation.goBack()} />
-      <View style={styles.content}>
-        <ScreenTitle>닉네임 변경</ScreenTitle>
+      <KeyboardAwareForm>
+        <View style={styles.content}>
+          <ScreenTitle>닉네임 변경</ScreenTitle>
 
-        <View style={styles.field}>
-          <FieldLabel>닉네임</FieldLabel>
-          <TextField
-            value={nickname}
-            onChangeText={(v) => {
-              setNickname(v);
-              setError(false);
-            }}
-            placeholder="닉네임을 입력해주세요"
-            maxLength={20}
-            error={error}
-          />
-          {error ? <HelperText error>닉네임을 변경하지 못했어요. 다시 시도해주세요.</HelperText> : null}
-        </View>
+          <View style={styles.field}>
+            <FieldLabel>닉네임</FieldLabel>
+            <TextField
+              value={nickname}
+              onChangeText={(v) => {
+                setNickname(v);
+                setError(false);
+              }}
+              placeholder="닉네임을 입력해주세요"
+              maxLength={20}
+              error={error}
+            />
+            {error ? <HelperText error>닉네임을 변경하지 못했어요. 다시 시도해주세요.</HelperText> : null}
+          </View>
 
-        <View style={styles.buttonWrap}>
-          <PrimaryButton
-            label="저장하기"
-            onPress={handleSave}
-            loading={loading}
-            disabled={!trimmed || unchanged}
-          />
+          <View style={styles.buttonWrap}>
+            <PrimaryButton
+              label="저장하기"
+              onPress={handleSave}
+              loading={loading}
+              disabled={!trimmed || unchanged}
+            />
+          </View>
         </View>
-      </View>
+      </KeyboardAwareForm>
     </SafeAreaView>
   );
 }
