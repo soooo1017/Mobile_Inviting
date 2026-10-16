@@ -41,7 +41,8 @@ type AuthContextValue = {
     password: string,
   ) => Promise<{ ok: true } | { ok: false; error: SignupError }>;
   /** For live "이미 사용 중인 아이디예요" validation while typing, before submitting. */
-  isUsernameAvailable: (username: string) => Promise<boolean>;
+  /** `null` means the check itself failed (network, paused project, missing function) — not that the name is taken. */
+  isUsernameAvailable: (username: string) => Promise<boolean | null>;
   /** Emails a reset link to a page that completes the reset in-browser. Always resolves ok (never reveals whether the email exists). */
   requestPasswordReset: (email: string) => Promise<{ ok: true }>;
   updateNickname: (nickname: string) => Promise<{ ok: true } | { ok: false; error: 'unknown' }>;
@@ -113,7 +114,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async isUsernameAvailable(username) {
         if (!username) return false;
         const { data, error } = await supabase.rpc('is_username_available', { p_username: username });
-        if (error) return false;
+        if (error) {
+          console.warn('is_username_available failed:', error.message);
+          return null;
+        }
         return Boolean(data);
       },
       async signup(username, nickname, email, password) {

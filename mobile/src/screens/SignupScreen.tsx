@@ -28,6 +28,7 @@ export function SignupScreen({ navigation }: Props) {
   const { signup, isUsernameAvailable } = useAuth();
   const [username, setUsername] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [usernameCheckFailed, setUsernameCheckFailed] = useState(false);
   const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -54,7 +55,9 @@ export function SignupScreen({ navigation }: Props) {
     let cancelled = false;
     const timer = setTimeout(async () => {
       const available = await isUsernameAvailable(username);
-      if (!cancelled) setUsernameAvailable(available);
+      if (cancelled) return;
+      setUsernameCheckFailed(available === null);
+      setUsernameAvailable(available);
     }, USERNAME_CHECK_DEBOUNCE_MS);
     return () => {
       cancelled = true;
@@ -113,12 +116,15 @@ export function SignupScreen({ navigation }: Props) {
             onChangeText={(v) => {
               setUsername(v);
               setUsernameAvailable(null);
+              setUsernameCheckFailed(false);
             }}
             autoCapitalize="none"
-            error={usernameFormatValid && usernameAvailable === false}
+            error={usernameFormatValid && (usernameAvailable === false || usernameCheckFailed)}
           />
           {!usernameFormatValid && username.length > 0 ? (
             <HelperText error>영문, 숫자, _만 사용해 4~20자로 입력해주세요</HelperText>
+          ) : usernameCheckFailed ? (
+            <HelperText error>아이디 중복을 확인하지 못했어요. 인터넷 연결을 확인하고 다시 입력해주세요</HelperText>
           ) : usernameAvailable === false ? (
             <HelperText error>이미 사용 중인 아이디예요</HelperText>
           ) : usernameAvailable === true ? (
