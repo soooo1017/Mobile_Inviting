@@ -12,6 +12,8 @@ import { HelperText } from '../components/HelperText';
 import { Checkbox } from '../components/Checkbox';
 import { TextLink } from '../components/TextLink';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { KeyboardAwareForm, useKeyboardAwareForm } from '../components/KeyboardAwareForm';
+import { EmailDomainChips } from '../components/EmailDomainChips';
 import { color, space } from '../theme/tokens';
 import { textStyle } from '../theme/typography';
 
@@ -26,6 +28,7 @@ const USERNAME_CHECK_DEBOUNCE_MS = 400;
 
 export function SignupScreen({ navigation }: Props) {
   const { signup, isUsernameAvailable } = useAuth();
+  const { scrollRef, fieldLayout, onFieldFocus } = useKeyboardAwareForm();
   const [username, setUsername] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [usernameCheckFailed, setUsernameCheckFailed] = useState(false);
@@ -105,106 +108,119 @@ export function SignupScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <BackButton onPress={() => navigation.goBack()} />
-      <View style={styles.content}>
-        <ScreenTitle>회원가입</ScreenTitle>
+      <KeyboardAwareForm scrollRef={scrollRef} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <ScreenTitle>회원가입</ScreenTitle>
 
-        <View style={styles.field}>
-          <FieldLabel>아이디</FieldLabel>
-          <TextField
-            placeholder="영문·숫자·_ 4~20자"
-            value={username}
-            onChangeText={(v) => {
-              setUsername(v);
-              setUsernameAvailable(null);
-              setUsernameCheckFailed(false);
-            }}
-            autoCapitalize="none"
-            error={usernameFormatValid && (usernameAvailable === false || usernameCheckFailed)}
-          />
-          {!usernameFormatValid && username.length > 0 ? (
-            <HelperText error>영문, 숫자, _만 사용해 4~20자로 입력해주세요</HelperText>
-          ) : usernameCheckFailed ? (
-            <HelperText error>아이디 중복을 확인하지 못했어요. 인터넷 연결을 확인하고 다시 입력해주세요</HelperText>
-          ) : usernameAvailable === false ? (
-            <HelperText error>이미 사용 중인 아이디예요</HelperText>
-          ) : usernameAvailable === true ? (
-            <HelperText>사용할 수 있는 아이디예요</HelperText>
-          ) : (
-            <HelperText>로그인할 때 이 아이디를 사용해요</HelperText>
-          )}
-        </View>
-
-        <View style={styles.field}>
-          <FieldLabel>닉네임</FieldLabel>
-          <TextField placeholder="2~12자로 입력해주세요" value={nickname} onChangeText={setNickname} />
-          <HelperText>다른 사람에게 보여지는 이름이에요</HelperText>
-        </View>
-
-        <View style={styles.field}>
-          <FieldLabel>이메일</FieldLabel>
-          <TextField
-            placeholder="jiwon@example.com"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-          />
-          <HelperText>가입 확인 메일을 받을 주소예요</HelperText>
-        </View>
-
-        <View style={styles.field}>
-          <FieldLabel>비밀번호</FieldLabel>
-          <TextField
-            placeholder="비밀번호"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          <HelperText>영문·숫자 포함 8자 이상</HelperText>
-        </View>
-
-        <View style={styles.field}>
-          <FieldLabel>비밀번호 확인</FieldLabel>
-          <TextField
-            placeholder="비밀번호 확인"
-            value={confirm}
-            onChangeText={setConfirm}
-            onBlur={() => setConfirmTouched(true)}
-            secureTextEntry
-            autoCapitalize="none"
-            autoCorrect={false}
-            error={confirmMismatch}
-          />
-          {confirmMismatch ? <HelperText error>비밀번호가 일치하지 않아요</HelperText> : null}
-        </View>
-
-        <View style={styles.agreeSection}>
-          <View style={styles.agreeAllRow}>
-            <Checkbox checked={agreeAll} onPress={toggleAll} />
-            <Text style={styles.agreeAllLabel}>약관 전체 동의</Text>
+          <View style={styles.field} onLayout={fieldLayout('username')}>
+            <FieldLabel>아이디</FieldLabel>
+            <TextField
+              placeholder="영문·숫자·_ 4~20자"
+              value={username}
+              onFocus={() => onFieldFocus('username')}
+              onChangeText={(v) => {
+                setUsername(v);
+                setUsernameAvailable(null);
+                setUsernameCheckFailed(false);
+              }}
+              autoCapitalize="none"
+              error={usernameFormatValid && (usernameAvailable === false || usernameCheckFailed)}
+            />
+            {!usernameFormatValid && username.length > 0 ? (
+              <HelperText error>영문, 숫자, _만 사용해 4~20자로 입력해주세요</HelperText>
+            ) : usernameCheckFailed ? (
+              <HelperText error>아이디 중복을 확인하지 못했어요. 인터넷 연결을 확인하고 다시 입력해주세요</HelperText>
+            ) : usernameAvailable === false ? (
+              <HelperText error>이미 사용 중인 아이디예요</HelperText>
+            ) : usernameAvailable === true ? (
+              <HelperText>사용할 수 있는 아이디예요</HelperText>
+            ) : (
+              <HelperText>로그인할 때 이 아이디를 사용해요</HelperText>
+            )}
           </View>
-          <View style={styles.agreeDivider} />
 
-          <AgreementRow label="(필수) 이용약관" checked={agreeTerms} onToggle={() => setAgreeTerms((v) => !v)} />
-          <AgreementRow
-            label="(필수) 개인정보 수집·이용"
-            checked={agreePrivacy}
-            onToggle={() => setAgreePrivacy((v) => !v)}
-          />
-          <AgreementRow
-            label="(선택) 마케팅 정보 수신"
-            checked={agreeMarketing}
-            onToggle={() => setAgreeMarketing((v) => !v)}
-          />
+          <View style={styles.field} onLayout={fieldLayout('nickname')}>
+            <FieldLabel>닉네임</FieldLabel>
+            <TextField
+              placeholder="2~12자로 입력해주세요"
+              value={nickname}
+              onChangeText={setNickname}
+              onFocus={() => onFieldFocus('nickname')}
+            />
+            <HelperText>다른 사람에게 보여지는 이름이에요</HelperText>
+          </View>
+
+          <View style={styles.field} onLayout={fieldLayout('email')}>
+            <FieldLabel>이메일</FieldLabel>
+            <TextField
+              placeholder="jiwon@example.com"
+              value={email}
+              onChangeText={setEmail}
+              onFocus={() => onFieldFocus('email')}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+            />
+            <EmailDomainChips email={email} onSelect={setEmail} />
+            <HelperText>가입 확인 메일을 받을 주소예요</HelperText>
+          </View>
+
+          <View style={styles.field} onLayout={fieldLayout('password')}>
+            <FieldLabel>비밀번호</FieldLabel>
+            <TextField
+              placeholder="비밀번호"
+              value={password}
+              onChangeText={setPassword}
+              onFocus={() => onFieldFocus('password')}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <HelperText>영문·숫자 포함 8자 이상</HelperText>
+          </View>
+
+          <View style={styles.field} onLayout={fieldLayout('confirm')}>
+            <FieldLabel>비밀번호 확인</FieldLabel>
+            <TextField
+              placeholder="비밀번호 확인"
+              value={confirm}
+              onChangeText={setConfirm}
+              onFocus={() => onFieldFocus('confirm')}
+              onBlur={() => setConfirmTouched(true)}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              error={confirmMismatch}
+            />
+            {confirmMismatch ? <HelperText error>비밀번호가 일치하지 않아요</HelperText> : null}
+          </View>
+
+          <View style={styles.agreeSection}>
+            <View style={styles.agreeAllRow}>
+              <Checkbox checked={agreeAll} onPress={toggleAll} />
+              <Text style={styles.agreeAllLabel}>약관 전체 동의</Text>
+            </View>
+            <View style={styles.agreeDivider} />
+
+            <AgreementRow label="(필수) 이용약관" checked={agreeTerms} onToggle={() => setAgreeTerms((v) => !v)} />
+            <AgreementRow
+              label="(필수) 개인정보 수집·이용"
+              checked={agreePrivacy}
+              onToggle={() => setAgreePrivacy((v) => !v)}
+            />
+            <AgreementRow
+              label="(선택) 마케팅 정보 수신"
+              checked={agreeMarketing}
+              onToggle={() => setAgreeMarketing((v) => !v)}
+            />
+          </View>
         </View>
-      </View>
 
-      <View style={styles.bottom}>
-        {submitError ? <HelperText error>{submitError}</HelperText> : null}
-        <PrimaryButton label="가입하고 시작하기" onPress={handleSubmit} disabled={!canSubmit} loading={loading} />
-      </View>
+        <View style={styles.bottom}>
+          {submitError ? <HelperText error>{submitError}</HelperText> : null}
+          <PrimaryButton label="가입하고 시작하기" onPress={handleSubmit} disabled={!canSubmit} loading={loading} />
+        </View>
+      </KeyboardAwareForm>
     </SafeAreaView>
   );
 }
@@ -225,6 +241,8 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: color.bg.canvas,
+  },
+  scrollContent: {
     justifyContent: 'space-between',
   },
   content: {
