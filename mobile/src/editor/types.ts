@@ -95,6 +95,17 @@ export type AccountProps = {
   gapBelow: GapSize;
 };
 
+/** 장소 — name/address live on the project (행사 정보); the block only holds what to show. */
+export type MapProps = {
+  showCopy: boolean;
+  showNaver: boolean;
+  showKakao: boolean;
+  /** Place link pasted from the map app; empty = search by address. */
+  naverUrl: string;
+  kakaoUrl: string;
+  shape: 'fill' | 'outline';
+};
+
 type BlockOf<T extends string, P> = { id: string; type: T; props: P; style?: { font?: FontId; align?: Align } };
 
 export type Block =
@@ -106,6 +117,7 @@ export type Block =
   | BlockOf<'button', ButtonProps>
   | BlockOf<'phone', PhoneProps>
   | BlockOf<'email', EmailProps>
+  | BlockOf<'map', MapProps>
   | BlockOf<'datetime', DateTimeProps>
   | BlockOf<'rsvp', RsvpProps>
   | BlockOf<'guestbook', GuestbookProps>
@@ -116,11 +128,23 @@ export type BlockOfType<T extends BlockType> = Extract<Block, { type: T }>;
 
 export type PageKey = 'invite' | 'thanks';
 
+/** 배경음악 — one per invitation. Both choices are kept so switching tabs doesn't lose the file. */
+export type BgmFile = { uri: string; name: string; size: number };
+export type Bgm = { mode: 'off' | 'list' | 'file'; trackId?: string; file?: BgmFile };
+
+/** 감사페이지 간단 모드: empty title/message fall back to the event type's default wording. */
+export type ThanksSimple = { title?: string; message?: string; showSender: boolean; sender?: string };
+export type ThanksPage = { mode: 'simple' | 'free'; simple: ThanksSimple };
+
 export type Invitation = {
   projectId: string;
   /** 기본 글꼴 — one Korean font for every format; blocks can override it. */
   font: FontId;
   pages: Record<PageKey, Block[]>;
+  /** 대표 사진 — a photo id from the invite page; missing = the first photo. */
+  coverPhotoId?: string;
+  bgm?: Bgm;
+  thanks?: ThanksPage;
 };
 
 export const LIMITS = {
@@ -156,6 +180,7 @@ export const BLOCK_LABEL: Record<BlockType, string> = {
   button: '버튼',
   phone: '전화번호',
   email: '이메일',
+  map: '장소',
   datetime: '일시',
   rsvp: '참석 응답',
   guestbook: '방명록',
@@ -203,6 +228,12 @@ export function defaultBlock(type: BlockType): Block {
         id,
         type,
         props: { view: 'list', buttonLabel: '메일 보내기', entries: [], showMail: true, showCopy: true, lines: true, gapBelow: 'm' },
+      };
+    case 'map':
+      return {
+        id,
+        type,
+        props: { showCopy: true, showNaver: true, showKakao: true, naverUrl: '', kakaoUrl: '', shape: 'outline' },
       };
     case 'datetime':
       return {

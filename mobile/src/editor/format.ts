@@ -156,6 +156,8 @@ export function blockSummary(block: Block): string {
       return block.props.contacts.length ? `${block.props.contacts.length}명 · ${clip(block.props.contacts.map((c) => c.name).join(', '), 14)}` : '연락처 없음';
     case 'email':
       return block.props.entries.length ? `${block.props.entries.length}개 · ${clip(block.props.entries.map((e) => e.name || e.email).join(', '), 14)}` : '이메일 없음';
+    case 'map':
+      return [block.props.showNaver && '네이버 지도', block.props.showKakao && '카카오맵'].filter(Boolean).join(' · ') || '버튼 없음';
     case 'datetime':
       return [block.props.showWhen && '일시', block.props.showDday && 'D-day', block.props.showCalendar && '달력'].filter(Boolean).join(' · ') || '모두 꺼짐';
     case 'rsvp':

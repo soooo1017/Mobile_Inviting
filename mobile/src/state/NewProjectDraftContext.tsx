@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import type { EventType, ThanksSettings, Venue } from '../types/project';
+import type { FontId } from '../editor/types';
 import { eventTypeMeta } from '../types/project';
 
 export type NewProjectDraft = {
@@ -10,6 +11,8 @@ export type NewProjectDraft = {
   venue?: Venue;
   thanks: ThanksSettings;
   themeId: string;
+  /** 기본 글꼴, picked next to the theme on the last step. */
+  font: FontId;
 };
 
 function initialDraft(): NewProjectDraft {
@@ -24,6 +27,7 @@ function initialDraft(): NewProjectDraft {
     venue: undefined,
     thanks: { enabled: true, days: 7, hasContent: false },
     themeId: 'linen',
+    font: 'pretendard',
   };
 }
 

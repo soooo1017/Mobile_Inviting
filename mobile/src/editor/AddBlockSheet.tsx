@@ -4,7 +4,7 @@ import { color, radius, space } from '../theme/tokens';
 import { textStyle } from '../theme/typography';
 import { BLOCK_LABEL, type BlockType } from './types';
 
-type Tile = { type: BlockType | 'map'; glyph: string };
+type Tile = { type: BlockType; glyph: string };
 
 const CATEGORIES: { name: string; tiles: Tile[] }[] = [
   {
@@ -55,21 +55,12 @@ export function AddBlockSheet({ visible, where, onPick, onClose }: Props) {
           <View key={cat.name} style={styles.cat}>
             <Text style={styles.catName}>{cat.name}</Text>
             <View style={styles.tiles}>
-              {cat.tiles.map((t) => {
-                const later = t.type === 'map';
-                return (
-                  <Pressable
-                    key={t.type}
-                    disabled={later}
-                    onPress={() => t.type !== 'map' && onPick(t.type)}
-                    style={[styles.tile, later && styles.tileLater]}
-                  >
-                    <Text style={[styles.glyph, later && styles.later]}>{t.glyph}</Text>
-                    <Text style={[styles.tileLabel, later && styles.later]}>{t.type === 'map' ? '지도' : BLOCK_LABEL[t.type]}</Text>
-                    {later ? <Text style={styles.badge}>나중에</Text> : null}
-                  </Pressable>
-                );
-              })}
+              {cat.tiles.map((t) => (
+                <Pressable key={t.type} onPress={() => onPick(t.type)} style={styles.tile}>
+                  <Text style={styles.glyph}>{t.glyph}</Text>
+                  <Text style={styles.tileLabel}>{BLOCK_LABEL[t.type]}</Text>
+                </Pressable>
+              ))}
             </View>
           </View>
         ))}
@@ -110,20 +101,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.card,
     paddingVertical: space[5],
   },
-  tileLater: {
-    backgroundColor: 'transparent',
-    borderStyle: 'dashed',
-  },
   glyph: {
     ...textStyle({ size: 'title3', weight: 'regular', color: color.ink.secondary }),
   },
   tileLabel: {
     ...textStyle({ size: 'label', weight: 'semibold', color: color.ink.primary }),
-  },
-  later: {
-    color: color.ink.placeholder,
-  },
-  badge: {
-    ...textStyle({ size: 'caption', weight: 'medium', color: color.ink.muted }),
   },
 });

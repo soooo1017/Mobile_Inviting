@@ -113,7 +113,7 @@ type ProjectsContextValue = {
   deleteProject: (id: string) => void;
   setThanksSettings: (id: string, thanks: Project['thanks']) => void;
   /** Used by the editor's 전체 설정 (theme, event date) — every block reads these live. */
-  updateProject: (id: string, patch: Partial<Pick<Project, 'themeId' | 'eventAt' | 'title'>>) => void;
+  updateProject: (id: string, patch: Partial<Pick<Project, 'themeId' | 'eventAt' | 'title' | 'venue'>>) => void;
 };
 
 const ProjectsContext = createContext<ProjectsContextValue | null>(null);
@@ -131,7 +131,9 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         const now = new Date().toISOString();
         const project: Project = {
           ...input,
-          id: `p${nextId++}`,
+          // Mock projects reset on every launch, but invitations stay saved on the phone — a
+          // counter id would hand a new project an old project's invitation.
+          id: `p${Date.now().toString(36)}${(nextId++).toString(36)}`,
           shared: false,
           counts: { rsvp: 0, guestbook: 0 },
           updatedAt: now,

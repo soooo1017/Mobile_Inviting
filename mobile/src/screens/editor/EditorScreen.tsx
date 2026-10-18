@@ -1,11 +1,20 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { useProjects } from '../../state/ProjectsContext';
-import { useInvitation } from '../../state/InvitationsContext';
+import { DEFAULT_THANKS_PAGE, useInvitation } from '../../state/InvitationsContext';
+import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus, type AudioSource } from 'expo-audio';
+import { BottomSheet } from '../../components/BottomSheet';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { SelectChip } from '../../components/SelectChip';
+import { SimpleThanksView } from '../../editor/canvas/SimpleThanks';
+import { ThanksSimpleSheet } from '../../editor/sheets/ThanksSimpleSheet';
+import { coverPhoto } from '../../editor/photos';
+import { simpleThanksToBlocks } from '../../editor/thanks';
+import { bgmSource } from '../../editor/bgm';
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { Canvas } from '../../editor/canvas/Canvas';
@@ -52,7 +61,9 @@ function Editor({
   navigation: Props['navigation'];
   updateProject: ReturnType<typeof useProjects>['updateProject'];
 }) {
-  const { invitation, insertBlock, updateBlock, removeBlock, duplicateBlock, moveBlock, setFont } = useInvitation(project.id);
+  const { invitation, insertBlock, updateBlock, removeBlock, duplicateBlock, moveBlock, setFont, setCoverPhoto, setBgm, updateThanks, setPage: setPageBlocks } =
+    useInvitation(project.id);
+  const { setThanksSettings } = useProjects();
   const { height: screenH } = useWindowDimensions();
   // [감사페이지] 탭은 감사페이지를 쓰는 경우에만 보여요.
   const hasThanks = project.thanks.enabled;
@@ -64,12 +75,18 @@ function Editor({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [toast, setToast] = useState<Toast>(null);
+  const [thanksSheetOpen, setThanksSheetOpen] = useState(false);
+  const [daysOpen, setDaysOpen] = useState(false);
+  const [confirmSimple, setConfirmSimple] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const blockY = useRef<Record<string, number>>({});
 
   const theme = invitationTheme(project.themeId);
   const blocks = invitation?.pages[page] ?? [];
   const selected = blocks.find((b) => b.id === selectedId) ?? null;
+  const thanksPage = invitation?.thanks ?? DEFAULT_THANKS_PAGE;
+  // 감사페이지 간단 모드: a fixed layout instead of the free block list.
+  const simpleThanks = page === 'thanks' && thanksPage.mode === 'simple';
 
   const showToast = useCallback((message: string) => setToast({ message }), []);
   const canvasValue = useMemo<CanvasContextValue | null>(
@@ -100,6 +117,11 @@ function Editor({
   const addBlock = (type: BlockType) => {
     const index = addAt ?? blocks.length;
     const block = defaultBlock(type);
+    if (block.type === 'map') {
+      // The map links picked on the new-project step decide which buttons start on (both when none was picked).
+      const links = project.venue?.mapLinks;
+      if (links && (links.naver || links.kakao)) block.props = { ...block.props, showNaver: links.naver, showKakao: links.kakao };
+    }
     insertBlock(page, block, index);
     setAddAt(null);
     if (mode === 'reorder') {
@@ -114,6 +136,21 @@ function Editor({
     removeBlock(page, block.id);
     if (highlightId === block.id) setHighlightId(null);
     setToast({ message: '삭제했어요', undo: () => insertBlock(page, block, index) });
+  };
+
+  // 간단하게 → 자유롭게 carries the content over as 텍스트 · 이미지; 자유롭게 → 간단하게 starts over (after a confirm).
+  const switchThanksMode = (next: 'simple' | 'free') => {
+    if (!invitation || next === thanksPage.mode) return;
+    setThanksSheetOpen(false);
+    setSelectedId(null);
+    if (next === 'free') {
+      setPageBlocks('thanks', simpleThanksToBlocks(project, thanksPage.simple, coverPhoto(invitation)));
+      updateThanks((t) => ({ ...t, mode: 'free' }));
+    } else if (invitation.pages.thanks.length) {
+      setConfirmSimple(true);
+    } else {
+      updateThanks((t) => ({ ...t, mode: 'simple' }));
+    }
   };
 
   if (!invitation || !canvasValue) {
@@ -168,6 +205,7 @@ function Editor({
                     onPress={() => {
                       setPage(k);
                       setSelectedId(null);
+                      setThanksSheetOpen(false);
                     }}
                     style={[styles.tab, page === k && styles.tabOn]}
                   >
@@ -176,6 +214,19 @@ function Editor({
                 ))}
               </View>
             ) : null}
+            {page === 'thanks' ? (
+              <View style={styles.thanksBar}>
+                <View style={styles.thanksModes}>
+                  <SelectChip label="간단하게" selected={thanksPage.mode === 'simple'} onPress={() => switchThanksMode('simple')} />
+                  <SelectChip label="자유롭게" selected={thanksPage.mode === 'free'} onPress={() => switchThanksMode('free')} />
+                </View>
+                <Pressable onPress={() => setDaysOpen(true)} style={styles.daysRow} hitSlop={6}>
+                  <Text style={styles.daysText}>{`행사 ${project.thanks.days ?? 7}일 뒤부터 이 화면이 보여요`}</Text>
+                  <Text style={styles.daysAction}>바꾸기 ›</Text>
+                </Pressable>
+              </View>
+            ) : null}
+            {simpleThanks ? null : (
             <View style={styles.menu}>
               <Pressable onPress={() => openReorder()} disabled={!blocks.length} style={[styles.menuBtn, !blocks.length && styles.menuOff]}>
                 <SortIcon color={color.ink.primary} />
@@ -192,6 +243,7 @@ function Editor({
                 <Text style={styles.menuLabel}>미리보기</Text>
               </Pressable>
             </View>
+            )}
           </>
         )}
 
@@ -206,6 +258,17 @@ function Editor({
               onInsertAt={(i) => setAddAt(i)}
             />
           </View>
+        ) : simpleThanks ? (
+          <ScrollView
+            style={[styles.flex, { backgroundColor: theme.paper }]}
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: thanksSheetOpen ? screenH * 0.66 : 40 }}
+          >
+            <Pressable onPress={() => setThanksSheetOpen(true)} style={[styles.flexGrow, thanksSheetOpen && styles.thanksSelected]} accessibilityHint="감사페이지 편집">
+              <View pointerEvents="none" style={styles.flexGrow}>
+                <SimpleThanksView simple={thanksPage.simple} photo={coverPhoto(invitation)} />
+              </View>
+            </Pressable>
+          </ScrollView>
         ) : blocks.length === 0 ? (
           <View style={[styles.flex, styles.empty, { backgroundColor: theme.paper }]}>
             <Text style={[styles.emptyTitle, { color: theme.ink }]}>아직 아무것도 없어요</Text>
@@ -235,7 +298,7 @@ function Editor({
           </ScrollView>
         )}
 
-        {mode === 'edit' && blocks.length > 0 && !selected ? (
+        {mode === 'edit' && !simpleThanks && blocks.length > 0 && !selected ? (
           <Pressable style={[styles.addBar, theme.isDark && styles.addBarOnDark]} onPress={() => setAddAt(blocks.length)}>
             <Text style={[styles.addBarLabel, theme.isDark && styles.addBarLabelOnDark]}>+ 추가하기</Text>
           </Pressable>
@@ -259,8 +322,20 @@ function Editor({
                 setSelectedId(null);
                 setSettingsOpen(true);
               }}
+              onProject={(patch) => updateProject(project.id, patch)}
             />
           </BlockDeleteContext.Provider>
+        ) : null}
+
+        {mode === 'edit' && simpleThanks && thanksSheetOpen ? (
+          <ThanksSimpleSheet
+            project={project}
+            invitation={invitation}
+            simple={thanksPage.simple}
+            onChange={(simple) => updateThanks((t) => ({ ...t, simple }))}
+            onCover={setCoverPhoto}
+            onDone={() => setThanksSheetOpen(false)}
+          />
         ) : null}
 
         <DarkToast
@@ -283,16 +358,70 @@ function Editor({
           font={invitation.font}
           onFont={setFont}
           onProject={(patch) => updateProject(project.id, patch)}
+          invitation={invitation}
+          onCover={setCoverPhoto}
+          onBgm={setBgm}
         />
 
-        <PreviewModal visible={previewOpen} onClose={() => setPreviewOpen(false)} blocks={blocks} base={canvasValue} />
+        <BottomSheet visible={daysOpen} onClose={() => setDaysOpen(false)} title="감사페이지로 바뀌는 날">
+          <View style={styles.daysSheet}>
+            <View style={styles.thanksModes}>
+              {([1, 2, 3, 4, 5, 6, 7] as const).map((d) => (
+                <SelectChip
+                  key={d}
+                  label={`${d}일 뒤`}
+                  selected={(project.thanks.days ?? 7) === d}
+                  onPress={() => {
+                    setThanksSettings(project.id, { ...project.thanks, days: d });
+                    setDaysOpen(false);
+                  }}
+                />
+              ))}
+            </View>
+            <Text style={styles.daysHelp}>행사가 끝나고 고른 날이 지나면, 같은 링크에서 초대장 대신 감사페이지가 보여요.</Text>
+          </View>
+        </BottomSheet>
+
+        <ConfirmDialog
+          visible={confirmSimple}
+          title="간단하게로 바꿀까요?"
+          confirmLabel="바꾸기"
+          onCancel={() => setConfirmSimple(false)}
+          onConfirm={() => {
+            setConfirmSimple(false);
+            setPageBlocks('thanks', []);
+            updateThanks((t) => ({ ...t, mode: 'simple' }));
+          }}
+        >
+          <Text style={styles.confirmBody}>{'자유롭게 만든 감사페이지 내용이 지워지고,\n기본 틀로 다시 시작해요.'}</Text>
+        </ConfirmDialog>
+
+        <PreviewModal
+          visible={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+          blocks={blocks}
+          base={canvasValue}
+          music={page === 'invite' ? bgmSource(invitation.bgm) : null}
+        />
       </SafeAreaView>
     </CanvasContext.Provider>
   );
 }
 
 /** 미리보기: the page as guests see it — no edit frames, guest buttons (전화 · 복사 · 펼치기…) work. */
-function PreviewModal({ visible, onClose, blocks, base }: { visible: boolean; onClose: () => void; blocks: Block[]; base: CanvasContextValue }) {
+function PreviewModal({
+  visible,
+  onClose,
+  blocks,
+  base,
+  music,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  blocks: Block[];
+  base: CanvasContextValue;
+  music: AudioSource | null;
+}) {
   const [toast, setToast] = useState<string | null>(null);
   const value = useMemo<CanvasContextValue>(() => ({ ...base, mode: 'preview', showToast: setToast }), [base]);
   return (
@@ -305,9 +434,12 @@ function PreviewModal({ visible, onClose, blocks, base }: { visible: boolean; on
               <Text style={styles.previewBackLabel}>편집으로</Text>
             </Pressable>
           </View>
-          <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-            <Canvas blocks={blocks} />
-          </ScrollView>
+          <View style={styles.flex}>
+            <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+              <Canvas blocks={blocks} />
+            </ScrollView>
+            {visible && music ? <MusicButton source={music} /> : null}
+          </View>
           <DarkToast message={toast} onHide={() => setToast(null)} bottom={28} />
         </ModalSafeArea>
       </CanvasContext.Provider>
@@ -315,7 +447,97 @@ function PreviewModal({ visible, onClose, blocks, base }: { visible: boolean; on
   );
 }
 
+/**
+ * ♪ 배경음악 button, top right of the invitation. Guests' browsers block autoplay with sound,
+ * so music starts when they tap it — the preview behaves the same way.
+ */
+function MusicButton({ source }: { source: AudioSource }) {
+  const player = useAudioPlayer(source);
+  const status = useAudioPlayerStatus(player);
+  useEffect(() => {
+    setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
+  }, []);
+  useEffect(() => {
+    // Loop like the guest page will; a song that ends restarts from the top.
+    if (status.didJustFinish) {
+      player.seekTo(0).then(() => player.play()).catch(() => {});
+    }
+  }, [status.didJustFinish, player]);
+  return (
+    <Pressable
+      onPress={() => (status.playing ? player.pause() : player.play())}
+      style={[styles.music, status.playing && styles.musicOn]}
+      hitSlop={8}
+      accessibilityLabel={status.playing ? '배경음악 끄기' : '배경음악 켜기'}
+    >
+      <Text style={[styles.musicGlyph, !status.playing && styles.musicGlyphOff]}>♪</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  flexGrow: {
+    flexGrow: 1,
+  },
+  thanksSelected: {
+    borderWidth: 1.5,
+    borderColor: color.accent.base,
+  },
+  thanksBar: {
+    paddingHorizontal: space.screenX,
+    paddingTop: space[5],
+    paddingBottom: space[5],
+    gap: space[4],
+  },
+  thanksModes: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space[3],
+  },
+  daysRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  daysText: {
+    ...textStyle({ size: 'small', weight: 'regular', color: color.ink.secondary }),
+  },
+  daysAction: {
+    ...textStyle({ size: 'small', weight: 'semibold', color: color.accent.base }),
+  },
+  daysSheet: {
+    paddingHorizontal: space.screenX,
+    paddingBottom: space[6],
+    gap: space[6],
+  },
+  daysHelp: {
+    ...textStyle({ size: 'small', weight: 'regular', color: color.ink.muted }),
+  },
+  confirmBody: {
+    ...textStyle({ size: 'label', weight: 'regular', color: color.ink.secondary }),
+    lineHeight: 21,
+  },
+  music: {
+    position: 'absolute',
+    top: 12,
+    right: 14,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(35,33,42,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  musicOn: {
+    backgroundColor: 'rgba(35,33,42,0.85)',
+  },
+  musicGlyph: {
+    color: '#ffffff',
+    fontSize: 17,
+  },
+  musicGlyphOff: {
+    opacity: 0.6,
+  },
   screen: {
     flex: 1,
     backgroundColor: color.bg.canvas,

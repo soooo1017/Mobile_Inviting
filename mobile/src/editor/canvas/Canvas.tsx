@@ -3,6 +3,7 @@ import { color } from '../../theme/tokens';
 import { useCanvas } from './CanvasContext';
 import { ButtonBlockView, DividerBlockView, GalleryBlockView, ImageBlockView, SpacerBlockView, TextBlockView } from './BasicBlocks';
 import { AccountBlockView, EmailBlockView, PhoneBlockView } from './ContactBlocks';
+import { MapBlockView } from './MapBlock';
 import { DateTimeBlockView, GuestbookBlockView, RsvpBlockView } from './FeatureBlocks';
 import type { Block } from '../types';
 
@@ -24,6 +25,8 @@ export function BlockView({ block }: { block: Block }) {
       return <PhoneBlockView block={block} />;
     case 'email':
       return <EmailBlockView block={block} />;
+    case 'map':
+      return <MapBlockView block={block} />;
     case 'datetime':
       return <DateTimeBlockView block={block} />;
     case 'rsvp':

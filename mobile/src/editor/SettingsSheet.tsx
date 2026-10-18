@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Platform, Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Image, Platform, Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { BottomSheet } from '../components/BottomSheet';
 import { color, radius, space } from '../theme/tokens';
@@ -9,7 +9,11 @@ import { FontList } from './sheets/common';
 import { fontMeta } from './fonts';
 import { formatWhenShort } from './format';
 import { Help, Section, SelectRow } from './ui';
-import type { FontId } from './types';
+import type { Bgm, FontId, Invitation } from './types';
+import { CoverPicker } from './CoverPicker';
+import { BgmSettings } from './BgmSettings';
+import { bgmSummary } from './bgm';
+import { coverPhoto } from './photos';
 
 type Props = {
   visible: boolean;
@@ -18,11 +22,19 @@ type Props = {
   font: FontId;
   onFont: (f: FontId) => void;
   onProject: (patch: Partial<Pick<Project, 'themeId' | 'eventAt'>>) => void;
+  invitation: Invitation;
+  onCover: (photoId: string) => void;
+  onBgm: (bgm: Bgm) => void;
 };
 
+type Page = 'main' | 'font' | 'cover' | 'bgm';
+const PAGE_TITLE: Record<Page, string> = { main: '전체 설정', font: '기본 글꼴', cover: '대표 사진', bgm: '배경음악' };
+
 /** ⚙ 전체 설정 — things that apply to the whole invitation rather than one block. */
-export function SettingsSheet({ visible, onClose, project, font, onFont, onProject }: Props) {
-  const [page, setPage] = useState<'main' | 'font'>('main');
+export function SettingsSheet({ visible, onClose, project, font, onFont, onProject, invitation, onCover, onBgm }: Props) {
+  const [page, setPage] = useState<Page>('main');
+  const cover = coverPhoto(invitation);
+  const [bgmLabel, bgmValue] = bgmSummary(invitation.bgm);
   const [picker, setPicker] = useState<'date' | 'time' | null>(null);
   const eventDate = new Date(project.eventAt);
   const whenShort = formatWhenShort(project.eventAt); // "2027. 5. 22. (토) 오후 1:00"
@@ -34,20 +46,35 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
   };
 
   return (
-    <BottomSheet visible={visible} onClose={close} title={page === 'font' ? '기본 글꼴' : '전체 설정'} maxHeight="88%">
+    <BottomSheet visible={visible} onClose={close} title={PAGE_TITLE[page]} maxHeight="88%">
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        {page !== 'main' ? (
+          <Pressable onPress={() => setPage('main')} hitSlop={8}>
+            <Text style={styles.back}>‹ 전체 설정으로</Text>
+          </Pressable>
+        ) : null}
         {page === 'font' ? (
           <>
-            <Pressable onPress={() => setPage('main')} hitSlop={8}>
-              <Text style={styles.back}>‹ 전체 설정으로</Text>
-            </Pressable>
             <FontList mode="default" value={font} defaultFont={font} onChange={(f) => f && onFont(f)} />
             <Help>초대장 전체 글에 이 글꼴이 들어가요. 따로 글꼴을 바꾼 곳은 그대로예요.</Help>
           </>
+        ) : page === 'cover' ? (
+          <CoverPicker invitation={invitation} onSelect={onCover} />
+        ) : page === 'bgm' ? (
+          <BgmSettings bgm={invitation.bgm} onChange={onBgm} />
         ) : (
           <>
             <Section label="기본 글꼴">
               <SelectRow label={fontMeta(font).label} onPress={() => setPage('font')} />
+            </Section>
+            <Section label="대표 사진">
+              <Pressable onPress={() => setPage('cover')} style={styles.coverRow}>
+                {cover ? <Image source={{ uri: cover.uri }} style={styles.coverThumb} /> : <View style={[styles.coverThumb, styles.coverEmpty]} />}
+                <Text style={styles.coverLabel} numberOfLines={1}>
+                  {cover ? '감사페이지 · 공유할 때 쓰여요' : '초대장에 사진을 넣으면 고를 수 있어요'}
+                </Text>
+                <Text style={styles.chevron}>›</Text>
+              </Pressable>
             </Section>
             <Section label="배경 테마">
               <View style={styles.themes}>
@@ -88,10 +115,8 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
                 </View>
               ) : null}
             </Section>
-            <Section label="배경음악 (BGM)">
-              <View style={styles.soon}>
-                <Text style={styles.soonText}>초대장에 하나만 들어가요 · 준비 중이에요</Text>
-              </View>
+            <Section label="배경음악">
+              <SelectRow label={bgmLabel} value={bgmValue || undefined} muted={!bgmValue} onPress={() => setPage('bgm')} />
             </Section>
           </>
         )}
@@ -149,14 +174,32 @@ const styles = StyleSheet.create({
     color: color.select.fill,
     fontFamily: 'Pretendard-SemiBold',
   },
-  soon: {
+  coverRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[5],
+    backgroundColor: color.bg.surface,
+    borderWidth: 1,
+    borderColor: color.line.default,
+    borderRadius: radius.input,
+    paddingHorizontal: space[5],
+    paddingVertical: space[4],
+  },
+  coverThumb: {
+    width: 40,
+    height: 40,
+    borderRadius: 6,
+  },
+  coverEmpty: {
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: color.line.dashed,
-    borderRadius: radius.input,
-    padding: 13,
   },
-  soonText: {
-    ...textStyle({ size: 'label', weight: 'regular', color: color.ink.muted }),
+  coverLabel: {
+    flex: 1,
+    ...textStyle({ size: 'label', weight: 'regular', color: color.ink.primary }),
+  },
+  chevron: {
+    ...textStyle({ size: 'control', weight: 'regular', color: color.ink.placeholder }),
   },
 });

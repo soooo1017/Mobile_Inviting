@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { cloneBlock, type Block, type FontId, type Invitation, type PageKey } from '../editor/types';
+import { cloneBlock, type Bgm, type Block, type FontId, type Invitation, type PageKey, type ThanksPage } from '../editor/types';
 
 // 저장 방식 (EDITOR_PLAN §10, 확정): mock first — every invitation is saved
 // on the phone and auto-saved after each change. Server storage (Supabase)
@@ -69,6 +69,19 @@ export function InvitationsProvider({ children }: { children: ReactNode }) {
   return <InvitationsContext.Provider value={value}>{children}</InvitationsContext.Provider>;
 }
 
+/** Sets up a brand-new invitation (e.g. the 기본 글꼴 picked on the last new-project step). */
+export function useStartInvitation() {
+  const ctx = useContext(InvitationsContext);
+  if (!ctx) throw new Error('useStartInvitation must be used within an InvitationsProvider');
+  const { mutate } = ctx;
+  return useCallback(
+    (projectId: string, init: Partial<Omit<Invitation, 'projectId'>>) => mutate(projectId, () => ({ ...emptyInvitation(projectId), ...init })),
+    [mutate],
+  );
+}
+
+export const DEFAULT_THANKS_PAGE: ThanksPage = { mode: 'simple', simple: { showSender: true } };
+
 function withPage(inv: Invitation, page: PageKey, blocks: Block[]): Invitation {
   return { ...inv, pages: { ...inv.pages, [page]: blocks } };
 }
@@ -88,6 +101,11 @@ export function useInvitation(projectId: string) {
   const actions = useMemo(
     () => ({
       setFont: (font: FontId) => edit((inv) => ({ ...inv, font })),
+      setCoverPhoto: (coverPhotoId: string | undefined) => edit((inv) => ({ ...inv, coverPhotoId })),
+      setBgm: (bgm: Bgm) => edit((inv) => ({ ...inv, bgm })),
+      updateThanks: (fn: (t: ThanksPage) => ThanksPage) => edit((inv) => ({ ...inv, thanks: fn(inv.thanks ?? DEFAULT_THANKS_PAGE) })),
+      /** Replaces a whole page at once (감사페이지 간단 ↔ 자유 전환). */
+      setPage: (page: PageKey, blocks: Block[]) => edit((inv) => withPage(inv, page, blocks)),
       /** Inserts at `index` (end when omitted). */
       insertBlock: (page: PageKey, block: Block, index?: number) =>
         edit((inv) => {

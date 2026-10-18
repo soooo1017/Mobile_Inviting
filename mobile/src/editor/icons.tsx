@@ -113,3 +113,25 @@ export function ExpandIcon({ size = 14, color }: IconProps) {
     </Svg>
   );
 }
+
+const PIN = 'M8 1.2c-2.9 0-5.1 2.2-5.1 5 0 3.6 5.1 8.6 5.1 8.6s5.1-5 5.1-8.6c0-2.8-2.2-5-5.1-5z';
+
+/** 네이버 지도 버튼: a green pin with N (the app's colour, not its official logo). */
+export function NaverMapIcon({ size = 14 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16">
+      <Path d={PIN} fill="#03c75a" />
+      <Path d="M6 3.9h1.3l1.6 2.4V3.9h1.2v4.6H8.8L7.2 6.1v2.4H6z" fill="#ffffff" />
+    </Svg>
+  );
+}
+
+/** 카카오맵 버튼: a yellow pin (the app's colour, not its official logo). */
+export function KakaoMapIcon({ size = 14 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16">
+      <Path d={PIN} fill="#fee500" stroke="#e0c800" strokeWidth={0.6} />
+      <Circle cx={8} cy={6.2} r={2} fill="#3c1e1e" />
+    </Svg>
+  );
+}

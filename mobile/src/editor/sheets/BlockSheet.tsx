@@ -1,4 +1,5 @@
-import type { Project } from '../../types/project';
+import type { Project, Venue } from '../../types/project';
+import { MapSheet } from './MapSheet';
 import type { Block, BlockOfType, BlockType, FontId } from '../types';
 import { ButtonSheet, DividerSheet, ImageSheet, SpacerSheet, TextSheet } from './BasicSheets';
 import { AccountSheet, EmailSheet, PhoneSheet } from './ContactSheets';
@@ -12,10 +13,12 @@ type Props = {
   onChange: (b: Block) => void;
   onDone: () => void;
   onOpenSettings: () => void;
+  /** 장소 edits the project's 행사 장소. */
+  onProject: (patch: { venue: Venue }) => void;
 };
 
 /** Opens the right editor for a block: a sheet, or full screen for 갤러리 / 참석 응답. */
-export function BlockSheet({ block, project, defaultFont, onChange, onDone, onOpenSettings }: Props) {
+export function BlockSheet({ block, project, defaultFont, onChange, onDone, onOpenSettings, onProject }: Props) {
   const base = { project, defaultFont, onDone };
   const props = <T extends BlockType>(b: BlockOfType<T>) => ({ ...base, block: b, onChange: (next: BlockOfType<T>) => onChange(next) });
   switch (block.type) {
@@ -35,6 +38,8 @@ export function BlockSheet({ block, project, defaultFont, onChange, onDone, onOp
       return <PhoneSheet {...props(block)} />;
     case 'email':
       return <EmailSheet {...props(block)} />;
+    case 'map':
+      return <MapSheet {...props(block)} onProject={onProject} />;
     case 'datetime':
       return <DateTimeSheet {...props(block)} onOpenSettings={onOpenSettings} />;
     case 'rsvp':
