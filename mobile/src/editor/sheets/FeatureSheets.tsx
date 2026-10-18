@@ -101,18 +101,21 @@ export function RsvpEditor({ block, onChange, onDone, project }: BlockSheetProps
           ) : null}
         </View>
         {picking ? (
-          <DateTimePicker
-            value={initial}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'inline' : 'default'}
-            minimumDate={today}
-            maximumDate={eventDay}
-            accentColor={color.select.fill}
-            onChange={(e, d) => {
-              if (Platform.OS !== 'ios') setPicking(false);
-              if (e.type === 'set' && d) set({ deadline: toDateKey(d) });
-            }}
-          />
+          <View style={styles.pickerWrap}>
+            <DateTimePicker
+              locale="ko-KR"
+              value={initial}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'inline' : 'default'}
+              minimumDate={today}
+              maximumDate={eventDay}
+              accentColor={color.select.fill}
+              onChange={(e, d) => {
+                if (Platform.OS !== 'ios') setPicking(false);
+                if (e.type === 'set' && d) set({ deadline: toDateKey(d) });
+              }}
+            />
+          </View>
         ) : null}
         <Help>고른 날 자정(밤 12시)까지 받아요. 비워두면 마감 없이 계속 받아요.</Help>
       </Section>
@@ -166,6 +169,10 @@ export function GuestbookSheet({ block, onChange, onDone }: BlockSheetProps<'gue
 }
 
 const styles = StyleSheet.create({
+  // iOS draws the inline calendar at its own width, flush left — center it in the sheet.
+  pickerWrap: {
+    alignItems: 'center',
+  },
   flex: {
     flex: 1,
   },

@@ -39,3 +39,9 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Project rules (from on-device feedback)
+
+- **Never draw under the status bar or home indicator.** Every screen sits inside the safe area: `SafeAreaView` (`react-native-safe-area-context`) for stack screens, `ModalSafeArea` (`src/components/ModalSafeArea.tsx`) for full-screen `Modal`s — `SafeAreaView` reads zero insets inside a Modal on iOS. Absolutely positioned overlays offset by `useSafeAreaInsets()`, never a hard-coded top.
+- **Date pickers are Korean.** Pass `locale="ko-KR"` to every `DateTimePicker`, and wrap iOS `inline` pickers in a centered `View` (they draw flush left otherwise).
+- **No 1/N percentage widths for wrapped grids** (e.g. a 7-column calendar) — iOS rounding wraps the last column early. Use explicit rows with `flex: 1` cells.

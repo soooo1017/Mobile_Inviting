@@ -15,6 +15,7 @@ export function DateTimeBlockView({ block }: { block: BlockOfType<'datetime'> })
   const font = block.style?.font;
   const date = new Date(project.eventAt);
   const cells = monthGrid(project.eventAt);
+  const weeks = Array.from({ length: cells.length / 7 }, (_, w) => cells.slice(w * 7, w * 7 + 7));
   const circle = p.circleColor === 'red' ? EVENT_RED : theme.accent;
   const nothing = !p.showWhen && !p.showDday && !p.showCalendar && !p.showCalendarButton;
 
@@ -46,33 +47,39 @@ export function DateTimeBlockView({ block }: { block: BlockOfType<'datetime'> })
           <InvText font={font} size={20} bold leading={1.3} style={[styles.center, styles.calTitle]}>
             {`${date.getFullYear()}. ${String(date.getMonth() + 1).padStart(2, '0')}`}
           </InvText>
+          {/* Rows of 7 with flex cells: 1/7-percent widths wrap early on iOS and push 토 to the next line. */}
           <View style={[styles.calGrid, { borderTopColor: theme.rule }]}>
-            {weekdayLabels().map((w, i) => (
-              <View key={w} style={styles.cell}>
-                <InvUiText size={11} soft style={i === 0 ? { color: SUNDAY } : null}>
-                  {w}
-                </InvUiText>
+            <View style={styles.calRow}>
+              {weekdayLabels().map((w, i) => (
+                <View key={w} style={styles.cell}>
+                  <InvUiText size={11} soft style={i === 0 ? { color: SUNDAY } : null}>
+                    {w}
+                  </InvUiText>
+                </View>
+              ))}
+            </View>
+            {weeks.map((week, w) => (
+              <View key={w} style={styles.calRow}>
+                {week.map((day, i) => {
+                  const isEvent = day === date.getDate();
+                  return (
+                    <View key={i} style={styles.cell}>
+                      {day ? (
+                        <View style={[styles.dayInner, isEvent && { borderColor: circle, borderWidth: 1.5 }]}>
+                          <InvUiText
+                            size={13}
+                            bold={isEvent}
+                            style={isEvent ? { color: circle } : i === 0 ? { color: SUNDAY } : null}
+                          >
+                            {day}
+                          </InvUiText>
+                        </View>
+                      ) : null}
+                    </View>
+                  );
+                })}
               </View>
             ))}
-            {cells.map((day, i) => {
-              const isEvent = day === date.getDate();
-              const isSunday = i % 7 === 0;
-              return (
-                <View key={i} style={styles.cell}>
-                  {day ? (
-                    <View style={[styles.dayInner, isEvent && { borderColor: circle, borderWidth: 1.5 }]}>
-                      <InvUiText
-                        size={13}
-                        bold={isEvent}
-                        style={isEvent ? { color: circle } : isSunday ? { color: SUNDAY } : null}
-                      >
-                        {day}
-                      </InvUiText>
-                    </View>
-                  ) : null}
-                </View>
-              );
-            })}
           </View>
         </View>
       ) : null}
@@ -170,13 +177,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   calGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     borderTopWidth: 1,
     paddingTop: 8,
   },
+  calRow: {
+    flexDirection: 'row',
+  },
   cell: {
-    width: `${100 / 7}%`,
+    flex: 1,
     height: 34,
     alignItems: 'center',
     justifyContent: 'center',

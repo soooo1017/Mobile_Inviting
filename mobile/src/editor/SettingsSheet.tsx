@@ -69,20 +69,23 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
               <SelectRow label={whenShort.slice(0, whenShort.indexOf(')') + 1)} value="날짜" onPress={() => setPicker(picker === 'date' ? null : 'date')} />
               <SelectRow label={whenShort.slice(whenShort.indexOf(')') + 2)} value="시간" onPress={() => setPicker(picker === 'time' ? null : 'time')} />
               {picker ? (
-                <DateTimePicker
-                  value={eventDate}
-                  mode={picker}
-                  display={Platform.OS === 'ios' ? (picker === 'date' ? 'inline' : 'spinner') : 'default'}
-                  accentColor={color.select.fill}
-                  onChange={(e, d) => {
-                    if (Platform.OS !== 'ios') setPicker(null);
-                    if (e.type !== 'set' || !d) return;
-                    const next = new Date(eventDate);
-                    if (picker === 'date') next.setFullYear(d.getFullYear(), d.getMonth(), d.getDate());
-                    else next.setHours(d.getHours(), d.getMinutes(), 0, 0);
-                    onProject({ eventAt: next.toISOString() });
-                  }}
-                />
+                <View style={styles.pickerWrap}>
+                  <DateTimePicker
+                    locale="ko-KR"
+                    value={eventDate}
+                    mode={picker}
+                    display={Platform.OS === 'ios' ? (picker === 'date' ? 'inline' : 'spinner') : 'default'}
+                    accentColor={color.select.fill}
+                    onChange={(e, d) => {
+                      if (Platform.OS !== 'ios') setPicker(null);
+                      if (e.type !== 'set' || !d) return;
+                      const next = new Date(eventDate);
+                      if (picker === 'date') next.setFullYear(d.getFullYear(), d.getMonth(), d.getDate());
+                      else next.setHours(d.getHours(), d.getMinutes(), 0, 0);
+                      onProject({ eventAt: next.toISOString() });
+                    }}
+                  />
+                </View>
               ) : null}
             </Section>
             <Section label="배경음악 (BGM)">
@@ -98,6 +101,10 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
 }
 
 const styles = StyleSheet.create({
+  // iOS draws the inline calendar at its own width, flush left — center it in the sheet.
+  pickerWrap: {
+    alignItems: 'center',
+  },
   body: {
     paddingHorizontal: space.screenX,
     paddingBottom: space[6],

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Linking, Modal, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCanvas } from './CanvasContext';
 import { InvText, InvUiText } from './InvText';
 import { PhotoFrame, frameAspect } from './PhotoFrame';
+import { ExpandIcon } from '../icons';
 import { FORMAT_SIZE, GAP_LABEL, SPACER_HEIGHT, type BlockOfType, type Photo } from '../types';
 
 export function TextBlockView({ block }: { block: BlockOfType<'text'> }) {
@@ -52,6 +53,7 @@ export function GalleryBlockView({ block }: { block: BlockOfType<'gallery'> }) {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [slide, setSlide] = useState(0);
   const [slideWidth, setSlideWidth] = useState(0);
+  const slideRef = useRef<ScrollView>(null);
 
   if (!photos.length) return mode === 'edit' ? <EmptyPhoto label="갤러리에 사진을 추가해주세요" /> : null;
 
@@ -79,22 +81,38 @@ export function GalleryBlockView({ block }: { block: BlockOfType<'gallery'> }) {
       </View>
     );
   } else {
-    const itemW = slideWidth * 0.84;
+    // 한 화면에 한 장, 가운데 정렬. 밀어서 넘기거나 사진 오른쪽 절반을 누르면 다음, 왼쪽 절반은 이전.
+    const goTo = (i: number) => {
+      const next = Math.max(0, Math.min(photos.length - 1, i));
+      slideRef.current?.scrollTo({ x: next * slideWidth, animated: true });
+      setSlide(next);
+    };
     body = (
       <View onLayout={(e) => setSlideWidth(e.nativeEvent.layout.width)}>
         {slideWidth > 0 ? (
           <ScrollView
+            ref={slideRef}
             horizontal
+            pagingEnabled
             showsHorizontalScrollIndicator={false}
-            snapToInterval={itemW + 8}
-            decelerationRate="fast"
-            scrollEnabled={mode === 'preview' || photos.length > 1}
-            onMomentumScrollEnd={(e) => setSlide(Math.round(e.nativeEvent.contentOffset.x / (itemW + 8)))}
-            contentContainerStyle={{ gap: 8 }}
+            scrollEnabled={mode === 'preview' && photos.length > 1}
+            onMomentumScrollEnd={(e) => setSlide(Math.round(e.nativeEvent.contentOffset.x / slideWidth))}
           >
             {photos.map((p, i) => (
-              <Pressable key={p.id} style={{ width: itemW }} onPress={open ? () => open(i) : undefined} disabled={!open}>
-                <PhotoFrame photo={p} aspect={4 / 5} radius={2} />
+              <Pressable
+                key={p.id}
+                style={[styles.slidePage, { width: slideWidth }]}
+                onPress={(e) => goTo(e.nativeEvent.locationX < slideWidth / 2 ? i - 1 : i + 1)}
+                disabled={mode !== 'preview'}
+              >
+                <View style={styles.slidePhoto}>
+                  <PhotoFrame photo={p} aspect={4 / 5} radius={2} />
+                  {open ? (
+                    <Pressable onPress={() => open(i)} hitSlop={8} style={styles.expand}>
+                      <ExpandIcon color="#ffffff" />
+                    </Pressable>
+                  ) : null}
+                </View>
               </Pressable>
             ))}
           </ScrollView>
@@ -263,6 +281,23 @@ const styles = StyleSheet.create({
   },
   gridCell: {
     width: '48.7%',
+  },
+  slidePage: {
+    alignItems: 'center',
+  },
+  slidePhoto: {
+    width: '100%',
+  },
+  expand: {
+    position: 'absolute',
+    right: 10,
+    bottom: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(0,0,0,0.38)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dots: {
     flexDirection: 'row',

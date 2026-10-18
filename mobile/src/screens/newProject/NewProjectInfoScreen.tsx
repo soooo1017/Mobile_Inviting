@@ -95,6 +95,7 @@ export function NewProjectInfoScreen({ navigation }: Props) {
           </View>
           {showDate ? (
             <DateTimePicker
+              locale="ko-KR"
               value={eventDate}
               mode="date"
               onChange={(_, selected) => {
@@ -109,6 +110,7 @@ export function NewProjectInfoScreen({ navigation }: Props) {
           ) : null}
           {showTime ? (
             <DateTimePicker
+              locale="ko-KR"
               value={eventDate}
               mode="time"
               onChange={(_, selected) => {
