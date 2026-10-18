@@ -53,7 +53,7 @@ export function NewProjectTypeScreen({ navigation }: Props) {
       >
         <Text style={styles.title}>어떤 행사인가요?</Text>
         <Text style={styles.desc}>
-          유형에 따라 입력 칸 이름만 바뀌어요.{'\n'}블록과 문구는 모두 자유롭게 고칠 수 있어요.
+          유형에 따라 입력 칸 이름만 바뀌어요.{'\n'}구성과 문구는 모두 자유롭게 고칠 수 있어요.
         </Text>
 
         <View style={styles.grid}>

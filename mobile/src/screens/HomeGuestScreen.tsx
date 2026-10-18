@@ -23,7 +23,7 @@ export function HomeGuestScreen({ navigation }: Props) {
         <Placeholder width={84} height={16} label="앱 이름" />
 
         <Text style={styles.headline}>
-          블록을 고르고 쌓아서{'\n'}나만의 초대장을
+          사진과 글을 골라 쌓아서{'\n'}나만의 초대장을
         </Text>
         <Text style={styles.description}>
           인사말, 갤러리, 지도, RSVP, 방명록.{'\n'}필요한 것만 골라 순서대로 놓으면 됩니다.
@@ -37,7 +37,7 @@ export function HomeGuestScreen({ navigation }: Props) {
             style={styles.previewImage}
           >
             <View style={styles.previewLabelWrap}>
-              <Text style={styles.previewLabel}>갤러리 블록 · 2열 그리드</Text>
+              <Text style={styles.previewLabel}>갤러리 · 2열 그리드</Text>
             </View>
           </LinearGradient>
         </View>

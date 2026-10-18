@@ -8,7 +8,7 @@ import { textStyle } from '../theme/typography';
 /** Lets a drag list inside a sheet stop the sheet from scrolling while an item is being dragged. */
 export const ScrollLockContext = createContext<(locked: boolean) => void>(() => {});
 
-/** Deletes the block being edited. Set by the editor screen; shown as 블록 삭제하기 at the bottom of a block's main editor page. */
+/** Deletes the block being edited. Set by the editor screen; shown as 삭제하기 at the bottom of a block's main editor page. */
 export const BlockDeleteContext = createContext<(() => void) | null>(null);
 
 function DeleteBlockButton() {
@@ -23,7 +23,7 @@ function DeleteBlockButton() {
       style={({ pressed }) => [styles.delete, pressed && styles.deletePressed]}
       accessibilityRole="button"
     >
-      <Text style={styles.deleteLabel}>블록 삭제하기</Text>
+      <Text style={styles.deleteLabel}>삭제하기</Text>
     </Pressable>
   );
 }

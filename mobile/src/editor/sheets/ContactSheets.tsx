@@ -106,7 +106,7 @@ export function PhoneSheet({ block, onChange, onDone, project }: BlockSheetProps
           { key: 'lines', label: '연락처 사이 선', value: p.lines, onChange: (lines) => set({ lines }) },
         ]}
       />
-      <Section label="아래 여백" sub="다음 블록과의 간격">
+      <Section label="아래 여백" sub="아래 내용과의 간격">
         <GapTiles value={p.gapBelow} onChange={(gapBelow) => set({ gapBelow })} />
       </Section>
     </EditorSheet>
@@ -190,7 +190,7 @@ export function EmailSheet({ block, onChange, onDone, project }: BlockSheetProps
           { key: 'lines', label: '이메일 사이 선', value: p.lines, onChange: (lines) => set({ lines }) },
         ]}
       />
-      <Section label="아래 여백" sub="다음 블록과의 간격">
+      <Section label="아래 여백" sub="아래 내용과의 간격">
         <GapTiles value={p.gapBelow} onChange={(gapBelow) => set({ gapBelow })} />
       </Section>
     </EditorSheet>
@@ -312,7 +312,7 @@ export function AccountSheet({ block, onChange, onDone, project }: BlockSheetPro
           { key: 'lines', label: '계좌 사이 선', value: p.lines, onChange: (lines) => set({ lines }) },
         ]}
       />
-      <Section label="아래 여백" sub="다음 블록과의 간격">
+      <Section label="아래 여백" sub="아래 내용과의 간격">
         <GapTiles value={p.gapBelow} onChange={(gapBelow) => set({ gapBelow })} />
       </Section>
     </EditorSheet>

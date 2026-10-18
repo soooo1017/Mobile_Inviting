@@ -20,7 +20,7 @@ export function DateTimeSheet({ block, onChange, onDone, project, onOpenSettings
           <Text style={styles.readonlyValue}>{formatWhenShort(project.eventAt)}</Text>
           <Text style={styles.readonlySub}>행사 정보에서 가져옴 ›</Text>
         </Pressable>
-        <Help>날짜·시간은 ⚙ 전체 설정 → 행사 정보에서 고쳐요. 모든 블록에 같이 반영돼요.</Help>
+        <Help>날짜·시간은 ⚙ 전체 설정 → 행사 정보에서 고쳐요. 초대장 전체에 같이 반영돼요.</Help>
       </Section>
       <ToggleList
         items={[

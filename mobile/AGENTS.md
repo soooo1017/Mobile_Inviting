@@ -45,3 +45,4 @@ Docs: https://docs.expo.dev/eas/index.md
 - **Never draw under the status bar or home indicator.** Every screen sits inside the safe area: `SafeAreaView` (`react-native-safe-area-context`) for stack screens, `ModalSafeArea` (`src/components/ModalSafeArea.tsx`) for full-screen `Modal`s — `SafeAreaView` reads zero insets inside a Modal on iOS. Absolutely positioned overlays offset by `useSafeAreaInsets()`, never a hard-coded top.
 - **Date pickers are Korean.** Pass `locale="ko-KR"` to every `DateTimePicker`, and wrap iOS `inline` pickers in a centered `View` (they draw flush left otherwise).
 - **No 1/N percentage widths for wrapped grids** (e.g. a 7-column calendar) — iOS rounding wraps the last column early. Use explicit rows with `flex: 1` cells.
+- **Never say "블록" in user-facing text.** It's an internal term; users think "사진 넣기 · 글 넣기". Use `+ 추가하기`, `삭제하기`, `삭제했어요`, or the item's own name (텍스트 · 사진 · 일시 …). Code identifiers and comments can keep "block".

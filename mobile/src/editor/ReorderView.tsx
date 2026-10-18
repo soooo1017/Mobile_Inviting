@@ -36,7 +36,7 @@ export function ReorderView({ blocks, highlightId, onMove, onDuplicate, onDelete
           onDragChange={setScrollLocked}
           renderGap={(indexAfter) => (
             <View style={styles.gap}>
-              <Pressable onPress={() => onInsertAt(indexAfter)} hitSlop={8} style={styles.plus} accessibilityLabel="이 자리에 블록 추가">
+              <Pressable onPress={() => onInsertAt(indexAfter)} hitSlop={8} style={styles.plus} accessibilityLabel="이 자리에 추가하기">
                 <Text style={styles.plusMark}>+</Text>
               </Pressable>
             </View>

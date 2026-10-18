@@ -22,7 +22,7 @@ export function DateTimeBlockView({ block }: { block: BlockOfType<'datetime'> })
   if (nothing) {
     return mode === 'edit' ? (
       <InvUiText size={13} soft style={styles.center}>
-        일시 블록 · 모두 꺼져 있어요
+        일시 · 모두 꺼져 있어요
       </InvUiText>
     ) : null;
   }

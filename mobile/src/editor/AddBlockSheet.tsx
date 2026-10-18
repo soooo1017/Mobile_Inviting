@@ -48,7 +48,7 @@ type Props = {
 /** Same sheet whether opened from the editor's bottom button or a "+" in 순서 편집. */
 export function AddBlockSheet({ visible, where, onPick, onClose }: Props) {
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="블록 추가">
+    <BottomSheet visible={visible} onClose={onClose} title="추가하기">
       <Text style={styles.where}>{where}</Text>
       <View style={styles.body}>
         {CATEGORIES.map((cat) => (

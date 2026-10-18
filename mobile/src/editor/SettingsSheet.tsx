@@ -42,7 +42,7 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
               <Text style={styles.back}>‹ 전체 설정으로</Text>
             </Pressable>
             <FontList mode="default" value={font} defaultFont={font} onChange={(f) => f && onFont(f)} />
-            <Help>모든 서식에 이 글꼴이 들어가요. 블록마다 따로 바꾼 글꼴은 그대로예요.</Help>
+            <Help>초대장 전체 글에 이 글꼴이 들어가요. 따로 글꼴을 바꾼 곳은 그대로예요.</Help>
           </>
         ) : (
           <>
@@ -65,7 +65,7 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
               </View>
               <Help>글씨 색은 배경에 맞춰 자동으로 정해져요.</Help>
             </Section>
-            <Section label="행사 정보" sub="일시 블록 등에 같이 반영돼요">
+            <Section label="행사 정보" sub="일시 등 초대장 전체에 같이 반영돼요">
               <SelectRow label={whenShort.slice(0, whenShort.indexOf(')') + 1)} value="날짜" onPress={() => setPicker(picker === 'date' ? null : 'date')} />
               <SelectRow label={whenShort.slice(whenShort.indexOf(')') + 2)} value="시간" onPress={() => setPicker(picker === 'time' ? null : 'time')} />
               {picker ? (

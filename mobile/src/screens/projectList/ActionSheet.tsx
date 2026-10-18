@@ -49,7 +49,7 @@ export function ActionSheet({
       <View style={styles.bigButtons}>
         <Pressable style={[styles.bigButton, styles.bigButtonSelect]} onPress={onEdit}>
           <Text style={styles.bigButtonLabelSelected}>편집</Text>
-          <Text style={styles.bigButtonSubSelected}>블록 · 디자인</Text>
+          <Text style={styles.bigButtonSubSelected}>내용 · 디자인</Text>
         </Pressable>
         <Pressable style={[styles.bigButton, styles.bigButtonOutline]} onPress={onManage}>
           <Text style={styles.bigButtonLabel}>관리</Text>

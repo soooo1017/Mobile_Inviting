@@ -113,7 +113,7 @@ function Editor({
   const deleteBlock = (block: Block, index: number) => {
     removeBlock(page, block.id);
     if (highlightId === block.id) setHighlightId(null);
-    setToast({ message: '블록을 삭제했어요', undo: () => insertBlock(page, block, index) });
+    setToast({ message: '삭제했어요', undo: () => insertBlock(page, block, index) });
   };
 
   if (!invitation || !canvasValue) {
@@ -208,12 +208,12 @@ function Editor({
           </View>
         ) : blocks.length === 0 ? (
           <View style={[styles.flex, styles.empty, { backgroundColor: theme.paper }]}>
-            <Text style={[styles.emptyTitle, { color: theme.ink }]}>아직 블록이 없어요</Text>
+            <Text style={[styles.emptyTitle, { color: theme.ink }]}>아직 아무것도 없어요</Text>
             <Text style={[styles.emptyDesc, { color: theme.inkSoft }]}>
-              {'텍스트, 사진, 일시 같은 블록을\n위에서부터 하나씩 쌓아 초대장을 만들어요.'}
+              {'글, 사진, 일시 같은 내용을\n위에서부터 하나씩 쌓아 초대장을 만들어요.'}
             </Text>
             <Pressable style={styles.emptyBtn} onPress={() => setAddAt(0)}>
-              <Text style={styles.emptyBtnLabel}>+ 첫 블록 추가</Text>
+              <Text style={styles.emptyBtnLabel}>+ 추가하기</Text>
             </Pressable>
           </View>
         ) : (
@@ -237,7 +237,7 @@ function Editor({
 
         {mode === 'edit' && blocks.length > 0 && !selected ? (
           <Pressable style={[styles.addBar, theme.isDark && styles.addBarOnDark]} onPress={() => setAddAt(blocks.length)}>
-            <Text style={[styles.addBarLabel, theme.isDark && styles.addBarLabelOnDark]}>+ 블록 추가</Text>
+            <Text style={[styles.addBarLabel, theme.isDark && styles.addBarLabelOnDark]}>+ 추가하기</Text>
           </Pressable>
         ) : null}
 
