@@ -1,12 +1,32 @@
-import { createContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ModalSafeArea } from '../components/ModalSafeArea';
-import { color, radius, space } from '../theme/tokens';
+import { color, radius, size, space } from '../theme/tokens';
 import { textStyle } from '../theme/typography';
 
 /** Lets a drag list inside a sheet stop the sheet from scrolling while an item is being dragged. */
 export const ScrollLockContext = createContext<(locked: boolean) => void>(() => {});
+
+/** Deletes the block being edited. Set by the editor screen; shown as 블록 삭제하기 at the bottom of a block's main editor page. */
+export const BlockDeleteContext = createContext<(() => void) | null>(null);
+
+function DeleteBlockButton() {
+  const onDelete = useContext(BlockDeleteContext);
+  if (!onDelete) return null;
+  return (
+    <Pressable
+      onPress={() => {
+        Keyboard.dismiss();
+        onDelete();
+      }}
+      style={({ pressed }) => [styles.delete, pressed && styles.deletePressed]}
+      accessibilityRole="button"
+    >
+      <Text style={styles.deleteLabel}>블록 삭제하기</Text>
+    </Pressable>
+  );
+}
 
 /** When the keyboard opens, scroll the sheet so the field being typed in sits just below the sheet's top. */
 function useScrollToFocusedInput() {
@@ -83,6 +103,7 @@ export function EditorSheet({ title, onDone, onBack, doneLabel = '완료', child
           <View ref={contentRef} collapsable={false}>
             <Pressable onPress={Keyboard.dismiss} accessible={false} style={styles.bodyInner}>
               <ScrollLockContext.Provider value={setLocked}>{children}</ScrollLockContext.Provider>
+              {onBack ? null : <DeleteBlockButton />}
             </Pressable>
           </View>
         </ScrollView>
@@ -135,6 +156,7 @@ export function FullScreenEditor({ visible, title, onClose, onDone, doneLabel = 
             <View ref={contentRef} collapsable={false}>
               <Pressable onPress={Keyboard.dismiss} accessible={false} style={styles.bodyInner}>
                 <ScrollLockContext.Provider value={setLocked}>{children}</ScrollLockContext.Provider>
+                <DeleteBlockButton />
               </Pressable>
             </View>
           </ScrollView>
@@ -146,6 +168,19 @@ export function FullScreenEditor({ visible, title, onClose, onDone, doneLabel = 
 }
 
 const styles = StyleSheet.create({
+  delete: {
+    marginTop: space[4],
+    backgroundColor: color.status.error,
+    borderRadius: radius.button,
+    paddingVertical: size.buttonPaddingY,
+    alignItems: 'center',
+  },
+  deletePressed: {
+    opacity: 0.85,
+  },
+  deleteLabel: {
+    ...textStyle({ size: 'button2', weight: 'semibold', color: '#ffffff' }),
+  },
   flex: {
     flex: 1,
   },

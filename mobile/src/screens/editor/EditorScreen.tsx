@@ -16,6 +16,7 @@ import { AddBlockSheet } from '../../editor/AddBlockSheet';
 import { SettingsSheet } from '../../editor/SettingsSheet';
 import { BlockSheet, isFullScreenEditor } from '../../editor/sheets/BlockSheet';
 import { DarkToast } from '../../editor/ui';
+import { BlockDeleteContext } from '../../editor/EditorSheet';
 import { ModalSafeArea } from '../../components/ModalSafeArea';
 import { EyeIcon, GearIcon, SortIcon } from '../../editor/icons';
 import { blockLabel, blockSummary } from '../../editor/format';
@@ -241,18 +242,25 @@ function Editor({
         ) : null}
 
         {mode === 'edit' && selected ? (
-          <BlockSheet
-            key={selected.id}
-            block={selected}
-            project={project}
-            defaultFont={invitation.font}
-            onChange={(next) => updateBlock(page, next.id, () => next)}
-            onDone={() => setSelectedId(null)}
-            onOpenSettings={() => {
+          <BlockDeleteContext.Provider
+            value={() => {
               setSelectedId(null);
-              setSettingsOpen(true);
+              deleteBlock(selected, blocks.indexOf(selected));
             }}
-          />
+          >
+            <BlockSheet
+              key={selected.id}
+              block={selected}
+              project={project}
+              defaultFont={invitation.font}
+              onChange={(next) => updateBlock(page, next.id, () => next)}
+              onDone={() => setSelectedId(null)}
+              onOpenSettings={() => {
+                setSelectedId(null);
+                setSettingsOpen(true);
+              }}
+            />
+          </BlockDeleteContext.Provider>
         ) : null}
 
         <DarkToast

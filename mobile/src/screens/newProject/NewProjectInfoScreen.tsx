@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, Text, View, StyleSheet } from 'react-native';
+import { Platform, Pressable, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -22,8 +22,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'NewProjectInfo'>;
 export function NewProjectInfoScreen({ navigation }: Props) {
   const { draft, update } = useNewProjectDraft();
   const { scrollRef, fieldLayout, onFieldFocus } = useKeyboardAwareForm();
-  const [showDate, setShowDate] = useState(false);
-  const [showTime, setShowTime] = useState(false);
+  // Same as ⚙ 전체 설정: tapping 일자/시간 opens the calendar / time wheel right away (tap again to close).
+  const [picker, setPicker] = useState<'date' | 'time' | null>(null);
   const [venueText, setVenueText] = useState(draft.venue?.name ?? '');
 
   const eventDate = new Date(draft.eventAt);
@@ -86,42 +86,37 @@ export function NewProjectInfoScreen({ navigation }: Props) {
         <View style={styles.section}>
           <FieldLabel>행사 일시</FieldLabel>
           <View style={styles.dateTimeRow}>
-            <Pressable style={styles.dateTimeField} onPress={() => setShowDate(true)}>
+            <Pressable
+              style={[styles.dateTimeField, picker === 'date' && styles.dateTimeFieldOn]}
+              onPress={() => setPicker(picker === 'date' ? null : 'date')}
+            >
               <Text style={styles.dateTimeText}>{formatEventDateTime(draft.eventAt).split(' ').slice(0, 4).join(' ')}</Text>
             </Pressable>
-            <Pressable style={styles.dateTimeField} onPress={() => setShowTime(true)}>
+            <Pressable
+              style={[styles.dateTimeField, picker === 'time' && styles.dateTimeFieldOn]}
+              onPress={() => setPicker(picker === 'time' ? null : 'time')}
+            >
               <Text style={styles.dateTimeText}>{formatEventDateTime(draft.eventAt).split(' ').slice(4).join(' ')}</Text>
             </Pressable>
           </View>
-          {showDate ? (
-            <DateTimePicker
-              locale="ko-KR"
-              value={eventDate}
-              mode="date"
-              onChange={(_, selected) => {
-                setShowDate(false);
-                if (selected) {
+          {picker ? (
+            <View style={styles.pickerWrap}>
+              <DateTimePicker
+                locale="ko-KR"
+                value={eventDate}
+                mode={picker}
+                display={Platform.OS === 'ios' ? (picker === 'date' ? 'inline' : 'spinner') : 'default'}
+                accentColor={color.select.fill}
+                onChange={(e, selected) => {
+                  if (Platform.OS !== 'ios') setPicker(null);
+                  if (e.type !== 'set' || !selected) return;
                   const next = new Date(eventDate);
-                  next.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate());
+                  if (picker === 'date') next.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate());
+                  else next.setHours(selected.getHours(), selected.getMinutes(), 0, 0);
                   update({ eventAt: next.toISOString() });
-                }
-              }}
-            />
-          ) : null}
-          {showTime ? (
-            <DateTimePicker
-              locale="ko-KR"
-              value={eventDate}
-              mode="time"
-              onChange={(_, selected) => {
-                setShowTime(false);
-                if (selected) {
-                  const next = new Date(eventDate);
-                  next.setHours(selected.getHours(), selected.getMinutes());
-                  update({ eventAt: next.toISOString() });
-                }
-              }}
-            />
+                }}
+              />
+            </View>
           ) : null}
         </View>
 
@@ -205,6 +200,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 13,
     paddingVertical: 13,
+  },
+  dateTimeFieldOn: {
+    borderColor: color.select.fill,
+  },
+  pickerWrap: {
+    alignItems: 'center',
   },
   dateTimeText: {
     ...textStyle({ size: 'control', weight: 'regular', color: color.ink.primary }),
