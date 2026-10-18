@@ -112,6 +112,8 @@ type ProjectsContextValue = {
   createProject: (input: NewProjectInput) => Project;
   deleteProject: (id: string) => void;
   setThanksSettings: (id: string, thanks: Project['thanks']) => void;
+  /** Used by the editor's 전체 설정 (theme, event date) — every block reads these live. */
+  updateProject: (id: string, patch: Partial<Pick<Project, 'themeId' | 'eventAt' | 'title'>>) => void;
 };
 
 const ProjectsContext = createContext<ProjectsContextValue | null>(null);
@@ -141,6 +143,8 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       deleteProject: (id) => setProjects((prev) => prev.filter((p) => p.id !== id)),
       setThanksSettings: (id, thanks) =>
         setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, thanks, updatedAt: new Date().toISOString() } : p))),
+      updateProject: (id, patch) =>
+        setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: new Date().toISOString() } : p))),
     }),
     [projects],
   );

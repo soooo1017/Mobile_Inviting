@@ -11,7 +11,7 @@ export type RootStackParamList = {
   NewProjectInfo: undefined;
   NewProjectThanks: undefined;
   ThemeSelect: undefined;
-  EditorPlaceholder: { projectId: string; tab?: 'invite' | 'thanks' };
+  Editor: { projectId: string; tab?: 'invite' | 'thanks' };
   ManagePlaceholder: { projectId: string };
   NicknameEdit: undefined;
   PasswordChange: undefined;

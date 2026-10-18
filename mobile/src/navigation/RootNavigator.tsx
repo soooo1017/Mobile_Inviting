@@ -12,7 +12,7 @@ import { NewProjectTypeScreen } from '../screens/newProject/NewProjectTypeScreen
 import { NewProjectInfoScreen } from '../screens/newProject/NewProjectInfoScreen';
 import { NewProjectThanksScreen } from '../screens/newProject/NewProjectThanksScreen';
 import { ThemeSelectScreen } from '../screens/newProject/ThemeSelectScreen';
-import { EditorPlaceholderScreen } from '../screens/EditorPlaceholderScreen';
+import { EditorScreen } from '../screens/editor/EditorScreen';
 import { ManagePlaceholderScreen } from '../screens/ManagePlaceholderScreen';
 import { NicknameEditScreen } from '../screens/myPage/NicknameEditScreen';
 import { PasswordChangeScreen } from '../screens/myPage/PasswordChangeScreen';
@@ -40,7 +40,7 @@ export function RootNavigator() {
       <Stack.Screen name="NewProjectInfo" component={NewProjectInfoScreen} />
       <Stack.Screen name="NewProjectThanks" component={NewProjectThanksScreen} />
       <Stack.Screen name="ThemeSelect" component={ThemeSelectScreen} />
-      <Stack.Screen name="EditorPlaceholder" component={EditorPlaceholderScreen} />
+      <Stack.Screen name="Editor" component={EditorScreen} options={{ gestureEnabled: false }} />
       <Stack.Screen name="ManagePlaceholder" component={ManagePlaceholderScreen} />
       <Stack.Screen name="NicknameEdit" component={NicknameEditScreen} />
       <Stack.Screen name="PasswordChange" component={PasswordChangeScreen} />

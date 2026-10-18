@@ -8,6 +8,8 @@ import * as SplashScreenModule from 'expo-splash-screen';
 import { AuthProvider } from './src/state/AuthContext';
 import { ProjectsProvider } from './src/state/ProjectsContext';
 import { NewProjectDraftProvider } from './src/state/NewProjectDraftContext';
+import { InvitationsProvider } from './src/state/InvitationsContext';
+import { InvitationFontsProvider } from './src/editor/fonts';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { color } from './src/theme/tokens';
 
@@ -36,9 +38,13 @@ export default function App() {
         <AuthProvider>
           <ProjectsProvider>
             <NewProjectDraftProvider>
-              <NavigationContainer>
-                <RootNavigator />
-              </NavigationContainer>
+              <InvitationsProvider>
+                <InvitationFontsProvider>
+                  <NavigationContainer>
+                    <RootNavigator />
+                  </NavigationContainer>
+                </InvitationFontsProvider>
+              </InvitationsProvider>
             </NewProjectDraftProvider>
           </ProjectsProvider>
         </AuthProvider>

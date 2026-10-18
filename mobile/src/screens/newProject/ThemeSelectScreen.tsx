@@ -33,7 +33,7 @@ export function ThemeSelectScreen({ navigation }: Props) {
       themeId: draft.themeId,
     });
     navigation.dispatch(
-      CommonActions.reset({ index: 0, routes: [{ name: 'EditorPlaceholder', params: { projectId: project.id } }] }),
+      CommonActions.reset({ index: 0, routes: [{ name: 'Editor', params: { projectId: project.id } }] }),
     );
   };
 
