@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/refs -- PanResponder callbacks only read refs inside gesture events, never during render; the rule can't tell them apart from render code. */
 import { useEffect, useRef, useState } from 'react';
 import { Image, Modal, PanResponder, Pressable, Text, View, StyleSheet, useWindowDimensions, type GestureResponderEvent } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ModalSafeArea } from '../../components/ModalSafeArea';
 import { color } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { frameAspect, photoRect } from '../canvas/PhotoFrame';
@@ -91,7 +91,7 @@ export function CropScreen({
 
   return (
     <Modal visible animationType="fade" presentationStyle="fullScreen" onRequestClose={onCancel}>
-      <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+      <ModalSafeArea style={styles.screen}>
         <View style={styles.head}>
           <Pressable onPress={onCancel} hitSlop={10}>
             <Text style={styles.headSide}>취소</Text>
@@ -139,7 +139,7 @@ export function CropScreen({
             );
           })}
         </View>
-      </SafeAreaView>
+      </ModalSafeArea>
     </Modal>
   );
 }

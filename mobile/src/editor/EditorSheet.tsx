@@ -1,6 +1,7 @@
 import { createContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, StyleSheet, useWindowDimensions } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ModalSafeArea } from '../components/ModalSafeArea';
 import { color, radius, space } from '../theme/tokens';
 import { textStyle } from '../theme/typography';
 
@@ -107,7 +108,7 @@ export function FullScreenEditor({ visible, title, onClose, onDone, doneLabel = 
   const { scrollRef, contentRef } = useScrollToFocusedInput();
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <SafeAreaView style={styles.full} edges={['top', 'bottom']}>
+      <ModalSafeArea style={styles.full}>
         <View style={styles.fullHead}>
           <Pressable onPress={onClose} hitSlop={10}>
             <Text style={styles.fullClose}>{closeLabel}</Text>
@@ -139,7 +140,7 @@ export function FullScreenEditor({ visible, title, onClose, onDone, doneLabel = 
           </ScrollView>
           {footer}
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </ModalSafeArea>
     </Modal>
   );
 }

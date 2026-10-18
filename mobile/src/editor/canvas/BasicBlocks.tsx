@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Linking, Modal, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCanvas } from './CanvasContext';
 import { InvText, InvUiText } from './InvText';
 import { PhotoFrame, frameAspect } from './PhotoFrame';
@@ -120,6 +121,7 @@ export function GalleryBlockView({ block }: { block: BlockOfType<'gallery'> }) {
 
 function PhotoViewer({ photos, start, onClose }: { photos: Photo[]; start: number; onClose: () => void }) {
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [index, setIndex] = useState(start);
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
@@ -137,7 +139,7 @@ function PhotoViewer({ photos, start, onClose }: { photos: Photo[]; start: numbe
             </View>
           ))}
         </ScrollView>
-        <View style={styles.viewerTop}>
+        <View style={[styles.viewerTop, { top: insets.top + 12 }]}>
           <Text style={styles.viewerCount}>{`${index + 1} / ${photos.length}`}</Text>
           <Pressable onPress={onClose} hitSlop={12}>
             <Text style={styles.viewerClose}>✕</Text>
@@ -283,7 +285,6 @@ const styles = StyleSheet.create({
   },
   viewerTop: {
     position: 'absolute',
-    top: 54,
     left: 20,
     right: 20,
     flexDirection: 'row',

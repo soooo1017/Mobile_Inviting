@@ -16,6 +16,7 @@ import { AddBlockSheet } from '../../editor/AddBlockSheet';
 import { SettingsSheet } from '../../editor/SettingsSheet';
 import { BlockSheet, isFullScreenEditor } from '../../editor/sheets/BlockSheet';
 import { DarkToast } from '../../editor/ui';
+import { ModalSafeArea } from '../../components/ModalSafeArea';
 import { EyeIcon, GearIcon, SortIcon } from '../../editor/icons';
 import { blockLabel, blockSummary } from '../../editor/format';
 import { defaultBlock, type Block, type BlockType, type PageKey } from '../../editor/types';
@@ -289,7 +290,7 @@ function PreviewModal({ visible, onClose, blocks, base }: { visible: boolean; on
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <CanvasContext.Provider value={value}>
-        <SafeAreaView style={[styles.screen, { backgroundColor: base.theme.paper }]} edges={['top', 'bottom']}>
+        <ModalSafeArea style={[styles.screen, { backgroundColor: base.theme.paper }]}>
           <View style={[styles.previewHead, { borderBottomColor: base.theme.rule }]}>
             <Text style={[styles.previewTitle, { color: base.theme.ink }]}>미리보기</Text>
             <Pressable onPress={onClose} style={styles.previewBack}>
@@ -300,7 +301,7 @@ function PreviewModal({ visible, onClose, blocks, base }: { visible: boolean; on
             <Canvas blocks={blocks} />
           </ScrollView>
           <DarkToast message={toast} onHide={() => setToast(null)} bottom={28} />
-        </SafeAreaView>
+        </ModalSafeArea>
       </CanvasContext.Provider>
     </Modal>
   );
