@@ -128,7 +128,11 @@ export type Block =
 export type BlockType = Block['type'];
 export type BlockOfType<T extends BlockType> = Extract<Block, { type: T }>;
 
-export type PageKey = 'invite' | 'thanks';
+/** 초대장 · 안내 팝업 · 감사페이지 — 안내 팝업은 초대장을 열면 먼저 뜨는 작은 페이지예요. */
+export type PageKey = 'invite' | 'popup' | 'thanks';
+
+/** 안내 팝업 사용 여부 — 끄더라도 만들어 둔 내용(pages.popup)은 그대로 보관돼요. */
+export type PopupSettings = { enabled: boolean };
 
 /** 배경음악 — one per invitation. Both choices are kept so switching tabs doesn't lose the file. */
 export type BgmFile = { uri: string; name: string; size: number };
@@ -147,7 +151,16 @@ export type Invitation = {
   coverPhotoId?: string;
   bgm?: Bgm;
   thanks?: ThanksPage;
+  popup?: PopupSettings;
 };
+
+/**
+ * 안내 팝업 크기 — 폰 크기와 상관없이 고정이에요 (가장 작은 폰 360pt에서도 양옆이 남는 크기).
+ * 내용 영역(300 × 364)은 넘치면 팝업 안에서 스크롤돼요.
+ */
+export const POPUP_SIZE = { width: 300, height: 420, bar: 56 } as const;
+/** 안내 팝업에 넣을 수 있는 것 — 짧게 읽히는 것만. */
+export const POPUP_BLOCK_TYPES: BlockType[] = ['text', 'image', 'divider', 'spacer', 'button'];
 
 export const LIMITS = {
   galleryPhotos: 30,

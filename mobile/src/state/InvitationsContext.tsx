@@ -18,7 +18,7 @@ type InvitationsContextValue = {
 const InvitationsContext = createContext<InvitationsContextValue | null>(null);
 
 function emptyInvitation(projectId: string): Invitation {
-  return { projectId, font: 'pretendard', pages: { invite: [], thanks: [] } };
+  return { projectId, font: 'pretendard', pages: { invite: [], popup: [], thanks: [] } };
 }
 
 export function InvitationsProvider({ children }: { children: ReactNode }) {
@@ -32,7 +32,11 @@ export function InvitationsProvider({ children }: { children: ReactNode }) {
     let inv = emptyInvitation(projectId);
     try {
       const raw = await AsyncStorage.getItem(STORAGE_PREFIX + projectId);
-      if (raw) inv = { ...inv, ...(JSON.parse(raw) as Invitation) };
+      if (raw) {
+        // Older saves have no 안내 팝업 page yet.
+        const saved = JSON.parse(raw) as Invitation;
+        inv = { ...inv, ...saved, pages: { ...inv.pages, ...saved.pages } };
+      }
     } catch (e) {
       console.warn('invitation load failed:', e);
     }
@@ -103,6 +107,7 @@ export function useInvitation(projectId: string) {
       setFont: (font: FontId) => edit((inv) => ({ ...inv, font })),
       setCoverPhoto: (coverPhotoId: string | undefined) => edit((inv) => ({ ...inv, coverPhotoId })),
       setBgm: (bgm: Bgm) => edit((inv) => ({ ...inv, bgm })),
+      setPopupEnabled: (enabled: boolean) => edit((inv) => ({ ...inv, popup: { enabled } })),
       updateThanks: (fn: (t: ThanksPage) => ThanksPage) => edit((inv) => ({ ...inv, thanks: fn(inv.thanks ?? DEFAULT_THANKS_PAGE) })),
       /** Replaces a whole page at once (감사페이지 간단 ↔ 자유 전환). */
       setPage: (page: PageKey, blocks: Block[]) => edit((inv) => withPage(inv, page, blocks)),

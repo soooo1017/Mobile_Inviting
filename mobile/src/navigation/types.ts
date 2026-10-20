@@ -11,7 +11,7 @@ export type RootStackParamList = {
   NewProjectInfo: undefined;
   NewProjectThanks: undefined;
   ThemeSelect: undefined;
-  Editor: { projectId: string; tab?: 'invite' | 'thanks' };
+  Editor: { projectId: string; tab?: 'invite' | 'popup' | 'thanks' };
   Manage: { projectId: string };
   ManageRsvp: { projectId: string };
   ManageGuestbook: { projectId: string };

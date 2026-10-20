@@ -5,6 +5,7 @@ import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { useProjects } from '../../state/ProjectsContext';
+import { useInvitation } from '../../state/InvitationsContext';
 import { BottomSheet } from '../../components/BottomSheet';
 import { SelectChip } from '../../components/SelectChip';
 import { TextField } from '../../components/TextField';
@@ -40,6 +41,8 @@ export function ProjectSettingsScreen({ navigation, route }: Props) {
 function Settings({ project, navigation }: { project: Project; navigation: Props['navigation'] }) {
   const { updateProject, setThanksSettings, deleteProject } = useProjects();
   const thanksMode = useThanksMode(project);
+  const { invitation, setPopupEnabled } = useInvitation(project.id);
+  const popupOn = invitation?.popup?.enabled ?? false;
   const [title, setTitle] = useState(project.title);
   const [venueOpen, setVenueOpen] = useState(false);
   const [downloadOpen, setDownloadOpen] = useState(false);
@@ -72,6 +75,12 @@ function Settings({ project, navigation }: { project: Project; navigation: Props
 
         <Section label="행사 정보" sub="에디터의 ⚙ 전체 설정과 같이 바뀌어요">
           <EventInfoRows project={project} onEventAt={(eventAt) => updateProject(project.id, { eventAt })} onOpenVenue={() => setVenueOpen(true)} />
+        </Section>
+
+        <Section label="안내 팝업" sub="초대장을 열면 먼저 떠요">
+          <ToggleList items={[{ key: 'popup', label: '안내 팝업 사용', value: popupOn, onChange: setPopupEnabled }]} />
+          {popupOn ? <SelectRow label="내용 편집" onPress={() => navigation.navigate('Editor', { projectId: project.id, tab: 'popup' })} /> : null}
+          <Help>에디터 ⚙ 전체 설정과 같은 설정이에요. 주차 · 셔틀처럼 놓치기 쉬운 정보를 적어 두세요.</Help>
         </Section>
 
         <Section label="감사페이지">

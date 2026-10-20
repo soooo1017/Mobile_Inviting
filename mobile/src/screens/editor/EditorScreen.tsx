@@ -9,6 +9,7 @@ import { DEFAULT_THANKS_PAGE, useInvitation } from '../../state/InvitationsConte
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus, type AudioSource } from 'expo-audio';
 import { BottomSheet } from '../../components/BottomSheet';
 import { SelectChip } from '../../components/SelectChip';
+import { DarkToast, ToggleList } from '../../editor/ui';
 import { SimpleThanksView } from '../../editor/canvas/SimpleThanks';
 import { ThanksSimpleSheet } from '../../editor/sheets/ThanksSimpleSheet';
 import { coverPhoto } from '../../editor/photos';
@@ -18,18 +19,18 @@ import { formatMonthDay, thanksEndDate, thanksStartDate } from '../../utils/proj
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { Canvas } from '../../editor/canvas/Canvas';
+import { GuestPopup, PopupFrame } from '../../editor/canvas/PopupFrame';
 import { CanvasContext, type CanvasContextValue } from '../../editor/canvas/CanvasContext';
 import { invitationTheme } from '../../editor/invitationTheme';
 import { ReorderView } from '../../editor/ReorderView';
 import { AddBlockSheet } from '../../editor/AddBlockSheet';
 import { SettingsSheet } from '../../editor/SettingsSheet';
 import { BlockSheet, isFullScreenEditor } from '../../editor/sheets/BlockSheet';
-import { DarkToast } from '../../editor/ui';
 import { BlockDeleteContext } from '../../editor/EditorSheet';
 import { ModalSafeArea } from '../../components/ModalSafeArea';
 import { EyeIcon, GearIcon, SortIcon } from '../../editor/icons';
 import { blockLabel, blockSummary } from '../../editor/format';
-import { defaultBlock, type Block, type BlockType, type PageKey } from '../../editor/types';
+import { defaultBlock, POPUP_BLOCK_TYPES, type Block, type BlockType, type PageKey } from '../../editor/types';
 import type { Project } from '../../types/project';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Editor'>;
@@ -61,13 +62,13 @@ function Editor({
   navigation: Props['navigation'];
   updateProject: ReturnType<typeof useProjects>['updateProject'];
 }) {
-  const { invitation, insertBlock, updateBlock, removeBlock, duplicateBlock, moveBlock, setFont, setCoverPhoto, setBgm, updateThanks } =
+  const { invitation, insertBlock, updateBlock, removeBlock, duplicateBlock, moveBlock, setFont, setCoverPhoto, setBgm, setPopupEnabled, updateThanks } =
     useInvitation(project.id);
   const { setThanksSettings } = useProjects();
   const { height: screenH } = useWindowDimensions();
   // [감사페이지] 탭은 감사페이지를 쓰는 경우에만 보여요.
   const hasThanks = project.thanks.enabled;
-  const [page, setPage] = useState<PageKey>(hasThanks && initialTab === 'thanks' ? 'thanks' : 'invite');
+  const [page, setPage] = useState<PageKey>(initialTab === 'popup' ? 'popup' : hasThanks && initialTab === 'thanks' ? 'thanks' : 'invite');
   const [mode, setMode] = useState<'edit' | 'reorder'>('edit');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
@@ -79,11 +80,20 @@ function Editor({
   const [daysOpen, setDaysOpen] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const blockY = useRef<Record<string, number>>({});
+  const popupScrollRef = useRef<ScrollView>(null);
 
   const theme = invitationTheme(project);
   const blocks = invitation?.pages[page] ?? [];
   const selected = blocks.find((b) => b.id === selectedId) ?? null;
   const thanksPage = invitation?.thanks ?? DEFAULT_THANKS_PAGE;
+  // 안내 팝업: 초대장을 열면 먼저 뜨는 작은 페이지. 쓰지 않으면 탭에 스위치와 안내만 보여요.
+  const isPopup = page === 'popup';
+  const popupOn = invitation?.popup?.enabled ?? false;
+  const popupOff = isPopup && !popupOn;
+  // 시트가 팝업(420)을 가리지 않게, 팝업 내용을 고르는 동안은 위쪽 탭 · 버튼 줄을 접어요.
+  const popupEditing = isPopup && selected !== null;
+  const pageTabs: PageKey[] = hasThanks ? ['invite', 'popup', 'thanks'] : ['invite', 'popup'];
+  const PAGE_LABEL: Record<PageKey, string> = { invite: '초대장', popup: '안내 팝업', thanks: '감사페이지' };
   // 감사페이지 간단 모드: a fixed layout instead of the free block list.
   const simpleThanks = page === 'thanks' && thanksPage.mode === 'simple';
   // 감사페이지는 행사 다음 날 자정부터 공개 기간(1~7일) 동안 보여요 — 새 초대장 3/4와 같은 규칙.
@@ -107,7 +117,8 @@ function Editor({
     // Keep the tapped block visible above the sheet.
     if (!isFullScreenEditor(block.type)) {
       const y = blockY.current[block.id];
-      if (y !== undefined) setTimeout(() => scrollRef.current?.scrollTo({ y: Math.max(0, y - 12), animated: true }), 60);
+      const target = page === 'popup' ? popupScrollRef : scrollRef;
+      if (y !== undefined) setTimeout(() => target.current?.scrollTo({ y: Math.max(0, y - 12), animated: true }), 60);
     }
   };
 
@@ -194,9 +205,9 @@ function Editor({
                 <GearIcon color={color.ink.secondary} />
               </Pressable>
             </View>
-            {hasThanks ? (
-              <View style={styles.tabs}>
-                {(['invite', 'thanks'] as PageKey[]).map((k) => (
+            {popupEditing ? null : (
+            <View style={styles.tabs}>
+                {pageTabs.map((k) => (
                   <Pressable
                     key={k}
                     onPress={() => {
@@ -206,9 +217,14 @@ function Editor({
                     }}
                     style={[styles.tab, page === k && styles.tabOn]}
                   >
-                    <Text style={[styles.tabLabel, page === k && styles.tabLabelOn]}>{k === 'invite' ? '초대장' : '감사페이지'}</Text>
+                    <Text style={[styles.tabLabel, page === k && styles.tabLabelOn]}>{PAGE_LABEL[k]}</Text>
                   </Pressable>
                 ))}
+              </View>
+            )}
+            {isPopup && !popupEditing ? (
+              <View style={styles.popupBar}>
+                <ToggleList items={[{ key: 'popup', label: '안내 팝업 사용', value: popupOn, onChange: setPopupEnabled }]} />
               </View>
             ) : null}
             {page === 'thanks' ? (
@@ -223,7 +239,7 @@ function Editor({
                 </Pressable>
               </View>
             ) : null}
-            {simpleThanks ? null : (
+            {simpleThanks || popupOff || popupEditing ? null : (
             <View style={styles.menu}>
               <Pressable onPress={() => openReorder()} disabled={!blocks.length} style={[styles.menuBtn, !blocks.length && styles.menuOff]}>
                 <SortIcon color={color.ink.primary} />
@@ -266,6 +282,28 @@ function Editor({
               </View>
             </Pressable>
           </ScrollView>
+        ) : isPopup ? (
+          popupOff ? (
+            <View style={[styles.flex, styles.popupOff]}>
+              <Text style={styles.popupOffTitle}>초대장을 열면 중요한 안내가 먼저 떠요</Text>
+              <Text style={styles.popupOffDesc}>{'주차 · 셔틀 · 식사 시간처럼\n놓치기 쉬운 정보에 좋아요.\n끄면 팝업 없이 바로 초대장이 열려요.'}</Text>
+              <Text style={styles.popupOffDesc}>켜기 전에 만들어 둔 내용은 끄더라도 그대로 보관돼요.</Text>
+            </View>
+          ) : (
+            <View style={[styles.flex, styles.popupStage]}>
+              <PopupFrame
+                blocks={blocks}
+                selectedId={selectedId}
+                scrollRef={popupScrollRef}
+                onPressBlock={select}
+                onLongPressBlock={openReorder}
+                onAdd={() => setAddAt(0)}
+                onBlockLayout={(id, y) => {
+                  blockY.current[id] = y;
+                }}
+              />
+            </View>
+          )
         ) : blocks.length === 0 ? (
           <View style={[styles.flex, styles.empty, { backgroundColor: theme.paper }]}>
             <Text style={[styles.emptyTitle, { color: theme.ink }]}>아직 아무것도 없어요</Text>
@@ -295,7 +333,7 @@ function Editor({
           </ScrollView>
         )}
 
-        {mode === 'edit' && !simpleThanks && blocks.length > 0 && !selected ? (
+        {mode === 'edit' && !simpleThanks && !popupOff && blocks.length > 0 && !selected ? (
           <Pressable style={[styles.addBar, theme.isDark && styles.addBarOnDark]} onPress={() => setAddAt(blocks.length)}>
             <Text style={[styles.addBarLabel, theme.isDark && styles.addBarLabelOnDark]}>+ 추가하기</Text>
           </Pressable>
@@ -346,7 +384,7 @@ function Editor({
           bottom={mode === 'edit' ? 84 : 28}
         />
 
-        <AddBlockSheet visible={addAt !== null} where={addWhere} onPick={addBlock} onClose={() => setAddAt(null)} />
+        <AddBlockSheet visible={addAt !== null} where={addWhere} onPick={addBlock} onClose={() => setAddAt(null)} types={isPopup ? POPUP_BLOCK_TYPES : undefined} />
 
         <SettingsSheet
           visible={settingsOpen}
@@ -358,6 +396,11 @@ function Editor({
           invitation={invitation}
           onCover={setCoverPhoto}
           onBgm={setBgm}
+          onPopupEnabled={setPopupEnabled}
+          onEditPopup={() => {
+            setPage('popup');
+            setSelectedId(null);
+          }}
         />
 
         <BottomSheet visible={daysOpen} onClose={() => setDaysOpen(false)} title="감사페이지 공개 기간">
@@ -384,9 +427,10 @@ function Editor({
         <PreviewModal
           visible={previewOpen}
           onClose={() => setPreviewOpen(false)}
-          blocks={blocks}
+          blocks={isPopup ? invitation.pages.invite : blocks}
+          popupBlocks={page !== 'thanks' && popupOn && invitation.pages.popup.length ? invitation.pages.popup : null}
           base={canvasValue}
-          music={page === 'invite' ? bgmSource(invitation.bgm) : null}
+          music={page !== 'thanks' ? bgmSource(invitation.bgm) : null}
         />
       </SafeAreaView>
     </CanvasContext.Provider>
@@ -398,16 +442,26 @@ function PreviewModal({
   visible,
   onClose,
   blocks,
+  popupBlocks,
   base,
   music,
 }: {
   visible: boolean;
   onClose: () => void;
   blocks: Block[];
+  /** 안내 팝업 — shown over the invitation when it opens, like for guests. null = no popup. */
+  popupBlocks: Block[] | null;
   base: CanvasContextValue;
   music: AudioSource | null;
 }) {
   const [toast, setToast] = useState<string | null>(null);
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [wasVisible, setWasVisible] = useState(visible);
+  // Every time the preview opens the popup comes up again (오늘 하루 보지 않기 is not saved in the preview).
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
+    if (visible) setPopupOpen(true);
+  }
   const value = useMemo<CanvasContextValue>(() => ({ ...base, mode: 'preview', showToast: setToast }), [base]);
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
@@ -424,6 +478,7 @@ function PreviewModal({
               <Canvas blocks={blocks} />
             </ScrollView>
             {visible && music ? <MusicButton source={music} /> : null}
+            {popupOpen && popupBlocks ? <GuestPopup blocks={popupBlocks} onClose={() => setPopupOpen(false)} /> : null}
           </View>
           <DarkToast message={toast} onHide={() => setToast(null)} bottom={28} />
         </ModalSafeArea>
@@ -467,6 +522,30 @@ const styles = StyleSheet.create({
   thanksSelected: {
     borderWidth: 1.5,
     borderColor: color.accent.base,
+  },
+  popupBar: {
+    paddingHorizontal: space.screenX,
+    paddingTop: space[5],
+  },
+  popupStage: {
+    alignItems: 'center',
+    paddingTop: space[6],
+  },
+  popupOff: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: space[10],
+    gap: space[4],
+    paddingBottom: 80,
+  },
+  popupOffTitle: {
+    ...textStyle({ size: 'control', weight: 'semibold', color: color.ink.primary }),
+    textAlign: 'center',
+  },
+  popupOffDesc: {
+    ...textStyle({ size: 'label', weight: 'regular', color: color.ink.muted }),
+    textAlign: 'center',
+    lineHeight: 21,
   },
   thanksBar: {
     paddingHorizontal: space.screenX,

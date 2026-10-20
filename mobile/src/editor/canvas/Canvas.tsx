@@ -44,13 +44,15 @@ type Props = {
   onPressBlock?: (block: Block) => void;
   onLongPressBlock?: (block: Block) => void;
   onBlockLayout?: (id: string, y: number, height: number) => void;
+  /** 'popup': tighter margins so the content is 260 wide inside the 300 wide 안내 팝업. */
+  variant?: 'page' | 'popup';
 };
 
 /** The invitation exactly as it looks (편집은 실제 모습 하나로만). */
-export function Canvas({ blocks, selectedId, onPressBlock, onLongPressBlock, onBlockLayout }: Props) {
+export function Canvas({ blocks, selectedId, onPressBlock, onLongPressBlock, onBlockLayout, variant = 'page' }: Props) {
   const { theme, mode } = useCanvas();
   return (
-    <View style={[styles.paper, { backgroundColor: theme.paper }]}>
+    <View style={[styles.paper, variant === 'popup' && styles.popupPaper, { backgroundColor: theme.paper }]}>
       {blocks.map((block) => {
         const selected = block.id === selectedId;
         const content = <BlockView block={block} />;
@@ -86,6 +88,12 @@ const styles = StyleSheet.create({
     paddingTop: 22,
     paddingBottom: 28,
     flexGrow: 1,
+  },
+  popupPaper: {
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 14,
+    flexGrow: 0,
   },
   slot: {
     paddingVertical: 3,

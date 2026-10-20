@@ -43,15 +43,18 @@ type Props = {
   where: string;
   onPick: (type: BlockType) => void;
   onClose: () => void;
+  /** Only these kinds are offered (안내 팝업은 짧은 것만). Default: all. */
+  types?: BlockType[];
 };
 
 /** Same sheet whether opened from the editor's bottom button or a "+" in 순서 편집. */
-export function AddBlockSheet({ visible, where, onPick, onClose }: Props) {
+export function AddBlockSheet({ visible, where, onPick, onClose, types }: Props) {
+  const categories = CATEGORIES.map((cat) => ({ ...cat, tiles: cat.tiles.filter((t) => !types || types.includes(t.type)) })).filter((cat) => cat.tiles.length);
   return (
     <BottomSheet visible={visible} onClose={onClose} title="추가하기">
       <Text style={styles.where}>{where}</Text>
       <View style={styles.body}>
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <View key={cat.name} style={styles.cat}>
             <Text style={styles.catName}>{cat.name}</Text>
             <View style={styles.tiles}>

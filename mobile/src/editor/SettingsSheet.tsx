@@ -6,7 +6,7 @@ import { textStyle } from '../theme/typography';
 import type { Project } from '../types/project';
 import { FontList } from './sheets/common';
 import { fontMeta } from './fonts';
-import { Help, Section, SelectRow } from './ui';
+import { Help, Section, SelectRow, ToggleList } from './ui';
 import type { Bgm, FontId, Invitation } from './types';
 import { CoverPicker } from './CoverPicker';
 import { BgmSettings } from './BgmSettings';
@@ -27,16 +27,20 @@ type Props = {
   invitation: Invitation;
   onCover: (photoId: string) => void;
   onBgm: (bgm: Bgm) => void;
+  onPopupEnabled: (enabled: boolean) => void;
+  /** 안내 팝업 탭으로 이동 (설정 창은 닫혀요). */
+  onEditPopup: () => void;
 };
 
 type Page = 'main' | 'font' | 'cover' | 'bgm' | 'venue';
 const PAGE_TITLE: Record<Page, string> = { main: '전체 설정', font: '기본 글꼴', cover: '대표 사진', bgm: '배경음악', venue: '장소' };
 
 /** ⚙ 전체 설정 — things that apply to the whole invitation rather than one block. */
-export function SettingsSheet({ visible, onClose, project, font, onFont, onProject, invitation, onCover, onBgm }: Props) {
+export function SettingsSheet({ visible, onClose, project, font, onFont, onProject, invitation, onCover, onBgm, onPopupEnabled, onEditPopup }: Props) {
   const [page, setPage] = useState<Page>('main');
   const cover = coverPhoto(invitation);
   const [bgmLabel, bgmValue] = bgmSummary(invitation.bgm);
+  const popupOn = invitation.popup?.enabled ?? false;
 
   const close = () => {
     setPage('main');
@@ -85,6 +89,19 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
             </Section>
             <Section label="배경음악">
               <SelectRow label={bgmLabel} value={bgmValue || undefined} muted={!bgmValue} onPress={() => setPage('bgm')} />
+            </Section>
+            <Section label="안내 팝업" sub="초대장을 열면 먼저 떠요">
+              <ToggleList items={[{ key: 'popup', label: '안내 팝업 사용', value: popupOn, onChange: onPopupEnabled }]} />
+              {popupOn ? (
+                <SelectRow
+                  label="내용 편집"
+                  onPress={() => {
+                    close();
+                    onEditPopup();
+                  }}
+                />
+              ) : null}
+              <Help>주차 · 셔틀처럼 놓치기 쉬운 정보를 적어 두면 게스트가 먼저 봐요. 관리 › 프로젝트 설정과 같은 설정이에요.</Help>
             </Section>
           </>
         )}
