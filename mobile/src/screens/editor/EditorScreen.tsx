@@ -15,6 +15,7 @@ import { ThanksSimpleSheet } from '../../editor/sheets/ThanksSimpleSheet';
 import { coverPhoto } from '../../editor/photos';
 import { simpleThanksToBlocks } from '../../editor/thanks';
 import { bgmSource } from '../../editor/bgm';
+import { formatMonthDay, thanksEndDate, thanksStartDate } from '../../utils/projectStatus';
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { Canvas } from '../../editor/canvas/Canvas';
@@ -87,6 +88,10 @@ function Editor({
   const thanksPage = invitation?.thanks ?? DEFAULT_THANKS_PAGE;
   // 감사페이지 간단 모드: a fixed layout instead of the free block list.
   const simpleThanks = page === 'thanks' && thanksPage.mode === 'simple';
+  // 감사페이지는 행사 다음 날 자정부터 공개 기간(1~7일) 동안 보여요 — 새 초대장 3/4와 같은 규칙.
+  const thanksDays = project.thanks.days ?? 7;
+  const thanksStart = thanksStartDate(new Date(project.eventAt));
+  const thanksPeriod = `${formatMonthDay(thanksStart.toISOString())} ~ ${formatMonthDay(thanksEndDate(thanksStart, thanksDays).toISOString())} (${thanksDays}일)`;
 
   const showToast = useCallback((message: string) => setToast({ message }), []);
   const canvasValue = useMemo<CanvasContextValue | null>(
@@ -221,7 +226,7 @@ function Editor({
                   <SelectChip label="자유롭게" selected={thanksPage.mode === 'free'} onPress={() => switchThanksMode('free')} />
                 </View>
                 <Pressable onPress={() => setDaysOpen(true)} style={styles.daysRow} hitSlop={6}>
-                  <Text style={styles.daysText}>{`행사 ${project.thanks.days ?? 7}일 뒤부터 이 화면이 보여요`}</Text>
+                  <Text style={styles.daysText}>{`공개 기간 ${thanksPeriod}`}</Text>
                   <Text style={styles.daysAction}>바꾸기 ›</Text>
                 </Pressable>
               </View>
@@ -363,14 +368,14 @@ function Editor({
           onBgm={setBgm}
         />
 
-        <BottomSheet visible={daysOpen} onClose={() => setDaysOpen(false)} title="감사페이지로 바뀌는 날">
+        <BottomSheet visible={daysOpen} onClose={() => setDaysOpen(false)} title="감사페이지 공개 기간">
           <View style={styles.daysSheet}>
             <View style={styles.thanksModes}>
               {([1, 2, 3, 4, 5, 6, 7] as const).map((d) => (
                 <SelectChip
                   key={d}
-                  label={`${d}일 뒤`}
-                  selected={(project.thanks.days ?? 7) === d}
+                  label={`${d}일`}
+                  selected={thanksDays === d}
                   onPress={() => {
                     setThanksSettings(project.id, { ...project.thanks, days: d });
                     setDaysOpen(false);
@@ -378,7 +383,7 @@ function Editor({
                 />
               ))}
             </View>
-            <Text style={styles.daysHelp}>행사가 끝나고 고른 날이 지나면, 같은 링크에서 초대장 대신 감사페이지가 보여요.</Text>
+            <Text style={styles.daysHelp}>{`행사 다음 날 자정부터 공유한 링크가 감사페이지로 바뀌어요.\n기간 : ${thanksPeriod}`}</Text>
           </View>
         </BottomSheet>
 
