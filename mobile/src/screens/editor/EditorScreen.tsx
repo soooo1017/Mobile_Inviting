@@ -80,7 +80,7 @@ function Editor({
   const scrollRef = useRef<ScrollView>(null);
   const blockY = useRef<Record<string, number>>({});
 
-  const theme = invitationTheme(project.themeId);
+  const theme = invitationTheme(project);
   const blocks = invitation?.pages[page] ?? [];
   const selected = blocks.find((b) => b.id === selectedId) ?? null;
   const thanksPage = invitation?.thanks ?? DEFAULT_THANKS_PAGE;

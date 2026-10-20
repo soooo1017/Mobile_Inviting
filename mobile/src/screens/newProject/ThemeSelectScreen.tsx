@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { ScrollView, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -10,8 +10,9 @@ import { BackButton } from '../../components/BackButton';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
-import { THEMES, eventTypeMeta } from '../../types/project';
-import { invitationTheme } from '../../editor/invitationTheme';
+import { eventTypeMeta, type ThemeColors } from '../../types/project';
+import { deriveTheme } from '../../editor/invitationTheme';
+import { ThemeColorPicker } from '../../editor/ThemeColorPicker';
 import { useFontFamily } from '../../editor/fonts';
 import { formatWhen } from '../../editor/format';
 import { FontList } from '../../editor/sheets/common';
@@ -36,7 +37,8 @@ export function ThemeSelectScreen({ navigation }: Props) {
       eventAt: draft.eventAt,
       venue: draft.venue,
       thanks: draft.thanks,
-      themeId: draft.themeId,
+      themeId: 'custom',
+      colors: draft.colors,
     });
     // 처음 열면 빈 페이지 (추천 구성은 출시 뒤) — only the chosen 기본 글꼴 is set up.
     startInvitation(project.id, { font: draft.font });
@@ -54,24 +56,9 @@ export function ThemeSelectScreen({ navigation }: Props) {
       <Text style={styles.stepLabel}>4 / 4 · 나중에 바꿀 수 있어요</Text>
 
       <ScrollView contentContainerStyle={styles.body}>
-        <Preview themeId={draft.themeId} font={draft.font} eyebrow={typeName} title={title || '우리의 초대장'} when={formatWhen(draft.eventAt)} />
+        <Preview colors={draft.colors} font={draft.font} eyebrow={typeName} title={title || '우리의 초대장'} when={formatWhen(draft.eventAt)} />
 
-        <View style={styles.section}>
-          <Text style={styles.label}>배경 테마</Text>
-          <View style={styles.swatches}>
-            {THEMES.map((theme) => {
-              const selected = draft.themeId === theme.id;
-              return (
-                <Pressable key={theme.id} style={styles.swatchCell} onPress={() => update({ themeId: theme.id })}>
-                  <View style={[styles.swatch, { backgroundColor: theme.colors[0] }, selected && styles.swatchOn]}>
-                    <View style={[styles.swatchDot, { backgroundColor: theme.colors[1] }]} />
-                  </View>
-                  <Text style={[styles.swatchName, selected && styles.swatchNameOn]}>{theme.name}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
+        <ThemeColorPicker colors={draft.colors} onChange={(colors) => update({ colors })} />
 
         <View style={styles.section}>
           <Text style={styles.label}>글꼴</Text>
@@ -86,9 +73,9 @@ export function ThemeSelectScreen({ navigation }: Props) {
   );
 }
 
-/** Live sample of the picked theme + font. */
-function Preview({ themeId, font, eyebrow, title, when }: { themeId: string; font: FontId; eyebrow: string; title: string; when: string }) {
-  const theme = invitationTheme(themeId);
+/** Live sample of the picked colors + font, with a 포인트 색 button. */
+function Preview({ colors, font, eyebrow, title, when }: { colors: ThemeColors; font: FontId; eyebrow: string; title: string; when: string }) {
+  const theme = deriveTheme(colors);
   const regular = useFontFamily(font, false);
   const bold = useFontFamily(font, true);
   return (
@@ -98,6 +85,9 @@ function Preview({ themeId, font, eyebrow, title, when }: { themeId: string; fon
         {title}
       </Text>
       <Text style={[styles.previewSmall, { color: theme.inkSoft, fontFamily: regular }]}>{when}</Text>
+      <View style={[styles.previewButton, { backgroundColor: theme.accent }]}>
+        <Text style={[styles.previewButtonLabel, { color: theme.onAccent, fontFamily: bold }]}>참석 의사 전달하기</Text>
+      </View>
     </View>
   );
 }
@@ -144,46 +134,20 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 32,
   },
+  previewButton: {
+    marginTop: space[4],
+    borderRadius: radius.input,
+    paddingHorizontal: space[8],
+    paddingVertical: space[4],
+  },
+  previewButtonLabel: {
+    fontSize: 13,
+  },
   section: {
     gap: space[4],
   },
   label: {
     ...textStyle({ size: 'label', weight: 'semibold', color: color.ink.label }),
-  },
-  swatches: {
-    flexDirection: 'row',
-    gap: space[3],
-  },
-  swatchCell: {
-    flex: 1,
-    alignItems: 'center',
-    gap: space[2],
-  },
-  swatch: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: color.line.default,
-    alignItems: 'flex-end',
-    justifyContent: 'flex-end',
-    padding: 5,
-  },
-  swatchOn: {
-    borderWidth: 2,
-    borderColor: color.select.fill,
-  },
-  swatchDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  swatchName: {
-    ...textStyle({ size: 'caption', weight: 'regular', color: color.ink.secondary }),
-  },
-  swatchNameOn: {
-    color: color.select.fill,
-    fontFamily: 'Pretendard-SemiBold',
   },
   footer: {
     paddingHorizontal: space.screenX,

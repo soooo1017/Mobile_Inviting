@@ -41,7 +41,7 @@ export function ProjectDetailCard({ project, onPress }: Props) {
       style={[styles.detailCard, status === 'past' && { backgroundColor: color.bg.cardPast }]}
     >
       <View style={styles.detailMain}>
-        <ProjectThumb themeId={project.themeId} style={styles.detailThumb} />
+        <ProjectThumb project={project} style={styles.detailThumb} />
         <View style={styles.detailInfo}>
           <View style={styles.metaRow}>
             <ProjectStatusChip status={status} />
@@ -69,7 +69,7 @@ export function ProjectThumbCard({ project, onPress }: Props) {
   return (
     <Pressable onPress={onPress} style={styles.thumbCardWrap}>
       <View style={styles.thumbImageWrap}>
-        <ProjectThumb themeId={project.themeId} style={styles.thumbImage} />
+        <ProjectThumb project={project} style={styles.thumbImage} />
         <View style={styles.thumbChipRow}>
           <ProjectStatusChip status={status} />
           {showThanksChip ? <ThanksSetChip /> : null}

@@ -3,7 +3,7 @@ import { Image, Pressable, ScrollView, Text, View, StyleSheet } from 'react-nati
 import { BottomSheet } from '../components/BottomSheet';
 import { color, radius, space } from '../theme/tokens';
 import { textStyle } from '../theme/typography';
-import { THEMES, type Project } from '../types/project';
+import type { Project } from '../types/project';
 import { FontList } from './sheets/common';
 import { fontMeta } from './fonts';
 import { Help, Section, SelectRow } from './ui';
@@ -14,6 +14,8 @@ import { bgmSummary } from './bgm';
 import { coverPhoto } from './photos';
 import { VenueFields } from './VenueFields';
 import { EventInfoRows } from './EventInfoRows';
+import { ThemeColorPicker } from './ThemeColorPicker';
+import { projectColors } from './invitationTheme';
 
 type Props = {
   visible: boolean;
@@ -21,7 +23,7 @@ type Props = {
   project: Project;
   font: FontId;
   onFont: (f: FontId) => void;
-  onProject: (patch: Partial<Pick<Project, 'themeId' | 'eventAt' | 'venue'>>) => void;
+  onProject: (patch: Partial<Pick<Project, 'colors' | 'eventAt' | 'venue'>>) => void;
   invitation: Invitation;
   onCover: (photoId: string) => void;
   onBgm: (bgm: Bgm) => void;
@@ -77,22 +79,7 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
                 <Text style={styles.chevron}>›</Text>
               </Pressable>
             </Section>
-            <Section label="배경 테마">
-              <View style={styles.themes}>
-                {THEMES.map((t) => {
-                  const on = t.id === project.themeId;
-                  return (
-                    <Pressable key={t.id} onPress={() => onProject({ themeId: t.id })} style={styles.themeCell}>
-                      <View style={[styles.swatch, { backgroundColor: t.colors[0] }, on && styles.swatchOn]}>
-                        <View style={[styles.swatchDot, { backgroundColor: t.colors[1] }]} />
-                      </View>
-                      <Text style={[styles.themeName, on && styles.themeNameOn]}>{t.name}</Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-              <Help>글씨 색은 배경에 맞춰 자동으로 정해져요.</Help>
-            </Section>
+            <ThemeColorPicker colors={projectColors(project)} onChange={(colors) => onProject({ colors })} />
             <Section label="행사 정보" sub="일시 등 초대장 전체에 같이 반영돼요">
               <EventInfoRows project={project} onEventAt={(eventAt) => onProject({ eventAt })} onOpenVenue={() => setPage('venue')} />
             </Section>
@@ -114,42 +101,6 @@ const styles = StyleSheet.create({
   },
   back: {
     ...textStyle({ size: 'label', weight: 'medium', color: color.accent.base }),
-  },
-  themes: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[4],
-  },
-  themeCell: {
-    width: '30.5%',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  swatch: {
-    width: '100%',
-    height: 54,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: color.line.default,
-    alignItems: 'flex-end',
-    justifyContent: 'flex-end',
-    padding: 6,
-  },
-  swatchOn: {
-    borderWidth: 2,
-    borderColor: color.select.fill,
-  },
-  swatchDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-  },
-  themeName: {
-    ...textStyle({ size: 'small', weight: 'regular', color: color.ink.secondary }),
-  },
-  themeNameOn: {
-    color: color.select.fill,
-    fontFamily: 'Pretendard-SemiBold',
   },
   coverRow: {
     flexDirection: 'row',

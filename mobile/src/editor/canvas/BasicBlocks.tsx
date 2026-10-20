@@ -243,12 +243,12 @@ export function InvButton({
       style={[
         styles.button,
         hug && styles.buttonHug,
-        fill ? { backgroundColor: theme.ink } : { borderWidth: 1, borderColor: theme.ink },
+        fill ? { backgroundColor: theme.accent } : { borderWidth: 1, borderColor: theme.accentInk },
         disabled && { opacity: 0.45 },
       ]}
     >
       {icon}
-      <InvUiText size={14} bold style={{ color: fill ? theme.paper : theme.ink }}>
+      <InvUiText size={14} bold style={{ color: fill ? theme.onAccent : theme.accentInk }}>
         {label}
       </InvUiText>
     </Pressable>

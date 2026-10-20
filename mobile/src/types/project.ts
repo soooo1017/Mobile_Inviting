@@ -55,7 +55,10 @@ export type Project = {
   venue?: Venue;
   thanks: ThanksSettings;
   shared: boolean;
+  /** Legacy fixed theme (이전 테마 6개). New invitations use `colors` instead; this keeps older ones looking the same. */
   themeId: string;
+  /** 배경 · 포인트 · 글씨 색 picked on new-project step 4 / ⚙ 전체 설정. */
+  colors?: ThemeColors;
   updatedAt: string; // ISO
   createdAt: string; // ISO
   counts: { rsvp: number; guestbook: number };
@@ -92,9 +95,25 @@ export function filterCount(f: FilterState): number {
   return statusCount + f.months.length + f.types.length + f.sido.length;
 }
 
+/** Text color choices: the three presets or a custom '#rrggbb'. */
+export type TextColorChoice = 'black' | 'gray' | 'accent' | `#${string}`;
+export type ThemeColors = { bg: string; accent: string; text: TextColorChoice };
+
+/** 색 조합 5가지 — two colors each; which one is 배경 and which 포인트 is up to the user (⇄ 바꾸기). */
+export const COLOR_COMBOS: [string, string][] = [
+  ['#ebf4f5', '#b5c6e0'],
+  ['#faf0ca', '#0d3b66'],
+  ['#f1f7ed', '#243e36'],
+  ['#e7ecef', '#274c77'],
+  ['#f3e9dc', '#c08552'],
+];
+
+export const DEFAULT_COLORS: ThemeColors = { bg: COLOR_COMBOS[0][0], accent: COLOR_COMBOS[0][1], text: 'black' };
+
 export type ThemeOption = { id: string; name: string; colors: [string, string] };
 
-export const THEMES: ThemeOption[] = [
+/** The six themes projects used before 배경 · 포인트 색 existed — kept only to draw older invitations. */
+export const LEGACY_THEMES: ThemeOption[] = [
   { id: 'linen', name: '리넨', colors: ['#e9e4d8', '#d8c3af'] },
   { id: 'lavender', name: '라벤더', colors: ['#eceafc', '#d9d3f5'] },
   { id: 'blush', name: '블러시', colors: ['#fbeae6', '#f4b3a6'] },

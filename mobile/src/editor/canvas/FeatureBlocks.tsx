@@ -89,7 +89,7 @@ export function DateTimeBlockView({ block }: { block: BlockOfType<'datetime'> })
             label="캘린더에 추가"
             tone={p.buttonTone === 'inverse' ? 'fill' : 'outline'}
             hug
-            icon={<CalendarIcon color={p.buttonTone === 'inverse' ? theme.paper : theme.ink} />}
+            icon={<CalendarIcon color={p.buttonTone === 'inverse' ? theme.onAccent : theme.accentInk} />}
             onPress={mode === 'preview' ? () => showToast('캘린더 추가는 게스트 화면에서 동작해요') : undefined}
           />
         </View>

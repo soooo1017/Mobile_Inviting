@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
-import type { EventType, ThanksSettings, Venue } from '../types/project';
+import { DEFAULT_COLORS, type EventType, type ThanksSettings, type ThemeColors, type Venue } from '../types/project';
 import type { FontId } from '../editor/types';
 import { eventTypeMeta } from '../types/project';
 
@@ -10,7 +10,8 @@ export type NewProjectDraft = {
   eventAt: string;
   venue?: Venue;
   thanks: ThanksSettings;
-  themeId: string;
+  /** 배경 · 포인트 · 글씨 색. */
+  colors: ThemeColors;
   /** 기본 글꼴, picked next to the theme on the last step. */
   font: FontId;
 };
@@ -26,7 +27,7 @@ function initialDraft(): NewProjectDraft {
     eventAt: eventAt.toISOString(),
     venue: undefined,
     thanks: { enabled: true, days: 7, hasContent: false },
-    themeId: 'linen',
+    colors: DEFAULT_COLORS,
     font: 'pretendard',
   };
 }

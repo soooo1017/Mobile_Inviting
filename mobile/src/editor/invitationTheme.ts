@@ -1,6 +1,9 @@
-// Colors the invitation canvas uses, derived from the B8 background theme.
-// Text color is never user-picked (EDITOR_PLAN §4): dark on the five light
-// themes, light on 잉크.
+// Colors the invitation canvas uses. New invitations derive them from the picked
+// 배경 · 포인트 · 글씨 색 (EDITOR_PLAN §4); invitations made with the old fixed
+// themes keep their original look through LEGACY below.
+
+import { contrast, isDarkColor, MIN_TEXT_CONTRAST, mix, readableOn } from './colors';
+import type { Project, TextColorChoice, ThemeColors } from '../types/project';
 
 export type InvitationTheme = {
   paper: string;
@@ -9,14 +12,20 @@ export type InvitationTheme = {
   rule: string;
   band: string;
   bandInk: string;
-  /** Accent used for "테마 색" calendar circles and similar touches. */
+  /** 포인트 색 — buttons, 달력 동그라미("테마 색"), 구분선 점 · 하트. */
   accent: string;
+  /** Text on an accent-filled button (dark or white, whichever reads). */
+  onAccent: string;
+  /** Accent as text/border on the paper — falls back to the ink when the accent is too close to the paper. */
+  accentInk: string;
   /** Raised surfaces on the canvas (guest inputs, collapsed panels). */
   field: string;
   isDark: boolean;
 };
 
-const THEMES: Record<string, InvitationTheme> = {
+type LegacyTheme = Omit<InvitationTheme, 'onAccent' | 'accentInk'>;
+
+const LEGACY: Record<string, LegacyTheme> = {
   linen: {
     paper: '#e9e4d8',
     ink: '#3b332b',
@@ -87,6 +96,45 @@ const THEMES: Record<string, InvitationTheme> = {
 
 export const EVENT_RED = '#c4473f';
 
-export function invitationTheme(themeId: string): InvitationTheme {
-  return THEMES[themeId] ?? THEMES.linen;
+const TEXT_BLACK = '#1f1f1f';
+const TEXT_GRAY = '#5b5b5b';
+
+export function resolveTextColor(text: TextColorChoice, accent: string): string {
+  return text === 'black' ? TEXT_BLACK : text === 'gray' ? TEXT_GRAY : text === 'accent' ? accent : text;
+}
+
+function finish(t: LegacyTheme): InvitationTheme {
+  return { ...t, onAccent: readableOn(t.accent), accentInk: contrast(t.paper, t.accent) >= MIN_TEXT_CONTRAST ? t.accent : t.ink };
+}
+
+/** Everything the canvas draws, derived from the two picked colors and the text color. */
+export function deriveTheme({ bg, accent, text }: ThemeColors): InvitationTheme {
+  const ink = resolveTextColor(text, accent);
+  const band = mix(accent, bg, 0.8);
+  const isDark = isDarkColor(bg);
+  return {
+    paper: bg,
+    ink,
+    inkSoft: mix(ink, bg, 0.35),
+    rule: mix(accent, bg, 0.55),
+    band,
+    bandInk: contrast(band, accent) >= MIN_TEXT_CONTRAST ? accent : ink,
+    accent,
+    onAccent: readableOn(accent),
+    accentInk: contrast(bg, accent) >= MIN_TEXT_CONTRAST ? accent : ink,
+    field: isDark ? mix(bg, '#ffffff', 0.08) : mix(bg, '#ffffff', 0.55),
+    isDark,
+  };
+}
+
+/** The colors a project is drawn with — its own, or the ones of its old fixed theme. */
+export function projectColors(project: Pick<Project, 'colors' | 'themeId'>): ThemeColors {
+  if (project.colors) return project.colors;
+  const t = LEGACY[project.themeId] ?? LEGACY.linen;
+  return { bg: t.paper, accent: t.accent, text: t.isDark ? (t.ink as TextColorChoice) : 'black' };
+}
+
+export function invitationTheme(project: Pick<Project, 'colors' | 'themeId'>): InvitationTheme {
+  if (project.colors) return deriveTheme(project.colors);
+  return finish(LEGACY[project.themeId] ?? LEGACY.linen);
 }

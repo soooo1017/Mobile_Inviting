@@ -112,8 +112,8 @@ type ProjectsContextValue = {
   createProject: (input: NewProjectInput) => Project;
   deleteProject: (id: string) => void;
   setThanksSettings: (id: string, thanks: Project['thanks']) => void;
-  /** Used by the editor's 전체 설정 (theme, event date) — every block reads these live. */
-  updateProject: (id: string, patch: Partial<Pick<Project, 'themeId' | 'eventAt' | 'title' | 'venue'>>) => void;
+  /** Used by the editor's 전체 설정 (colors, event date) — every block reads these live. */
+  updateProject: (id: string, patch: Partial<Pick<Project, 'colors' | 'eventAt' | 'title' | 'venue'>>) => void;
 };
 
 const ProjectsContext = createContext<ProjectsContextValue | null>(null);

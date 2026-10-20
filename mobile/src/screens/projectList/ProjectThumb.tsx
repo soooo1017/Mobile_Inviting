@@ -1,20 +1,16 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ViewStyle } from 'react-native';
-import { THEMES } from '../../types/project';
+import { LEGACY_THEMES, type Project } from '../../types/project';
 
 type Props = {
-  themeId: string;
+  project: Pick<Project, 'colors' | 'themeId'>;
   style?: ViewStyle;
 };
 
-export function ProjectThumb({ themeId, style }: Props) {
-  const theme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
-  return (
-    <LinearGradient
-      colors={theme.colors}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={style}
-    />
-  );
+/** Card thumbnail: the invitation's 배경 → 포인트 색 (or its old fixed theme's two colors). */
+export function ProjectThumb({ project, style }: Props) {
+  const colors: [string, string] = project.colors
+    ? [project.colors.bg, project.colors.accent]
+    : (LEGACY_THEMES.find((t) => t.id === project.themeId) ?? LEGACY_THEMES[0]).colors;
+  return <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={style} />;
 }
