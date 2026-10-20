@@ -6,7 +6,7 @@ import { TextField } from '../components/TextField';
 import { color, radius, space } from '../theme/tokens';
 import { textStyle } from '../theme/typography';
 import { COLOR_COMBOS, type TextColorChoice, type ThemeColors } from '../types/project';
-import { contrast, MIN_TEXT_CONTRAST, normalizeHex } from './colors';
+import { autoTextColor, contrast, MIN_TEXT_CONTRAST, normalizeHex } from './colors';
 import { resolveTextColor } from './invitationTheme';
 import { Help, Section } from './ui';
 
@@ -24,7 +24,8 @@ export function ThemeColorPicker({ colors, onChange }: { colors: ThemeColors; on
   const [custom, setCustom] = useState(() => comboIndex(colors) < 0);
   const [target, setTarget] = useState<Target | null>(null);
   const selected = custom ? -1 : comboIndex(colors);
-  const textColor = resolveTextColor(colors.text, colors.accent);
+  const textColor = resolveTextColor(colors.text, colors.accent, colors.bg);
+  const defaultLabel = autoTextColor(colors.bg) === '#ffffff' ? '흰색 (기본)' : '검정 (기본)';
   const hard = contrast(colors.bg, textColor) < MIN_TEXT_CONTRAST;
   const customText = colors.text.startsWith('#');
 
@@ -40,8 +41,8 @@ export function ThemeColorPicker({ colors, onChange }: { colors: ThemeColors; on
   const targetValue = target === 'text' ? textColor : target ? colors[target] : '#000000';
 
   const textChips: { key: TextColorChoice | 'custom'; label: string; dot?: string; on: boolean; onPress: () => void }[] = [
-    { key: 'black', label: '검정 (기본)', dot: resolveTextColor('black', colors.accent), on: colors.text === 'black', onPress: () => onChange({ ...colors, text: 'black' }) },
-    { key: 'gray', label: '진한 회색', dot: resolveTextColor('gray', colors.accent), on: colors.text === 'gray', onPress: () => onChange({ ...colors, text: 'gray' }) },
+    { key: 'black', label: defaultLabel, dot: resolveTextColor('black', colors.accent, colors.bg), on: colors.text === 'black', onPress: () => onChange({ ...colors, text: 'black' }) },
+    { key: 'gray', label: '진한 회색', dot: resolveTextColor('gray', colors.accent, colors.bg), on: colors.text === 'gray', onPress: () => onChange({ ...colors, text: 'gray' }) },
     { key: 'accent', label: '포인트 색', dot: colors.accent, on: colors.text === 'accent', onPress: () => onChange({ ...colors, text: 'accent' }) },
     { key: 'custom', label: '직접', dot: customText ? textColor : undefined, on: customText, onPress: () => setTarget('text') },
   ];

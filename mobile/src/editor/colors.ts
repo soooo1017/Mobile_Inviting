@@ -73,6 +73,13 @@ export function readableOn(bg: string): string {
   return contrast(bg, '#111111') >= contrast(bg, '#ffffff') ? '#111111' : '#ffffff';
 }
 
+const AUTO_DARK = '#1f1f1f';
+
+/** 기본 글씨 색: dark on a light background, white on a dark one — whichever reads better. */
+export function autoTextColor(bg: string): string {
+  return contrast(bg, AUTO_DARK) >= contrast(bg, '#ffffff') ? AUTO_DARK : '#ffffff';
+}
+
 /** Below this ratio text is hard to read — the picker shows "잘 안 보일 수 있어요". */
 export const MIN_TEXT_CONTRAST = 3;
 

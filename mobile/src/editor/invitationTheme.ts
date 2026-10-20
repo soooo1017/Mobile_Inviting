@@ -2,7 +2,7 @@
 // 배경 · 포인트 · 글씨 색 (EDITOR_PLAN §4); invitations made with the old fixed
 // themes keep their original look through LEGACY below.
 
-import { contrast, isDarkColor, MIN_TEXT_CONTRAST, mix, readableOn } from './colors';
+import { autoTextColor, contrast, isDarkColor, MIN_TEXT_CONTRAST, mix, readableOn } from './colors';
 import type { Project, TextColorChoice, ThemeColors } from '../types/project';
 
 export type InvitationTheme = {
@@ -96,11 +96,11 @@ const LEGACY: Record<string, LegacyTheme> = {
 
 export const EVENT_RED = '#c4473f';
 
-const TEXT_BLACK = '#1f1f1f';
 const TEXT_GRAY = '#5b5b5b';
 
-export function resolveTextColor(text: TextColorChoice, accent: string): string {
-  return text === 'black' ? TEXT_BLACK : text === 'gray' ? TEXT_GRAY : text === 'accent' ? accent : text;
+/** 'black' is the 기본 choice: it follows the background (검정 on light, 흰색 on dark). */
+export function resolveTextColor(text: TextColorChoice, accent: string, bg: string): string {
+  return text === 'black' ? autoTextColor(bg) : text === 'gray' ? TEXT_GRAY : text === 'accent' ? accent : text;
 }
 
 function finish(t: LegacyTheme): InvitationTheme {
@@ -109,7 +109,7 @@ function finish(t: LegacyTheme): InvitationTheme {
 
 /** Everything the canvas draws, derived from the two picked colors and the text color. */
 export function deriveTheme({ bg, accent, text }: ThemeColors): InvitationTheme {
-  const ink = resolveTextColor(text, accent);
+  const ink = resolveTextColor(text, accent, bg);
   const band = mix(accent, bg, 0.8);
   const isDark = isDarkColor(bg);
   return {
