@@ -82,6 +82,8 @@ export type GuestbookProps = {
   visibility: 'public' | 'private';
   recentCount: 3 | 5 | 10;
   buttonLabel: string;
+  /** 어느 쪽 손님(신랑측 / 신부측)도 고르게 할지 — on by default for weddings. */
+  askSide?: boolean;
 };
 
 export type Account = { id: string; role: string; holder: string; bank: string; number: string; kakaoPay?: string };

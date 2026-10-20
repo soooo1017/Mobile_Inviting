@@ -13,7 +13,11 @@ import { NewProjectInfoScreen } from '../screens/newProject/NewProjectInfoScreen
 import { NewProjectThanksScreen } from '../screens/newProject/NewProjectThanksScreen';
 import { ThemeSelectScreen } from '../screens/newProject/ThemeSelectScreen';
 import { EditorScreen } from '../screens/editor/EditorScreen';
-import { ManagePlaceholderScreen } from '../screens/ManagePlaceholderScreen';
+import { ManageScreen } from '../screens/manage/ManageScreen';
+import { RsvpStatusScreen } from '../screens/manage/RsvpStatusScreen';
+import { GuestbookManageScreen } from '../screens/manage/GuestbookManageScreen';
+import { StatsScreen } from '../screens/manage/StatsScreen';
+import { ProjectSettingsScreen } from '../screens/manage/ProjectSettingsScreen';
 import { NicknameEditScreen } from '../screens/myPage/NicknameEditScreen';
 import { PasswordChangeScreen } from '../screens/myPage/PasswordChangeScreen';
 import { NotificationSettingsScreen } from '../screens/myPage/NotificationSettingsScreen';
@@ -41,7 +45,11 @@ export function RootNavigator() {
       <Stack.Screen name="NewProjectThanks" component={NewProjectThanksScreen} />
       <Stack.Screen name="ThemeSelect" component={ThemeSelectScreen} />
       <Stack.Screen name="Editor" component={EditorScreen} options={{ gestureEnabled: false }} />
-      <Stack.Screen name="ManagePlaceholder" component={ManagePlaceholderScreen} />
+      <Stack.Screen name="Manage" component={ManageScreen} />
+      <Stack.Screen name="ManageRsvp" component={RsvpStatusScreen} />
+      <Stack.Screen name="ManageGuestbook" component={GuestbookManageScreen} />
+      <Stack.Screen name="ManageStats" component={StatsScreen} />
+      <Stack.Screen name="ProjectSettings" component={ProjectSettingsScreen} />
       <Stack.Screen name="NicknameEdit" component={NicknameEditScreen} />
       <Stack.Screen name="PasswordChange" component={PasswordChangeScreen} />
       <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />

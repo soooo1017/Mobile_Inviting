@@ -209,7 +209,7 @@ export function ProjectListScreen(_props: Props) {
         project={actionProject}
         onClose={() => setActionProjectId(null)}
         onEdit={() => { if (actionProject) navigation.navigate('Editor', { projectId: actionProject.id }); setActionProjectId(null); }}
-        onManage={() => { if (actionProject) navigation.navigate('ManagePlaceholder', { projectId: actionProject.id }); setActionProjectId(null); }}
+        onManage={() => { if (actionProject) navigation.navigate('Manage', { projectId: actionProject.id }); setActionProjectId(null); }}
         onPreview={() => { setActionProjectId(null); showToast('미리보기는 다음 핸드오프에서 제공됩니다'); }}
         onCopyLink={() => actionProject && handleCopyLink(actionProject)}
         onDelete={() => { setDeleteProjectId(actionProjectId); setActionProjectId(null); }}

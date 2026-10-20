@@ -1,4 +1,4 @@
-import type { EventType } from '../types/project';
+import type { EventType, Project } from '../types/project';
 import { BLOCK_LABEL, FORMAT_LABEL, GAP_LABEL, type Block } from './types';
 
 const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
@@ -167,6 +167,13 @@ export function blockSummary(block: Block): string {
     case 'account':
       return `${clip(block.props.title, 12)} · ${block.props.accounts.length}개`;
   }
+}
+
+/** The two guest sides for 어느 쪽 손님 (참석 응답 · 방명록); empty when the event has a single host. */
+export function guestSides(project: Project): [string, string] | [] {
+  if (project.eventType === 'wedding') return ['신랑측', '신부측'];
+  const labels = project.hosts.map((h) => h.label).filter(Boolean);
+  return labels.length === 2 ? [`${labels[0]}측`, `${labels[1]}측`] : [];
 }
 
 export function blockLabel(block: Block): string {

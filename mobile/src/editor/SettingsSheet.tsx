@@ -1,19 +1,19 @@
 import { useState } from 'react';
-import { Image, Platform, Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { Image, Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { BottomSheet } from '../components/BottomSheet';
 import { color, radius, space } from '../theme/tokens';
 import { textStyle } from '../theme/typography';
 import { THEMES, type Project } from '../types/project';
 import { FontList } from './sheets/common';
 import { fontMeta } from './fonts';
-import { formatWhenShort } from './format';
 import { Help, Section, SelectRow } from './ui';
 import type { Bgm, FontId, Invitation } from './types';
 import { CoverPicker } from './CoverPicker';
 import { BgmSettings } from './BgmSettings';
 import { bgmSummary } from './bgm';
 import { coverPhoto } from './photos';
+import { VenueFields } from './VenueFields';
+import { EventInfoRows } from './EventInfoRows';
 
 type Props = {
   visible: boolean;
@@ -21,27 +21,23 @@ type Props = {
   project: Project;
   font: FontId;
   onFont: (f: FontId) => void;
-  onProject: (patch: Partial<Pick<Project, 'themeId' | 'eventAt'>>) => void;
+  onProject: (patch: Partial<Pick<Project, 'themeId' | 'eventAt' | 'venue'>>) => void;
   invitation: Invitation;
   onCover: (photoId: string) => void;
   onBgm: (bgm: Bgm) => void;
 };
 
-type Page = 'main' | 'font' | 'cover' | 'bgm';
-const PAGE_TITLE: Record<Page, string> = { main: '전체 설정', font: '기본 글꼴', cover: '대표 사진', bgm: '배경음악' };
+type Page = 'main' | 'font' | 'cover' | 'bgm' | 'venue';
+const PAGE_TITLE: Record<Page, string> = { main: '전체 설정', font: '기본 글꼴', cover: '대표 사진', bgm: '배경음악', venue: '장소' };
 
 /** ⚙ 전체 설정 — things that apply to the whole invitation rather than one block. */
 export function SettingsSheet({ visible, onClose, project, font, onFont, onProject, invitation, onCover, onBgm }: Props) {
   const [page, setPage] = useState<Page>('main');
   const cover = coverPhoto(invitation);
   const [bgmLabel, bgmValue] = bgmSummary(invitation.bgm);
-  const [picker, setPicker] = useState<'date' | 'time' | null>(null);
-  const eventDate = new Date(project.eventAt);
-  const whenShort = formatWhenShort(project.eventAt); // "2027. 5. 22. (토) 오후 1:00"
 
   const close = () => {
     setPage('main');
-    setPicker(null);
     onClose();
   };
 
@@ -62,6 +58,11 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
           <CoverPicker invitation={invitation} onSelect={onCover} />
         ) : page === 'bgm' ? (
           <BgmSettings bgm={invitation.bgm} onChange={onBgm} />
+        ) : page === 'venue' ? (
+          <>
+            <VenueFields project={project} onVenue={(venue) => onProject({ venue })} />
+            <Help>초대장의 장소 칸과 관리 › 프로젝트 설정에 같이 반영돼요.</Help>
+          </>
         ) : (
           <>
             <Section label="기본 글꼴">
@@ -93,27 +94,7 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
               <Help>글씨 색은 배경에 맞춰 자동으로 정해져요.</Help>
             </Section>
             <Section label="행사 정보" sub="일시 등 초대장 전체에 같이 반영돼요">
-              <SelectRow label={whenShort.slice(0, whenShort.indexOf(')') + 1)} value="날짜" onPress={() => setPicker(picker === 'date' ? null : 'date')} />
-              <SelectRow label={whenShort.slice(whenShort.indexOf(')') + 2)} value="시간" onPress={() => setPicker(picker === 'time' ? null : 'time')} />
-              {picker ? (
-                <View style={styles.pickerWrap}>
-                  <DateTimePicker
-                    locale="ko-KR"
-                    value={eventDate}
-                    mode={picker}
-                    display={Platform.OS === 'ios' ? (picker === 'date' ? 'inline' : 'spinner') : 'default'}
-                    accentColor={color.select.fill}
-                    onChange={(e, d) => {
-                      if (Platform.OS !== 'ios') setPicker(null);
-                      if (e.type !== 'set' || !d) return;
-                      const next = new Date(eventDate);
-                      if (picker === 'date') next.setFullYear(d.getFullYear(), d.getMonth(), d.getDate());
-                      else next.setHours(d.getHours(), d.getMinutes(), 0, 0);
-                      onProject({ eventAt: next.toISOString() });
-                    }}
-                  />
-                </View>
-              ) : null}
+              <EventInfoRows project={project} onEventAt={(eventAt) => onProject({ eventAt })} onOpenVenue={() => setPage('venue')} />
             </Section>
             <Section label="배경음악">
               <SelectRow label={bgmLabel} value={bgmValue || undefined} muted={!bgmValue} onPress={() => setPage('bgm')} />
@@ -126,10 +107,6 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
 }
 
 const styles = StyleSheet.create({
-  // iOS draws the inline calendar at its own width, flush left — center it in the sheet.
-  pickerWrap: {
-    alignItems: 'center',
-  },
   body: {
     paddingHorizontal: space.screenX,
     paddingBottom: space[6],

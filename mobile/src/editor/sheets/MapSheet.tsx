@@ -4,8 +4,8 @@ import { EditorSheet } from '../EditorSheet';
 import { Chips, Help, Section, ToggleList } from '../ui';
 import { LabeledInput } from './common';
 import type { BlockSheetProps } from './BasicSheets';
-import { venueAddressLine } from '../maps';
-import type { Project, Venue } from '../../types/project';
+import { VenueFields } from '../VenueFields';
+import type { Venue } from '../../types/project';
 
 type Props = BlockSheetProps<'map'> & { onProject: (patch: { venue: Venue }) => void };
 
@@ -13,29 +13,10 @@ type Props = BlockSheetProps<'map'> & { onProject: (patch: { venue: Venue }) => 
 export function MapSheet({ block, onChange, onDone, project, onProject }: Props) {
   const p = block.props;
   const set = (patch: Partial<typeof p>) => onChange({ ...block, props: { ...p, ...patch } });
-  const venue = currentVenue(project);
-  const setVenue = (patch: Partial<Venue>) => onProject({ venue: { ...venue, ...patch } });
 
   return (
     <EditorSheet title="장소" onDone={onDone} maxHeight={0.78}>
-      <LabeledInput
-        label="장소 이름"
-        value={venue.name}
-        onChangeText={(name) =>
-          // The new-project step stores one text as both name and address — keep them together until the address is set apart.
-          setVenue(venue.address === venue.name ? { name, address: name } : { name })
-        }
-        placeholder="예: 더채플앳청담"
-        maxLength={40}
-      />
-      <LabeledInput
-        label="주소"
-        sub="층 · 홀까지 적어도 돼요"
-        value={venueAddressLine(venue)}
-        onChangeText={(address) => setVenue({ address })}
-        placeholder="예: 서울 강남구 선릉로 757 · 3층 그랜드홀"
-        maxLength={80}
-      />
+      <VenueFields project={project} onVenue={(venue) => onProject({ venue })} />
       <Help>행사 정보의 장소와 같이 바뀌어요.</Help>
       <ToggleList items={[{ key: 'copy', label: '주소 복사 버튼', value: p.showCopy, onChange: (showCopy) => set({ showCopy }) }]} />
       <Section label="지도 버튼">
@@ -89,10 +70,6 @@ export function MapSheet({ block, onChange, onDone, project, onProject }: Props)
       </Section>
     </EditorSheet>
   );
-}
-
-function currentVenue(project: Project): Venue {
-  return project.venue ?? { name: '', address: '', sido: '', mapLinks: { naver: true, kakao: true } };
 }
 
 const styles = StyleSheet.create({

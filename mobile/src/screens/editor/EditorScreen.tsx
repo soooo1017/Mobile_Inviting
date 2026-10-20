@@ -8,12 +8,11 @@ import { useProjects } from '../../state/ProjectsContext';
 import { DEFAULT_THANKS_PAGE, useInvitation } from '../../state/InvitationsContext';
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus, type AudioSource } from 'expo-audio';
 import { BottomSheet } from '../../components/BottomSheet';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { SelectChip } from '../../components/SelectChip';
 import { SimpleThanksView } from '../../editor/canvas/SimpleThanks';
 import { ThanksSimpleSheet } from '../../editor/sheets/ThanksSimpleSheet';
 import { coverPhoto } from '../../editor/photos';
-import { simpleThanksToBlocks } from '../../editor/thanks';
+import { useThanksMode } from '../../editor/thanksMode';
 import { bgmSource } from '../../editor/bgm';
 import { formatMonthDay, thanksEndDate, thanksStartDate } from '../../utils/projectStatus';
 import { color, radius, space } from '../../theme/tokens';
@@ -62,7 +61,7 @@ function Editor({
   navigation: Props['navigation'];
   updateProject: ReturnType<typeof useProjects>['updateProject'];
 }) {
-  const { invitation, insertBlock, updateBlock, removeBlock, duplicateBlock, moveBlock, setFont, setCoverPhoto, setBgm, updateThanks, setPage: setPageBlocks } =
+  const { invitation, insertBlock, updateBlock, removeBlock, duplicateBlock, moveBlock, setFont, setCoverPhoto, setBgm, updateThanks } =
     useInvitation(project.id);
   const { setThanksSettings } = useProjects();
   const { height: screenH } = useWindowDimensions();
@@ -78,7 +77,6 @@ function Editor({
   const [toast, setToast] = useState<Toast>(null);
   const [thanksSheetOpen, setThanksSheetOpen] = useState(false);
   const [daysOpen, setDaysOpen] = useState(false);
-  const [confirmSimple, setConfirmSimple] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const blockY = useRef<Record<string, number>>({});
 
@@ -127,6 +125,8 @@ function Editor({
       const links = project.venue?.mapLinks;
       if (links && (links.naver || links.kakao)) block.props = { ...block.props, showNaver: links.naver, showKakao: links.kakao };
     }
+    // 방명록 어느 쪽 손님 받기: on by default for weddings (신랑측 / 신부측).
+    if (block.type === 'guestbook') block.props = { ...block.props, askSide: project.eventType === 'wedding' };
     insertBlock(page, block, index);
     setAddAt(null);
     if (mode === 'reorder') {
@@ -143,19 +143,11 @@ function Editor({
     setToast({ message: '삭제했어요', undo: () => insertBlock(page, block, index) });
   };
 
-  // 간단하게 → 자유롭게 carries the content over as 텍스트 · 이미지; 자유롭게 → 간단하게 starts over (after a confirm).
+  const thanksMode = useThanksMode(project);
   const switchThanksMode = (next: 'simple' | 'free') => {
-    if (!invitation || next === thanksPage.mode) return;
     setThanksSheetOpen(false);
     setSelectedId(null);
-    if (next === 'free') {
-      setPageBlocks('thanks', simpleThanksToBlocks(project, thanksPage.simple, coverPhoto(invitation)));
-      updateThanks((t) => ({ ...t, mode: 'free' }));
-    } else if (invitation.pages.thanks.length) {
-      setConfirmSimple(true);
-    } else {
-      updateThanks((t) => ({ ...t, mode: 'simple' }));
-    }
+    thanksMode.switchTo(next);
   };
 
   if (!invitation || !canvasValue) {
@@ -222,8 +214,8 @@ function Editor({
             {page === 'thanks' ? (
               <View style={styles.thanksBar}>
                 <View style={styles.thanksModes}>
-                  <SelectChip label="간단하게" selected={thanksPage.mode === 'simple'} onPress={() => switchThanksMode('simple')} />
-                  <SelectChip label="자유롭게" selected={thanksPage.mode === 'free'} onPress={() => switchThanksMode('free')} />
+                  <SelectChip label="간단하게" selected={thanksMode.mode === 'simple'} onPress={() => switchThanksMode('simple')} />
+                  <SelectChip label="자유롭게" selected={thanksMode.mode === 'free'} onPress={() => switchThanksMode('free')} />
                 </View>
                 <Pressable onPress={() => setDaysOpen(true)} style={styles.daysRow} hitSlop={6}>
                   <Text style={styles.daysText}>{`공개 기간 ${thanksPeriod}`}</Text>
@@ -387,19 +379,7 @@ function Editor({
           </View>
         </BottomSheet>
 
-        <ConfirmDialog
-          visible={confirmSimple}
-          title="간단하게로 바꿀까요?"
-          confirmLabel="바꾸기"
-          onCancel={() => setConfirmSimple(false)}
-          onConfirm={() => {
-            setConfirmSimple(false);
-            setPageBlocks('thanks', []);
-            updateThanks((t) => ({ ...t, mode: 'simple' }));
-          }}
-        >
-          <Text style={styles.confirmBody}>{'자유롭게 만든 감사페이지 내용이 지워지고,\n기본 틀로 다시 시작해요.'}</Text>
-        </ConfirmDialog>
+        {thanksMode.dialog}
 
         <PreviewModal
           visible={previewOpen}
@@ -517,10 +497,6 @@ const styles = StyleSheet.create({
   },
   daysHelp: {
     ...textStyle({ size: 'small', weight: 'regular', color: color.ink.muted }),
-  },
-  confirmBody: {
-    ...textStyle({ size: 'label', weight: 'regular', color: color.ink.secondary }),
-    lineHeight: 21,
   },
   music: {
     position: 'absolute',

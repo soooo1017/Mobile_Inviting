@@ -12,7 +12,11 @@ export type RootStackParamList = {
   NewProjectThanks: undefined;
   ThemeSelect: undefined;
   Editor: { projectId: string; tab?: 'invite' | 'thanks' };
-  ManagePlaceholder: { projectId: string };
+  Manage: { projectId: string };
+  ManageRsvp: { projectId: string };
+  ManageGuestbook: { projectId: string };
+  ManageStats: { projectId: string };
+  ProjectSettings: { projectId: string };
   NicknameEdit: undefined;
   PasswordChange: undefined;
   NotificationSettings: undefined;

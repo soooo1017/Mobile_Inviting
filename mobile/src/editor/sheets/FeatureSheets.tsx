@@ -8,7 +8,7 @@ import { EditorSheet, FullScreenEditor } from '../EditorSheet';
 import { Chips, Help, Section, ToggleList } from '../ui';
 import { LabeledInput } from './common';
 import type { BlockSheetProps } from './BasicSheets';
-import { formatDeadline, formatWhenShort, fromDateKey, toDateKey } from '../format';
+import { formatDeadline, formatWhenShort, fromDateKey, guestSides, toDateKey } from '../format';
 
 export function DateTimeSheet({ block, onChange, onDone, project, onOpenSettings }: BlockSheetProps<'datetime'> & { onOpenSettings: () => void }) {
   const p = block.props;
@@ -78,7 +78,7 @@ export function RsvpEditor({ block, onChange, onDone, project }: BlockSheetProps
         <ToggleList
           items={[
             { key: 'attend', label: '참석 여부', value: true, fixedLabel: '항상 받음' },
-            { key: 'side', label: '어느 쪽 손님', sub: '신랑측 · 신부측', value: p.fields.side, onChange: (v) => setField('side', v) },
+            { key: 'side', label: '어느 쪽 손님', sub: guestSides(project).join(' · ') || undefined, value: p.fields.side, onChange: (v) => setField('side', v) },
             { key: 'comp', label: '동반 인원', value: p.fields.companions, onChange: (v) => setField('companions', v) },
             { key: 'meal', label: '식사 여부', value: p.fields.meal, onChange: (v) => setField('meal', v) },
             { key: 'phone', label: '연락처', value: p.fields.phone, onChange: (v) => setField('phone', v) },
@@ -125,9 +125,10 @@ export function RsvpEditor({ block, onChange, onDone, project }: BlockSheetProps
   );
 }
 
-export function GuestbookSheet({ block, onChange, onDone }: BlockSheetProps<'guestbook'>) {
+export function GuestbookSheet({ block, onChange, onDone, project }: BlockSheetProps<'guestbook'>) {
   const p = block.props;
   const set = (patch: Partial<typeof p>) => onChange({ ...block, props: { ...p, ...patch } });
+  const sides = guestSides(project);
   return (
     <EditorSheet title="방명록" onDone={onDone} maxHeight={0.7}>
       <LabeledInput label="안내 문구" value={p.intro} onChangeText={(intro) => set({ intro })} maxLength={40} />
@@ -159,6 +160,14 @@ export function GuestbookSheet({ block, onChange, onDone }: BlockSheetProps<'gue
           />
           <Help>{'더 있으면 게스트는 "전체 보기"로 모든 글을 봐요.'}</Help>
         </Section>
+      ) : null}
+      {sides.length ? (
+        <View style={styles.gapSm}>
+          <ToggleList
+            items={[{ key: 'side', label: '어느 쪽 손님 받기', sub: sides.join(' · '), value: !!p.askSide, onChange: (askSide) => set({ askSide }) }]}
+          />
+          <Help>게스트가 글을 남길 때 고르고, 관리 화면에서 걸러볼 수 있어요.</Help>
+        </View>
       ) : null}
       <View style={styles.gapSm}>
         <LabeledInput label="버튼 문구" value={p.buttonLabel} onChangeText={(buttonLabel) => set({ buttonLabel })} maxLength={16} />
