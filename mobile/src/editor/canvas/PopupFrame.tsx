@@ -23,7 +23,7 @@ type FrameProps = {
 };
 
 /**
- * 안내 팝업 (고정 300 × 420). 위쪽 내용 영역은 넘치면 안에서 스크롤되고, 아랫줄
+ * 안내 팝업 (고정 330 × 500). 위쪽 내용 영역은 넘치면 안에서 스크롤되고, 아랫줄
  * (☐ 오늘 하루 보지 않기 · [닫기])은 항상 같은 자리에 있어요.
  */
 export function PopupFrame({ blocks, selectedId, onPressBlock, onLongPressBlock, onBlockLayout, scrollRef, onAdd, dontShow = false, onToggleDontShow, onClose }: FrameProps) {

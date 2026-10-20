@@ -156,9 +156,9 @@ export type Invitation = {
 
 /**
  * 안내 팝업 크기 — 폰 크기와 상관없이 고정이에요 (가장 작은 폰 360pt에서도 양옆이 남는 크기).
- * 내용 영역(300 × 364)은 넘치면 팝업 안에서 스크롤돼요.
+ * 내용 영역(330 × 444)은 넘치면 팝업 안에서 스크롤돼요.
  */
-export const POPUP_SIZE = { width: 300, height: 420, bar: 56 } as const;
+export const POPUP_SIZE = { width: 330, height: 500, bar: 56 } as const;
 /** 안내 팝업에 넣을 수 있는 것 — 짧게 읽히는 것만. */
 export const POPUP_BLOCK_TYPES: BlockType[] = ['text', 'image', 'divider', 'spacer', 'button'];
 

@@ -77,10 +77,10 @@ function Settings({ project, navigation }: { project: Project; navigation: Props
           <EventInfoRows project={project} onEventAt={(eventAt) => updateProject(project.id, { eventAt })} onOpenVenue={() => setVenueOpen(true)} />
         </Section>
 
-        <Section label="안내 팝업" sub="초대장을 열면 먼저 떠요">
+        <Section label="안내 팝업">
           <ToggleList items={[{ key: 'popup', label: '안내 팝업 사용', value: popupOn, onChange: setPopupEnabled }]} />
           {popupOn ? <SelectRow label="내용 편집" onPress={() => navigation.navigate('Editor', { projectId: project.id, tab: 'popup' })} /> : null}
-          <Help>에디터 ⚙ 전체 설정과 같은 설정이에요. 주차 · 셔틀처럼 놓치기 쉬운 정보를 적어 두세요.</Help>
+          <Help>에디터 ⚙ 전체 설정과 같은 설정이에요.</Help>
         </Section>
 
         <Section label="감사페이지">

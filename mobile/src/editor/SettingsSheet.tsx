@@ -90,7 +90,7 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
             <Section label="배경음악">
               <SelectRow label={bgmLabel} value={bgmValue || undefined} muted={!bgmValue} onPress={() => setPage('bgm')} />
             </Section>
-            <Section label="안내 팝업" sub="초대장을 열면 먼저 떠요">
+            <Section label="안내 팝업">
               <ToggleList items={[{ key: 'popup', label: '안내 팝업 사용', value: popupOn, onChange: onPopupEnabled }]} />
               {popupOn ? (
                 <SelectRow
@@ -101,7 +101,7 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
                   }}
                 />
               ) : null}
-              <Help>주차 · 셔틀처럼 놓치기 쉬운 정보를 적어 두면 게스트가 먼저 봐요. 관리 › 프로젝트 설정과 같은 설정이에요.</Help>
+              <Help>{popupOn ? '관리 › 프로젝트 설정과 같은 설정이에요.' : '사용하지 않더라도 만들어 둔 내용은 보관돼요.'}</Help>
             </Section>
           </>
         )}

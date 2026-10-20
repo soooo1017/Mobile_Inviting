@@ -9,7 +9,7 @@ import { DEFAULT_THANKS_PAGE, useInvitation } from '../../state/InvitationsConte
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus, type AudioSource } from 'expo-audio';
 import { BottomSheet } from '../../components/BottomSheet';
 import { SelectChip } from '../../components/SelectChip';
-import { DarkToast, ToggleList } from '../../editor/ui';
+import { DarkToast } from '../../editor/ui';
 import { SimpleThanksView } from '../../editor/canvas/SimpleThanks';
 import { ThanksSimpleSheet } from '../../editor/sheets/ThanksSimpleSheet';
 import { coverPhoto } from '../../editor/photos';
@@ -68,7 +68,7 @@ function Editor({
   const { height: screenH } = useWindowDimensions();
   // [감사페이지] 탭은 감사페이지를 쓰는 경우에만 보여요.
   const hasThanks = project.thanks.enabled;
-  const [page, setPage] = useState<PageKey>(initialTab === 'popup' ? 'popup' : hasThanks && initialTab === 'thanks' ? 'thanks' : 'invite');
+  const [pageState, setPage] = useState<PageKey>(initialTab === 'popup' ? 'popup' : hasThanks && initialTab === 'thanks' ? 'thanks' : 'invite');
   const [mode, setMode] = useState<'edit' | 'reorder'>('edit');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
@@ -82,17 +82,17 @@ function Editor({
   const blockY = useRef<Record<string, number>>({});
   const popupScrollRef = useRef<ScrollView>(null);
 
+  // [안내 팝업] 탭도 설정에서 쓰기로 한 경우에만 보여요 (감사페이지와 같은 방식). 끄면 초대장으로 돌아가요.
+  const popupOn = invitation?.popup?.enabled ?? false;
+  const page: PageKey = pageState === 'popup' && !popupOn ? 'invite' : pageState;
+
   const theme = invitationTheme(project);
   const blocks = invitation?.pages[page] ?? [];
   const selected = blocks.find((b) => b.id === selectedId) ?? null;
   const thanksPage = invitation?.thanks ?? DEFAULT_THANKS_PAGE;
-  // 안내 팝업: 초대장을 열면 먼저 뜨는 작은 페이지. 쓰지 않으면 탭에 스위치와 안내만 보여요.
+  // 안내 팝업: 초대장을 열면 먼저 뜨는 작은 페이지.
   const isPopup = page === 'popup';
-  const popupOn = invitation?.popup?.enabled ?? false;
-  const popupOff = isPopup && !popupOn;
-  // 시트가 팝업(420)을 가리지 않게, 팝업 내용을 고르는 동안은 위쪽 탭 · 버튼 줄을 접어요.
-  const popupEditing = isPopup && selected !== null;
-  const pageTabs: PageKey[] = hasThanks ? ['invite', 'popup', 'thanks'] : ['invite', 'popup'];
+  const pageTabs: PageKey[] = ['invite', ...(popupOn ? (['popup'] as const) : []), ...(hasThanks ? (['thanks'] as const) : [])];
   const PAGE_LABEL: Record<PageKey, string> = { invite: '초대장', popup: '안내 팝업', thanks: '감사페이지' };
   // 감사페이지 간단 모드: a fixed layout instead of the free block list.
   const simpleThanks = page === 'thanks' && thanksPage.mode === 'simple';
@@ -205,8 +205,8 @@ function Editor({
                 <GearIcon color={color.ink.secondary} />
               </Pressable>
             </View>
-            {popupEditing ? null : (
-            <View style={styles.tabs}>
+            {pageTabs.length > 1 ? (
+              <View style={styles.tabs}>
                 {pageTabs.map((k) => (
                   <Pressable
                     key={k}
@@ -221,11 +221,6 @@ function Editor({
                   </Pressable>
                 ))}
               </View>
-            )}
-            {isPopup && !popupEditing ? (
-              <View style={styles.popupBar}>
-                <ToggleList items={[{ key: 'popup', label: '안내 팝업 사용', value: popupOn, onChange: setPopupEnabled }]} />
-              </View>
             ) : null}
             {page === 'thanks' ? (
               <View style={styles.thanksBar}>
@@ -239,7 +234,7 @@ function Editor({
                 </Pressable>
               </View>
             ) : null}
-            {simpleThanks || popupOff || popupEditing ? null : (
+            {simpleThanks ? null : (
             <View style={styles.menu}>
               <Pressable onPress={() => openReorder()} disabled={!blocks.length} style={[styles.menuBtn, !blocks.length && styles.menuOff]}>
                 <SortIcon color={color.ink.primary} />
@@ -283,27 +278,19 @@ function Editor({
             </Pressable>
           </ScrollView>
         ) : isPopup ? (
-          popupOff ? (
-            <View style={[styles.flex, styles.popupOff]}>
-              <Text style={styles.popupOffTitle}>초대장을 열면 중요한 안내가 먼저 떠요</Text>
-              <Text style={styles.popupOffDesc}>{'주차 · 셔틀 · 식사 시간처럼\n놓치기 쉬운 정보에 좋아요.\n끄면 팝업 없이 바로 초대장이 열려요.'}</Text>
-              <Text style={styles.popupOffDesc}>켜기 전에 만들어 둔 내용은 끄더라도 그대로 보관돼요.</Text>
-            </View>
-          ) : (
-            <View style={[styles.flex, styles.popupStage]}>
-              <PopupFrame
-                blocks={blocks}
-                selectedId={selectedId}
-                scrollRef={popupScrollRef}
-                onPressBlock={select}
-                onLongPressBlock={openReorder}
-                onAdd={() => setAddAt(0)}
-                onBlockLayout={(id, y) => {
-                  blockY.current[id] = y;
-                }}
-              />
-            </View>
-          )
+          <View style={[styles.flex, styles.popupStage]}>
+            <PopupFrame
+              blocks={blocks}
+              selectedId={selectedId}
+              scrollRef={popupScrollRef}
+              onPressBlock={select}
+              onLongPressBlock={openReorder}
+              onAdd={() => setAddAt(0)}
+              onBlockLayout={(id, y) => {
+                blockY.current[id] = y;
+              }}
+            />
+          </View>
         ) : blocks.length === 0 ? (
           <View style={[styles.flex, styles.empty, { backgroundColor: theme.paper }]}>
             <Text style={[styles.emptyTitle, { color: theme.ink }]}>아직 아무것도 없어요</Text>
@@ -333,7 +320,7 @@ function Editor({
           </ScrollView>
         )}
 
-        {mode === 'edit' && !simpleThanks && !popupOff && blocks.length > 0 && !selected ? (
+        {mode === 'edit' && !simpleThanks && blocks.length > 0 && !selected ? (
           <Pressable style={[styles.addBar, theme.isDark && styles.addBarOnDark]} onPress={() => setAddAt(blocks.length)}>
             <Text style={[styles.addBarLabel, theme.isDark && styles.addBarLabelOnDark]}>+ 추가하기</Text>
           </Pressable>
@@ -523,29 +510,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: color.accent.base,
   },
-  popupBar: {
-    paddingHorizontal: space.screenX,
-    paddingTop: space[5],
-  },
   popupStage: {
     alignItems: 'center',
     paddingTop: space[6],
-  },
-  popupOff: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: space[10],
-    gap: space[4],
-    paddingBottom: 80,
-  },
-  popupOffTitle: {
-    ...textStyle({ size: 'control', weight: 'semibold', color: color.ink.primary }),
-    textAlign: 'center',
-  },
-  popupOffDesc: {
-    ...textStyle({ size: 'label', weight: 'regular', color: color.ink.muted }),
-    textAlign: 'center',
-    lineHeight: 21,
   },
   thanksBar: {
     paddingHorizontal: space.screenX,
