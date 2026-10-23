@@ -33,7 +33,7 @@ export function ShareScreen({ navigation, route }: Props) {
     await Clipboard.setStringAsync(url);
     setToast('링크를 복사했어요');
   };
-  // 폰의 공유창이 열려요 — 거기서 카카오톡을 고르면 돼요.
+  // 폰의 공유창이 열려요 — 거기서 카카오톡 등 보낼 앱을 골라요.
   const share = () => {
     Share.share({ message: url }).catch(() => setToast('공유창을 열지 못했어요'));
   };
@@ -51,8 +51,8 @@ export function ShareScreen({ navigation, route }: Props) {
             <Pressable onPress={copy} style={[manageStyles.outlineBtn, styles.flex]}>
               <Text style={manageStyles.outlineBtnLabel}>링크 복사</Text>
             </Pressable>
-            <Pressable onPress={share} disabled={!started} style={[styles.kakao, styles.flex, !started && manageStyles.off]}>
-              <Text style={styles.kakaoLabel}>카카오톡 공유</Text>
+            <Pressable onPress={share} disabled={!started} style={[styles.shareBtn, styles.flex, !started && manageStyles.off]}>
+              <Text style={styles.shareLabel}>공유하기</Text>
             </Pressable>
           </View>
         </View>
@@ -133,14 +133,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: space[3],
   },
-  kakao: {
-    backgroundColor: '#fee500',
+  shareBtn: {
+    backgroundColor: color.ink.primary,
     borderRadius: radius.button,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  kakaoLabel: {
-    ...textStyle({ size: 'control', weight: 'semibold', color: '#3a1d1d' }),
+  shareLabel: {
+    ...textStyle({ size: 'control', weight: 'semibold', color: color.ink.onPrimary }),
   },
   band: {
     backgroundColor: color.accent.tint,
