@@ -14,6 +14,9 @@ import { NewProjectThanksScreen } from '../screens/newProject/NewProjectThanksSc
 import { ThemeSelectScreen } from '../screens/newProject/ThemeSelectScreen';
 import { EditorScreen } from '../screens/editor/EditorScreen';
 import { ManageScreen } from '../screens/manage/ManageScreen';
+import { ShareScreen } from '../screens/share/ShareScreen';
+import { QrScreen } from '../screens/share/QrScreen';
+import { PosterScreen } from '../poster/PosterScreen';
 import { RsvpStatusScreen } from '../screens/manage/RsvpStatusScreen';
 import { GuestbookManageScreen } from '../screens/manage/GuestbookManageScreen';
 import { StatsScreen } from '../screens/manage/StatsScreen';
@@ -50,6 +53,9 @@ export function RootNavigator() {
       <Stack.Screen name="ManageGuestbook" component={GuestbookManageScreen} />
       <Stack.Screen name="ManageStats" component={StatsScreen} />
       <Stack.Screen name="ProjectSettings" component={ProjectSettingsScreen} />
+      <Stack.Screen name="Share" component={ShareScreen} />
+      <Stack.Screen name="Qr" component={QrScreen} />
+      <Stack.Screen name="Poster" component={PosterScreen} options={{ gestureEnabled: false }} />
       <Stack.Screen name="NicknameEdit" component={NicknameEditScreen} />
       <Stack.Screen name="PasswordChange" component={PasswordChangeScreen} />
       <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />

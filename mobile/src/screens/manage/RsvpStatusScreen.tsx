@@ -46,7 +46,7 @@ export function RsvpStatusScreen({ navigation, route }: Props) {
 
   let body;
   if (!isShared(project)) {
-    body = <NotShared what="참석 응답이" onShare={() => setToast('공유하기는 준비 중이에요')} />;
+    body = <NotShared what="참석 응답이" onShare={() => navigation.navigate('Share', { projectId: project.id })} />;
   } else if (!block || block.type !== 'rsvp') {
     body = (
       <Guide

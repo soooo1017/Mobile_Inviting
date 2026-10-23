@@ -111,7 +111,7 @@ function Role({ label, hex, editable, onPress, divider }: { label: string; hex: 
 }
 
 /** 색 고르기 창: 색상 영역 + 밝기 바 + 색 코드. */
-function ColorSheet({ visible, title, value, onChange, onClose }: { visible: boolean; title: string; value: string; onChange: (hex: string) => void; onClose: () => void }) {
+export function ColorSheet({ visible, title, value, onChange, onClose }: { visible: boolean; title: string; value: string; onChange: (hex: string) => void; onClose: () => void }) {
   const [text, setText] = useState(value.toUpperCase());
   const [wasVisible, setWasVisible] = useState(visible);
   const [lastValue, setLastValue] = useState(value);

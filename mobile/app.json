@@ -20,6 +20,16 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-media-library",
+        {
+          "photosPermission": false,
+          "savePhotosPermission": "초대장 QR · 홍보물 이미지를 사진첩에 저장하려면 접근이 필요해요.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ]
+    ]
   }
 }

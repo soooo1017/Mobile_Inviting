@@ -69,7 +69,7 @@ export function GuestbookManageScreen({ navigation, route }: Props) {
 
   let body;
   if (!shared) {
-    body = <NotShared what="방명록 글이" onShare={() => setToast('공유하기는 준비 중이에요')} />;
+    body = <NotShared what="방명록 글이" onShare={() => navigation.navigate('Share', { projectId: project.id })} />;
   } else if (!block) {
     body = (
       <Guide

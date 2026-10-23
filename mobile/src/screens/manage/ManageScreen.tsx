@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -6,7 +5,6 @@ import type { RootStackParamList } from '../../navigation/types';
 import { useProjects } from '../../state/ProjectsContext';
 import { attendingHeadcount, useGuestData } from '../../state/guestData';
 import { ProjectStatusChip } from '../../components/ProjectStatusChip';
-import { DarkToast } from '../../editor/ui';
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { eventTypeMeta } from '../../types/project';
@@ -20,7 +18,6 @@ export function ManageScreen({ navigation, route }: Props) {
   const { getProject } = useProjects();
   const project = getProject(route.params.projectId);
   const { responses, posts, visits } = useGuestData(route.params.projectId);
-  const [toast, setToast] = useState<string | null>(null);
 
   if (!project) return <SafeAreaView style={manageStyles.screen} />;
   const projectId = project.id;
@@ -28,7 +25,6 @@ export function ManageScreen({ navigation, route }: Props) {
   const typeName = project.eventType === 'other' ? project.customTypeName || '기타' : eventTypeMeta(project.eventType).label;
   const coming = attendingHeadcount(responses);
   const notComing = responses.filter((r) => !r.attending).length;
-  const soon = () => setToast('공유하기는 준비 중이에요');
 
   const kpis: { label: string; value: number; unit: string; sub: string; onPress: () => void }[] = [
     {
@@ -52,7 +48,9 @@ export function ManageScreen({ navigation, route }: Props) {
     { icon: '✓', label: '참석 응답 현황', onPress: () => navigation.navigate('ManageRsvp', { projectId }) },
     { icon: '✎', label: '방명록 관리', onPress: () => navigation.navigate('ManageGuestbook', { projectId }) },
     { icon: '▥', label: '통계', onPress: () => navigation.navigate('ManageStats', { projectId }) },
-    { icon: '↗', label: '공유하기', value: '준비 중', onPress: soon },
+    { icon: '↗', label: '공유하기', onPress: () => navigation.navigate('Share', { projectId }) },
+    { icon: '▦', label: 'QR 코드', onPress: () => navigation.navigate('Qr', { projectId }) },
+    { icon: '▤', label: '홍보물 만들기', onPress: () => navigation.navigate('Poster', { projectId }) },
     { icon: '⚙', label: '프로젝트 설정', onPress: () => navigation.navigate('ProjectSettings', { projectId }) },
   ];
 
@@ -101,7 +99,6 @@ export function ManageScreen({ navigation, route }: Props) {
           ))}
         </View>
       </ScrollView>
-      <DarkToast message={toast} onHide={() => setToast(null)} bottom={40} />
     </SafeAreaView>
   );
 }

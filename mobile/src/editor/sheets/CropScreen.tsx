@@ -29,18 +29,21 @@ export function CropScreen({
   crop: initialCrop,
   onCancel,
   onApply,
+  aspect: fixedAspect,
 }: {
   photo: Photo;
   ratio: ImageRatio;
   crop: Crop;
   onCancel: () => void;
   onApply: (crop: Crop, ratio: ImageRatio) => void;
+  /** 틀의 가로 ÷ 세로가 정해져 있을 때(홍보물 사진 틀) — 비율 칩은 숨겨요. */
+  aspect?: number;
 }) {
   const { width: screenW, height: screenH } = useWindowDimensions();
   const [ratio, setRatio] = useState(initialRatio);
   const [crop, setCrop] = useState(initialCrop);
 
-  const aspect = frameAspect(ratio, photo);
+  const aspect = fixedAspect ?? frameAspect(ratio, photo);
   let frameW = screenW * 0.78;
   let frameH = frameW / aspect;
   const maxH = screenH * 0.5;
@@ -123,7 +126,7 @@ export function CropScreen({
           {ratio === 'original' ? '원본 비율은 사진 전체가 보여요' : '끌어서 위치를 맞추고, 두 손가락으로 확대해요'}
         </Text>
         <View style={styles.ratios}>
-          {RATIOS.map((r) => {
+          {(fixedAspect ? [] : RATIOS).map((r) => {
             const on = r.value === ratio;
             return (
               <Pressable

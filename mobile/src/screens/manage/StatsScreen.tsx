@@ -1,11 +1,9 @@
-import { useState } from 'react';
 import { ScrollView, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { useProjects } from '../../state/ProjectsContext';
 import { useGuestData } from '../../state/guestData';
-import { DarkToast } from '../../editor/ui';
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { isShared, ManageHeader, manageStyles, NotShared } from './common';
@@ -26,7 +24,6 @@ export function StatsScreen({ navigation, route }: Props) {
   const { getProject } = useProjects();
   const project = getProject(route.params.projectId);
   const { responses, visits } = useGuestData(route.params.projectId);
-  const [toast, setToast] = useState<string | null>(null);
 
   if (!project) return <SafeAreaView style={manageStyles.screen} />;
   const rate = visits.people ? `${Math.round((responses.length / visits.people) * 100)}%` : '–';
@@ -37,7 +34,7 @@ export function StatsScreen({ navigation, route }: Props) {
     <SafeAreaView style={manageStyles.screen} edges={['top', 'bottom']}>
       <ManageHeader title="통계" onBack={() => navigation.goBack()} />
       {!isShared(project) ? (
-        <NotShared what="방문 기록이" onShare={() => setToast('공유하기는 준비 중이에요')} />
+        <NotShared what="방문 기록이" onShare={() => navigation.navigate('Share', { projectId: project.id })} />
       ) : (
         <ScrollView contentContainerStyle={manageStyles.body}>
           <View style={styles.kpis}>
@@ -73,7 +70,6 @@ export function StatsScreen({ navigation, route }: Props) {
           {visits.people === 0 ? <Text style={manageStyles.help}>아직 방문 기록이 없어요.</Text> : null}
         </ScrollView>
       )}
-      <DarkToast message={toast} onHide={() => setToast(null)} bottom={40} />
     </SafeAreaView>
   );
 }

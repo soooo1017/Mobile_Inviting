@@ -17,6 +17,9 @@ export type RootStackParamList = {
   ManageGuestbook: { projectId: string };
   ManageStats: { projectId: string };
   ProjectSettings: { projectId: string };
+  Share: { projectId: string };
+  Qr: { projectId: string };
+  Poster: { projectId: string };
   NicknameEdit: undefined;
   PasswordChange: undefined;
   NotificationSettings: undefined;
