@@ -10,6 +10,7 @@ export type RootStackParamList = {
   NewProjectType: undefined;
   NewProjectInfo: undefined;
   NewProjectThanks: undefined;
+  NewProjectPopup: undefined;
   ThemeSelect: undefined;
   Editor: { projectId: string; tab?: 'invite' | 'popup' | 'thanks' };
   Manage: { projectId: string };

@@ -68,6 +68,7 @@ export function NewProjectTypeScreen({ navigation }: Props) {
                   onPress={() => selectType(t.type)}
                 />
               ))}
+              {EVENT_TYPES.slice(row * 2, row * 2 + 2).length === 1 ? <View style={styles.tileSpacer} /> : null}
             </TileRow>
           ))}
         </View>
@@ -111,6 +112,9 @@ const styles = StyleSheet.create({
   grid: {
     gap: space[5],
     marginTop: space[8],
+  },
+  tileSpacer: {
+    flex: 1,
   },
   customField: {
     marginTop: space[8],

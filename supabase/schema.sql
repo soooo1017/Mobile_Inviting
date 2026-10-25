@@ -157,3 +157,34 @@ end;
 $$;
 
 grant execute on function public.delete_own_account() to authenticated;
+
+-- 8) My Page: 문의. 앱에서는 "보내기"와 "내 문의 보기"만 해요. 답변은 앱 안의 관리자 화면이 아니라
+-- Supabase 대시보드(Table Editor → inquiries)에서 reply를 적고 status를 'answered'로 바꾸면 돼요
+-- (대시보드는 service role이라 아래 RLS를 건너뛰어요). 문의가 많아지면 그때 웹 관리자 화면을 만들어요.
+-- 회원 탈퇴 시 그 사람의 문의도 같이 지워지게 auth.users에 연결해 둬요.
+create table if not exists public.inquiries (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  topic text not null,
+  title text not null,
+  content text not null,
+  status text not null default 'pending' check (status in ('pending', 'answered')),
+  reply text,
+  replied_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists inquiries_user_created_idx on public.inquiries (user_id, created_at desc);
+
+alter table public.inquiries enable row level security;
+
+-- 내 문의만 보고, 내 이름으로만 보낼 수 있어요. 고치기 · 지우기는 앱에서 못 해요.
+drop policy if exists "inquiries: select own" on public.inquiries;
+create policy "inquiries: select own"
+  on public.inquiries for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "inquiries: insert own" on public.inquiries;
+create policy "inquiries: insert own"
+  on public.inquiries for insert
+  with check (auth.uid() = user_id and status = 'pending' and reply is null);

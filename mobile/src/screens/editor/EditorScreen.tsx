@@ -24,7 +24,7 @@ import { CanvasContext, type CanvasContextValue } from '../../editor/canvas/Canv
 import { invitationTheme } from '../../editor/invitationTheme';
 import { ReorderView } from '../../editor/ReorderView';
 import { AddBlockSheet } from '../../editor/AddBlockSheet';
-import { SettingsSheet } from '../../editor/SettingsSheet';
+import { SettingsSheet, type Page as SettingsPage } from '../../editor/SettingsSheet';
 import { BlockSheet, isFullScreenEditor } from '../../editor/sheets/BlockSheet';
 import { BlockDeleteContext } from '../../editor/EditorSheet';
 import { ModalSafeArea } from '../../components/ModalSafeArea';
@@ -62,7 +62,7 @@ function Editor({
   navigation: Props['navigation'];
   updateProject: ReturnType<typeof useProjects>['updateProject'];
 }) {
-  const { invitation, insertBlock, updateBlock, removeBlock, duplicateBlock, moveBlock, setFont, setCoverPhoto, setBgm, setPopupEnabled, updateThanks } =
+  const { invitation, insertBlock, updateBlock, removeBlock, duplicateBlock, moveBlock, setFont, setCoverPhoto, setBgm, setPopupEnabled, setPopupStart, updateThanks } =
     useInvitation(project.id);
   const { setThanksSettings } = useProjects();
   const { height: screenH } = useWindowDimensions();
@@ -74,6 +74,8 @@ function Editor({
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [addAt, setAddAt] = useState<number | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  /** 설정 창을 열 때 바로 보여줄 하위 화면 — 메뉴 줄의 [배경음악]은 'bgm'으로 열어요. */
+  const [settingsPage, setSettingsPage] = useState<SettingsPage | undefined>(undefined);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [toast, setToast] = useState<Toast>(null);
   const [thanksSheetOpen, setThanksSheetOpen] = useState(false);
@@ -84,7 +86,7 @@ function Editor({
 
   // [안내 팝업] 탭도 설정에서 쓰기로 한 경우에만 보여요 (감사페이지와 같은 방식). 끄면 초대장으로 돌아가요.
   const popupOn = invitation?.popup?.enabled ?? false;
-  const page: PageKey = pageState === 'popup' && !popupOn ? 'invite' : pageState;
+  const page: PageKey = (pageState === 'popup' && !popupOn) || (pageState === 'thanks' && !hasThanks) ? 'invite' : pageState;
 
   const theme = invitationTheme(project);
   const blocks = invitation?.pages[page] ?? [];
@@ -201,7 +203,14 @@ function Editor({
               <Text style={[styles.title, styles.flex]} numberOfLines={1}>
                 {project.title}
               </Text>
-              <Pressable onPress={() => setSettingsOpen(true)} hitSlop={10} accessibilityLabel="전체 설정">
+              <Pressable
+                onPress={() => {
+                  setSettingsPage(undefined);
+                  setSettingsOpen(true);
+                }}
+                hitSlop={10}
+                accessibilityLabel="전체 설정"
+              >
                 <GearIcon color={color.ink.secondary} />
               </Pressable>
             </View>
@@ -250,6 +259,19 @@ function Editor({
                 <EyeIcon color={color.ink.primary} />
                 <Text style={styles.menuLabel}>미리보기</Text>
               </Pressable>
+              {page !== 'thanks' ? (
+                <Pressable
+                  onPress={() => {
+                    setSelectedId(null);
+                    setSettingsPage('bgm');
+                    setSettingsOpen(true);
+                  }}
+                  style={styles.menuBtn}
+                >
+                  <Text style={styles.menuGlyph}>♪</Text>
+                  <Text style={styles.menuLabel}>배경음악</Text>
+                </Pressable>
+              ) : null}
             </View>
             )}
           </>
@@ -342,6 +364,7 @@ function Editor({
               onDone={() => setSelectedId(null)}
               onOpenSettings={() => {
                 setSelectedId(null);
+                setSettingsPage(undefined);
                 setSettingsOpen(true);
               }}
               onProject={(patch) => updateProject(project.id, patch)}
@@ -384,10 +407,18 @@ function Editor({
           onCover={setCoverPhoto}
           onBgm={setBgm}
           onPopupEnabled={setPopupEnabled}
+          onPopupStart={setPopupStart}
           onEditPopup={() => {
             setPage('popup');
             setSelectedId(null);
           }}
+          onThanksEnabled={(enabled) => setThanksSettings(project.id, { ...project.thanks, enabled, days: project.thanks.days ?? 7 })}
+          onEditThanks={() => {
+            setPage('thanks');
+            setSelectedId(null);
+          }}
+          onShared={(shared) => updateProject(project.id, { shared })}
+          initialPage={settingsPage}
         />
 
         <BottomSheet visible={daysOpen} onClose={() => setDaysOpen(false)} title="감사페이지 공개 기간">
@@ -641,6 +672,10 @@ const styles = StyleSheet.create({
   },
   menuOff: {
     opacity: 0.4,
+  },
+  menuGlyph: {
+    ...textStyle({ size: 'label', weight: 'semibold', color: color.ink.primary }),
+    fontSize: 15,
   },
   menuLabel: {
     ...textStyle({ size: 'label', weight: 'medium', color: color.ink.primary }),

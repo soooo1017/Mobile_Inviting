@@ -107,7 +107,9 @@ export function useInvitation(projectId: string) {
       setFont: (font: FontId) => edit((inv) => ({ ...inv, font })),
       setCoverPhoto: (coverPhotoId: string | undefined) => edit((inv) => ({ ...inv, coverPhotoId })),
       setBgm: (bgm: Bgm) => edit((inv) => ({ ...inv, bgm })),
-      setPopupEnabled: (enabled: boolean) => edit((inv) => ({ ...inv, popup: { enabled } })),
+      setPopupEnabled: (enabled: boolean) => edit((inv) => ({ ...inv, popup: { ...inv.popup, enabled } })),
+      /** 안내 팝업이 행사 며칠 전부터 뜰지 (null = 공유하면 바로). */
+      setPopupStart: (startDays: number | null) => edit((inv) => ({ ...inv, popup: { enabled: inv.popup?.enabled ?? false, startDays } })),
       updateThanks: (fn: (t: ThanksPage) => ThanksPage) => edit((inv) => ({ ...inv, thanks: fn(inv.thanks ?? DEFAULT_THANKS_PAGE) })),
       /** Replaces a whole page at once (감사페이지 간단 ↔ 자유 전환). */
       setPage: (page: PageKey, blocks: Block[]) => edit((inv) => withPage(inv, page, blocks)),

@@ -118,7 +118,7 @@ export function ProjectListScreen(_props: Props) {
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="프로젝트명 검색"
+              placeholder="초대장 검색"
               placeholderTextColor={color.ink.placeholder}
               returnKeyType="search"
               style={styles.searchInput}

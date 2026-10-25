@@ -42,7 +42,7 @@ export function PhoneSheet({ block, onChange, onDone, project }: BlockSheetProps
   const p = block.props;
   const set = (patch: Partial<typeof p>) => onChange({ ...block, props: { ...p, ...patch } });
   const [editing, setEditing] = useState<Contact | null>(null);
-  const suggestions = roleSuggestions(project.eventType, project.hosts.map((h) => h.label));
+  const suggestions = roleSuggestions(project.eventType, project.hosts);
 
   if (editing) {
     const isNew = !p.contacts.some((c) => c.id === editing.id);
@@ -84,7 +84,12 @@ export function PhoneSheet({ block, onChange, onDone, project }: BlockSheetProps
       </Section>
       {p.view === 'button' ? (
         <LabeledInput label="버튼 문구" value={p.buttonLabel} onChangeText={(buttonLabel) => set({ buttonLabel })} maxLength={16} />
-      ) : null}
+      ) : (
+        <View style={styles.gapSm}>
+          <LabeledInput label="제목" sub="선택" value={p.title ?? ''} onChangeText={(title) => set({ title })} placeholder="예: 전화하기 · 연락주세요~" maxLength={20} />
+          <Help>연락처 목록 위에 보여요. 비워두면 연락처만 나와요.</Help>
+        </View>
+      )}
       <Section label={`연락처 ${p.contacts.length}/${LIMITS.contacts}`} sub="꾹 눌러 순서 바꾸기">
         <ItemRows
           items={p.contacts}
@@ -119,7 +124,7 @@ export function EmailSheet({ block, onChange, onDone, project }: BlockSheetProps
   const p = block.props;
   const set = (patch: Partial<typeof p>) => onChange({ ...block, props: { ...p, ...patch } });
   const [editing, setEditing] = useState<EmailEntry | null>(null);
-  const suggestions = roleSuggestions(project.eventType, project.hosts.map((h) => h.label));
+  const suggestions = roleSuggestions(project.eventType, project.hosts);
 
   if (editing) {
     const isNew = !p.entries.some((e) => e.id === editing.id);
@@ -169,7 +174,12 @@ export function EmailSheet({ block, onChange, onDone, project }: BlockSheetProps
           <LabeledInput label="버튼 문구" value={p.buttonLabel} onChangeText={(buttonLabel) => set({ buttonLabel })} maxLength={16} />
           <Help>주소가 1개면 바로 메일 앱이 열리고, 여러 개면 목록이 올라와요.</Help>
         </View>
-      ) : null}
+      ) : (
+        <View style={styles.gapSm}>
+          <LabeledInput label="제목" sub="선택" value={p.title ?? ''} onChangeText={(title) => set({ title })} placeholder="예: 문의하기 · 연락주세요~" maxLength={20} />
+          <Help>이메일 목록 위에 보여요. 비워두면 이메일만 나와요.</Help>
+        </View>
+      )}
       <Section label={`이메일 ${p.entries.length}/${LIMITS.emails}`} sub="꾹 눌러 순서 바꾸기">
         <ItemRows
           items={p.entries}
@@ -204,7 +214,7 @@ export function AccountSheet({ block, onChange, onDone, project }: BlockSheetPro
   const set = (patch: Partial<typeof p>) => onChange({ ...block, props: { ...p, ...patch } });
   const [editing, setEditing] = useState<Account | null>(null);
   const [pickingBank, setPickingBank] = useState(false);
-  const suggestions = roleSuggestions(project.eventType, project.hosts.map((h) => h.label));
+  const suggestions = roleSuggestions(project.eventType, project.hosts);
 
   if (editing && pickingBank) {
     return (

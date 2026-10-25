@@ -11,6 +11,7 @@ import { MainTabs } from './MainTabs';
 import { NewProjectTypeScreen } from '../screens/newProject/NewProjectTypeScreen';
 import { NewProjectInfoScreen } from '../screens/newProject/NewProjectInfoScreen';
 import { NewProjectThanksScreen } from '../screens/newProject/NewProjectThanksScreen';
+import { NewProjectPopupScreen } from '../screens/newProject/NewProjectPopupScreen';
 import { ThemeSelectScreen } from '../screens/newProject/ThemeSelectScreen';
 import { EditorScreen } from '../screens/editor/EditorScreen';
 import { ManageScreen } from '../screens/manage/ManageScreen';
@@ -46,6 +47,7 @@ export function RootNavigator() {
       <Stack.Screen name="NewProjectType" component={NewProjectTypeScreen} />
       <Stack.Screen name="NewProjectInfo" component={NewProjectInfoScreen} />
       <Stack.Screen name="NewProjectThanks" component={NewProjectThanksScreen} />
+      <Stack.Screen name="NewProjectPopup" component={NewProjectPopupScreen} />
       <Stack.Screen name="ThemeSelect" component={ThemeSelectScreen} />
       <Stack.Screen name="Editor" component={EditorScreen} options={{ gestureEnabled: false }} />
       <Stack.Screen name="Manage" component={ManageScreen} />

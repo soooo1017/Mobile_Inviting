@@ -14,6 +14,9 @@ import { EventInfoRows } from '../../editor/EventInfoRows';
 import { VenueFields } from '../../editor/VenueFields';
 import { useThanksMode } from '../../editor/thanksMode';
 import { Help, Section, SelectRow, ToggleList } from '../../editor/ui';
+import { PopupStartPicker } from '../../editor/PopupStartPicker';
+import { popupStartDays } from '../../editor/types';
+import { ShareControl } from '../share/ShareControl';
 import { DeleteDialog } from '../projectList/DeleteDialog';
 import { DownloadSheet } from '../projectList/DownloadSheet';
 import { color, radius, space } from '../../theme/tokens';
@@ -41,7 +44,7 @@ export function ProjectSettingsScreen({ navigation, route }: Props) {
 function Settings({ project, navigation }: { project: Project; navigation: Props['navigation'] }) {
   const { updateProject, setThanksSettings, deleteProject } = useProjects();
   const thanksMode = useThanksMode(project);
-  const { invitation, setPopupEnabled } = useInvitation(project.id);
+  const { invitation, setPopupEnabled, setPopupStart } = useInvitation(project.id);
   const popupOn = invitation?.popup?.enabled ?? false;
   const [title, setTitle] = useState(project.title);
   const [venueOpen, setVenueOpen] = useState(false);
@@ -69,6 +72,15 @@ function Settings({ project, navigation }: { project: Project; navigation: Props
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
       >
+        <Section label="공유">
+          <ShareControl
+            project={project}
+            onChange={(shared) => {
+              updateProject(project.id, { shared });
+              setToast(shared ? '공유를 시작했어요 · 게스트 화면은 서버 연결 뒤에 열려요' : '공유를 중지했어요');
+            }}
+          />
+        </Section>
         <Section label="초대장 이름" sub="내 초대장 목록에 보여요">
           <TextField value={title} onChangeText={setTitle} onBlur={commitTitle} onSubmitEditing={commitTitle} maxLength={30} returnKeyType="done" />
         </Section>
@@ -79,6 +91,7 @@ function Settings({ project, navigation }: { project: Project; navigation: Props
 
         <Section label="안내 팝업">
           <ToggleList items={[{ key: 'popup', label: '안내 팝업 사용', value: popupOn, onChange: setPopupEnabled }]} />
+          {popupOn ? <PopupStartPicker eventAt={project.eventAt} value={popupStartDays(invitation?.popup)} onChange={setPopupStart} /> : null}
           {popupOn ? <SelectRow label="내용 편집" onPress={() => navigation.navigate('Editor', { projectId: project.id, tab: 'popup' })} /> : null}
           <Help>에디터 ⚙ 전체 설정과 같은 설정이에요.</Help>
         </Section>

@@ -5,7 +5,7 @@ import { TextField } from '../../components/TextField';
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { EditorSheet, FullScreenEditor } from '../EditorSheet';
-import { Chips, Help, Section, ToggleList } from '../ui';
+import { Chips, Help, InlineChips, Section, ToggleList } from '../ui';
 import { LabeledInput } from './common';
 import type { BlockSheetProps } from './BasicSheets';
 import { formatDeadline, formatWhenShort, fromDateKey, guestSides, toDateKey } from '../format';
@@ -24,36 +24,44 @@ export function DateTimeSheet({ block, onChange, onDone, project, onOpenSettings
       </Section>
       <ToggleList
         items={[
-          { key: 'when', label: '일시 문구', value: p.showWhen, onChange: (showWhen) => set({ showWhen }) },
-          { key: 'dday', label: 'D-day 띠', value: p.showDday, onChange: (showDday) => set({ showDday }) },
-          { key: 'cal', label: '달력', value: p.showCalendar, onChange: (showCalendar) => set({ showCalendar }) },
-          { key: 'btn', label: '캘린더에 추가 버튼', value: p.showCalendarButton, onChange: (showCalendarButton) => set({ showCalendarButton }) },
+          { key: 'when', label: '일시', value: p.showWhen, onChange: (showWhen) => set({ showWhen }) },
+          { key: 'dday', label: 'D-day', value: p.showDday, onChange: (showDday) => set({ showDday }) },
+          {
+            key: 'cal',
+            label: '달력',
+            value: p.showCalendar,
+            onChange: (showCalendar) => set({ showCalendar }),
+            extra: p.showCalendar ? (
+              <InlineChips
+                label="행사일 동그라미 색"
+                options={[
+                  { value: 'red', label: '빨강 (기본)' },
+                  { value: 'theme', label: '테마 색' },
+                ]}
+                value={p.circleColor}
+                onChange={(circleColor) => set({ circleColor })}
+              />
+            ) : undefined,
+          },
+          {
+            key: 'btn',
+            label: '캘린더에 추가 버튼',
+            value: p.showCalendarButton,
+            onChange: (showCalendarButton) => set({ showCalendarButton }),
+            extra: p.showCalendarButton ? (
+              <InlineChips
+                label="버튼 색"
+                options={[
+                  { value: 'default', label: '기본' },
+                  { value: 'inverse', label: '반전' },
+                ]}
+                value={p.buttonTone}
+                onChange={(buttonTone) => set({ buttonTone })}
+              />
+            ) : undefined,
+          },
         ]}
       />
-      {p.showCalendarButton ? (
-        <Section label="캘린더에 추가 버튼 색">
-          <Chips
-            options={[
-              { value: 'default', label: '기본' },
-              { value: 'inverse', label: '반전' },
-            ]}
-            value={p.buttonTone}
-            onChange={(buttonTone) => set({ buttonTone })}
-          />
-        </Section>
-      ) : null}
-      {p.showCalendar ? (
-        <Section label="행사일 동그라미 색">
-          <Chips
-            options={[
-              { value: 'red', label: '빨강 (기본)' },
-              { value: 'theme', label: '테마 색' },
-            ]}
-            value={p.circleColor}
-            onChange={(circleColor) => set({ circleColor })}
-          />
-        </Section>
-      ) : null}
     </EditorSheet>
   );
 }
@@ -63,6 +71,7 @@ export function RsvpEditor({ block, onChange, onDone, project }: BlockSheetProps
   const set = (patch: Partial<typeof p>) => onChange({ ...block, props: { ...p, ...patch } });
   const setField = (key: keyof typeof p.fields, v: boolean) => set({ fields: { ...p.fields, [key]: v } });
   const [picking, setPicking] = useState(false);
+  const sides = guestSides(project);
 
   const eventDay = new Date(project.eventAt);
   const today = new Date();
@@ -78,11 +87,12 @@ export function RsvpEditor({ block, onChange, onDone, project }: BlockSheetProps
         <ToggleList
           items={[
             { key: 'attend', label: '참석 여부', value: true, fixedLabel: '항상 받음' },
-            { key: 'side', label: '어느 쪽 손님', sub: guestSides(project).join(' · ') || undefined, value: p.fields.side, onChange: (v) => setField('side', v) },
-            { key: 'comp', label: '동반 인원', value: p.fields.companions, onChange: (v) => setField('companions', v) },
-            { key: 'meal', label: '식사 여부', value: p.fields.meal, onChange: (v) => setField('meal', v) },
-            { key: 'phone', label: '연락처', value: p.fields.phone, onChange: (v) => setField('phone', v) },
-            { key: 'msg', label: '전할 말', value: p.fields.message, onChange: (v) => setField('message', v) },
+            // 게스트가 실제로 고르는 선택지를 항목 옆에 같이 보여줘요. 쪽이 없는 행사(동창회 등)는 이 항목이 없어요.
+            ...(sides.length ? [{ key: 'side', label: '어느 쪽 손님', sub: `${sides.join(' · ')} 중 선택`, value: p.fields.side, onChange: (v: boolean) => setField('side', v) }] : []),
+            { key: 'comp', label: '동반 인원', sub: '인원 수 입력', value: p.fields.companions, onChange: (v) => setField('companions', v) },
+            { key: 'meal', label: '식사 여부', sub: '함 · 안 함 선택', value: p.fields.meal, onChange: (v) => setField('meal', v) },
+            { key: 'phone', label: '연락처', sub: '번호 입력', value: p.fields.phone, onChange: (v) => setField('phone', v) },
+            { key: 'msg', label: '전할 말', sub: '한마디 입력', value: p.fields.message, onChange: (v) => setField('message', v) },
           ]}
         />
       </Section>

@@ -6,25 +6,45 @@ export type EventType =
   | 'housewarming'
   | 'opening'
   | 'reunion'
+  | 'club'
   | 'other';
+
+/**
+ * 주인공(호스트) 입력 방식 — 행사 종류마다 달라요.
+ * - fixed: 정해진 칸 (결혼식 신랑 · 신부 / 돌잔치 · 백일 아이 · 아버지 · 어머니 …)
+ * - group: 모임명 + 직책(회장 · 부회장 · 총무 · 기타) + 이름 (동창회 · 동호회)
+ * - free: 호스트 + 직접 추가(구분 + 이름) (기타)
+ */
+export type HostMode = 'fixed' | 'group' | 'free';
 
 export type EventTypeMeta = {
   type: EventType;
   label: string;
   subtitle: string;
-  hostLabels: [string, string] | [string];
+  hostMode: HostMode;
+  /** 처음 만들어지는 칸 이름. group은 [모임명, 직책], free는 [호스트]. */
+  hostLabels: string[];
+  /** 앞에서부터 이만큼은 꼭 적어야 다음으로 가요. */
+  requiredHosts: number;
 };
 
 export const EVENT_TYPES: EventTypeMeta[] = [
-  { type: 'wedding', label: '결혼식', subtitle: '신랑 · 신부', hostLabels: ['신랑', '신부'] },
-  { type: 'first_birthday', label: '돌잔치', subtitle: '아이 · 부모님', hostLabels: ['아이', '부모님'] },
-  { type: '100days', label: '백일', subtitle: '아이 · 부모님', hostLabels: ['아이', '부모님'] },
-  { type: 'birthday', label: '생일파티', subtitle: '주인공', hostLabels: ['주인공'] },
-  { type: 'housewarming', label: '집들이', subtitle: '집주인', hostLabels: ['집주인'] },
-  { type: 'opening', label: '개업식', subtitle: '가게 · 대표', hostLabels: ['가게', '대표'] },
-  { type: 'reunion', label: '동창회', subtitle: '모임 · 총무', hostLabels: ['모임', '총무'] },
-  { type: 'other', label: '기타', subtitle: '직접 입력', hostLabels: ['주인공'] },
+  { type: 'wedding', label: '결혼식', subtitle: '신랑 · 신부', hostMode: 'fixed', hostLabels: ['신랑', '신부'], requiredHosts: 2 },
+  { type: 'first_birthday', label: '돌잔치', subtitle: '아이 · 아버지 · 어머니', hostMode: 'fixed', hostLabels: ['아이', '아버지', '어머니'], requiredHosts: 1 },
+  { type: '100days', label: '백일', subtitle: '아이 · 아버지 · 어머니', hostMode: 'fixed', hostLabels: ['아이', '아버지', '어머니'], requiredHosts: 1 },
+  { type: 'birthday', label: '생일파티', subtitle: '주인공', hostMode: 'fixed', hostLabels: ['주인공'], requiredHosts: 1 },
+  { type: 'housewarming', label: '집들이', subtitle: '집주인', hostMode: 'fixed', hostLabels: ['집주인'], requiredHosts: 1 },
+  { type: 'opening', label: '개업식', subtitle: '가게 · 대표', hostMode: 'fixed', hostLabels: ['가게', '대표'], requiredHosts: 2 },
+  { type: 'reunion', label: '동창회', subtitle: '모임명 · 직책 · 이름', hostMode: 'group', hostLabels: ['모임명', '총무'], requiredHosts: 2 },
+  { type: 'club', label: '동호회', subtitle: '모임명 · 직책 · 이름', hostMode: 'group', hostLabels: ['모임명', '총무'], requiredHosts: 2 },
+  { type: 'other', label: '기타', subtitle: '호스트 직접 입력', hostMode: 'free', hostLabels: ['호스트'], requiredHosts: 1 },
 ];
+
+/** 동창회 · 동호회 직책 선택지 (기타는 직접 입력). */
+export const GROUP_ROLES = ['회장', '부회장', '총무'] as const;
+/** 기타 행사에서 호스트를 더할 때 쓰는 구분 추천 칩. */
+export const FREE_ROLES = ['회장', '부회장', '총무', '대표', '주최'] as const;
+export const MAX_FREE_HOSTS = 6;
 
 export function eventTypeMeta(type: EventType): EventTypeMeta {
   return EVENT_TYPES.find((t) => t.type === type) ?? EVENT_TYPES[0];

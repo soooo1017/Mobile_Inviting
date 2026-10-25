@@ -7,7 +7,7 @@ import type { Project } from '../types/project';
 import { FontList } from './sheets/common';
 import { fontMeta } from './fonts';
 import { Help, Section, SelectRow, ToggleList } from './ui';
-import type { Bgm, FontId, Invitation } from './types';
+import { popupStartDays, type Bgm, type FontId, type Invitation } from './types';
 import { CoverPicker } from './CoverPicker';
 import { BgmSettings } from './BgmSettings';
 import { bgmSummary } from './bgm';
@@ -16,6 +16,8 @@ import { VenueFields } from './VenueFields';
 import { EventInfoRows } from './EventInfoRows';
 import { ThemeColorPicker } from './ThemeColorPicker';
 import { projectColors } from './invitationTheme';
+import { PopupStartPicker } from './PopupStartPicker';
+import { ShareControl } from '../screens/share/ShareControl';
 
 type Props = {
   visible: boolean;
@@ -28,16 +30,31 @@ type Props = {
   onCover: (photoId: string) => void;
   onBgm: (bgm: Bgm) => void;
   onPopupEnabled: (enabled: boolean) => void;
+  /** 안내 팝업이 행사 며칠 전부터 뜰지 (null = 공유하면 바로). */
+  onPopupStart: (startDays: number | null) => void;
   /** 안내 팝업 탭으로 이동 (설정 창은 닫혀요). */
   onEditPopup: () => void;
+  /** 감사페이지 사용 여부 — 프로젝트 설정과 같은 설정이에요. */
+  onThanksEnabled: (enabled: boolean) => void;
+  /** 감사페이지 탭으로 이동 (설정 창은 닫혀요). */
+  onEditThanks: () => void;
+  /** 공유 시작 · 중지. */
+  onShared: (shared: boolean) => void;
+  /** 열 때 바로 보여줄 하위 화면 (예: 에디터의 배경음악 버튼 → 'bgm'). */
+  initialPage?: Page;
 };
 
-type Page = 'main' | 'font' | 'cover' | 'bgm' | 'venue';
+export type Page = 'main' | 'font' | 'cover' | 'bgm' | 'venue';
 const PAGE_TITLE: Record<Page, string> = { main: '전체 설정', font: '기본 글꼴', cover: '대표 사진', bgm: '배경음악', venue: '장소' };
 
 /** ⚙ 전체 설정 — things that apply to the whole invitation rather than one block. */
-export function SettingsSheet({ visible, onClose, project, font, onFont, onProject, invitation, onCover, onBgm, onPopupEnabled, onEditPopup }: Props) {
-  const [page, setPage] = useState<Page>('main');
+export function SettingsSheet({ visible, onClose, project, font, onFont, onProject, invitation, onCover, onBgm, onPopupEnabled, onPopupStart, onEditPopup, onThanksEnabled, onEditThanks, onShared, initialPage }: Props) {
+  const [page, setPage] = useState<Page>(initialPage ?? 'main');
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
+    if (visible) setPage(initialPage ?? 'main');
+  }
   const cover = coverPhoto(invitation);
   const [bgmLabel, bgmValue] = bgmSummary(invitation.bgm);
   const popupOn = invitation.popup?.enabled ?? false;
@@ -71,6 +88,9 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
           </>
         ) : (
           <>
+            <Section label="공유" sub="시작해야 링크로 볼 수 있어요">
+              <ShareControl project={project} onChange={onShared} />
+            </Section>
             <Section label="기본 글꼴">
               <SelectRow label={fontMeta(font).label} onPress={() => setPage('font')} />
             </Section>
@@ -93,15 +113,35 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
             <Section label="안내 팝업">
               <ToggleList items={[{ key: 'popup', label: '안내 팝업 사용', value: popupOn, onChange: onPopupEnabled }]} />
               {popupOn ? (
+                <>
+                  <PopupStartPicker eventAt={project.eventAt} value={popupStartDays(invitation.popup)} onChange={onPopupStart} />
+                  <SelectRow
+                    label="내용 편집"
+                    onPress={() => {
+                      close();
+                      onEditPopup();
+                    }}
+                  />
+                </>
+              ) : null}
+              <Help>{popupOn ? '관리 › 프로젝트 설정과 같은 설정이에요.' : '사용하지 않더라도 만들어 둔 내용은 보관돼요.'}</Help>
+            </Section>
+            <Section label="감사페이지">
+              <ToggleList items={[{ key: 'thanks', label: '감사페이지 사용', value: project.thanks.enabled, onChange: onThanksEnabled }]} />
+              {project.thanks.enabled ? (
                 <SelectRow
                   label="내용 편집"
                   onPress={() => {
                     close();
-                    onEditPopup();
+                    onEditThanks();
                   }}
                 />
               ) : null}
-              <Help>{popupOn ? '관리 › 프로젝트 설정과 같은 설정이에요.' : '사용하지 않더라도 만들어 둔 내용은 보관돼요.'}</Help>
+              <Help>
+                {project.thanks.enabled
+                  ? '행사 다음 날 자정부터 공유한 링크가 감사페이지로 바뀌어요. 관리 › 프로젝트 설정과 같은 설정이에요.'
+                  : '사용하지 않으면 행사가 끝나도 초대장이 계속 보여요. 만들어 둔 감사페이지는 보관돼요.'}
+              </Help>
             </Section>
           </>
         )}

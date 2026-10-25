@@ -31,6 +31,10 @@ const DEFAULTS: Record<EventType, { title: string; message: string }> = {
     title: '고마워요',
     message: '오랜만에 함께해 줘서 고마워요.\n덕분에 즐거운 시간이었어요. 다음 모임에서 또 만나요.',
   },
+  club: {
+    title: '고마워요',
+    message: '함께해 주셔서 고맙습니다.\n덕분에 즐거운 시간이었어요. 다음 모임에서 또 만나요.',
+  },
   other: {
     title: '감사합니다',
     message: '귀한 시간 내어 함께해 주셔서 진심으로 감사드립니다.',
@@ -51,10 +55,11 @@ function hasFinalConsonant(word: string): boolean {
   return code >= 0 && code <= 11171 && code % 28 !== 0;
 }
 
-/** "신랑 민석 · 신부 지원 드림", "하준이네 드림", "카페 온기 · 대표 김민석 드림" … — empty when no names were entered. */
+/** "신랑 민석 · 신부 지원 드림", "하준이네 드림", "한울동창회 총무 김민수 드림" … — empty when no names were entered. */
 export function defaultThanksSender(project: Project): string {
-  const name = (i: number) => project.hosts[i]?.name.trim() ?? '';
-  const label = (i: number) => project.hosts[i]?.label ?? '';
+  const hosts = project.hosts;
+  const name = (i: number) => hosts[i]?.name.trim() ?? '';
+  const label = (i: number) => hosts[i]?.label ?? '';
   let from = '';
   switch (project.eventType) {
     case 'wedding':
@@ -62,13 +67,20 @@ export function defaultThanksSender(project: Project): string {
       break;
     case 'first_birthday':
     case '100days':
-      from = name(0) ? `${name(0)}${hasFinalConsonant(name(0)) ? '이네' : '네'}` : name(1);
+      from = name(0) ? `${name(0)}${hasFinalConsonant(name(0)) ? '이네' : '네'}` : '';
       break;
     case 'opening':
       from = [name(0), name(1) && `${label(1)} ${name(1)}`].filter(Boolean).join(' · ');
       break;
     case 'reunion':
-      from = name(1) ? `${label(1)} ${name(1)}` : name(0);
+    case 'club':
+      from = [name(0), name(1) && `${label(1)} ${name(1)}`].filter(Boolean).join(' ');
+      break;
+    case 'other':
+      from = hosts
+        .filter((h) => h.name.trim())
+        .map((h) => (h.label === '호스트' ? h.name.trim() : `${h.label} ${h.name.trim()}`))
+        .join(' · ');
       break;
     default:
       from = name(0);

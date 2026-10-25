@@ -3,6 +3,9 @@ import { BackButton } from '../../components/BackButton';
 import { color, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 
+/** 새 초대장 단계 수: 행사 유형 → 기본 정보 → 감사 페이지 → 안내 팝업 → 테마 · 글꼴. */
+export const WIZARD_STEPS = 5;
+
 type Props = {
   onBack: () => void;
   step: number;
@@ -18,9 +21,9 @@ export function WizardHeader({ onBack, step, stepLabel, title = '새 초대장' 
         <Text style={styles.headerTitle}>{title}</Text>
       </View>
       <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${(step / 4) * 100}%` }]} />
+        <View style={[styles.progressFill, { width: `${(step / WIZARD_STEPS) * 100}%` }]} />
       </View>
-      <Text style={styles.stepLabel}>{step} / 4 · {stepLabel}</Text>
+      <Text style={styles.stepLabel}>{step} / {WIZARD_STEPS} · {stepLabel}</Text>
     </View>
   );
 }

@@ -6,6 +6,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { useNewProjectDraft } from '../../state/NewProjectDraftContext';
 import { WizardHeader } from './WizardHeader';
+import { HostFields, hostsComplete } from './HostFields';
 import { FieldLabel } from '../../components/FieldLabel';
 import { TextField } from '../../components/TextField';
 import { HelperText } from '../../components/HelperText';
@@ -27,12 +28,8 @@ export function NewProjectInfoScreen({ navigation }: Props) {
   const [venueText, setVenueText] = useState(draft.venue?.name ?? '');
 
   const eventDate = new Date(draft.eventAt);
-  const typeLabel = eventTypeMeta(draft.eventType).label;
+  const typeLabel = draft.eventType === 'other' ? draft.customTypeName || '기타' : eventTypeMeta(draft.eventType).label;
 
-  const setHostName = (index: number, name: string) => {
-    const hosts = draft.hosts.map((h, i) => (i === index ? { ...h, name } : h));
-    update({ hosts });
-  };
 
   const setVenueField = (text: string) => {
     setVenueText(text);
@@ -53,7 +50,7 @@ export function NewProjectInfoScreen({ navigation }: Props) {
     update({ venue: { ...draft.venue, mapLinks: { ...draft.venue.mapLinks, [link]: !draft.venue.mapLinks[link] } } });
   };
 
-  const canProceed = draft.hosts.every((h) => h.name.trim().length > 0);
+  const canProceed = hostsComplete(draft.eventType, draft.hosts);
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
@@ -67,22 +64,9 @@ export function NewProjectInfoScreen({ navigation }: Props) {
           </View>
         }
       >
-        <FieldLabel>주인공</FieldLabel>
-        <View style={styles.hostRow} onLayout={fieldLayout('hosts')}>
-          {draft.hosts.map((h, i) => (
-            <View key={h.label} style={styles.hostField}>
-              <Text style={styles.hostLabel}>{h.label}</Text>
-              <TextField
-                value={h.name}
-                onChangeText={(v) => setHostName(i, v)}
-                onFocus={() => onFieldFocus('hosts')}
-                placeholder={h.label}
-              />
-            </View>
-          ))}
+        <View onLayout={fieldLayout('hosts')}>
+          <HostFields eventType={draft.eventType} hosts={draft.hosts} onChange={(hosts) => update({ hosts })} onFocus={() => onFieldFocus('hosts')} />
         </View>
-        <HelperText>칸 이름은 행사 유형에 맞춰 미리 채워져요.</HelperText>
-
         <View style={styles.section}>
           <FieldLabel>행사 일시</FieldLabel>
           <View style={styles.dateTimeRow}>
@@ -173,17 +157,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.screenX,
     paddingTop: space[8],
     gap: space[3],
-  },
-  hostRow: {
-    flexDirection: 'row',
-    gap: space[5],
-  },
-  hostField: {
-    flex: 1,
-  },
-  hostLabel: {
-    ...textStyle({ size: 'small', weight: 'regular', color: color.ink.muted }),
-    marginBottom: space[2],
   },
   section: {
     marginTop: space[8],

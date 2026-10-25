@@ -1,4 +1,4 @@
-import type { EventType, Project } from '../types/project';
+import { GROUP_ROLES, type EventType, type Project } from '../types/project';
 import { BLOCK_LABEL, FORMAT_LABEL, GAP_LABEL, type Block } from './types';
 
 const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
@@ -87,12 +87,40 @@ export function formatPhone(input: string): string {
   return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
 }
 
-/** 호칭 suggestion chips, matched to the event type (돌잔치 → 아이·아버지·어머니). */
-export function roleSuggestions(eventType: EventType, hostLabels: string[]): string[] {
+/**
+ * 호칭 추천 칩 — 연락처 · 이메일 · 계좌에서 같은 행사 종류는 같은 말로 통일해요.
+ * 결혼식 신랑 · 신부 · 아버지 · 어머니 / 돌잔치 · 백일 아이 · 아버지 · 어머니 / 동창회 · 동호회 회장 · 부회장 · 총무 …
+ */
+export function roleSuggestions(eventType: EventType, hosts: { label: string; name: string }[]): string[] {
   if (eventType === 'wedding') return ['신랑', '신부', '아버지', '어머니'];
   if (eventType === 'first_birthday' || eventType === '100days') return ['아이', '아버지', '어머니'];
-  const hosts = hostLabels.filter((l) => l && l !== '부모님');
-  return Array.from(new Set([...hosts, '아버지', '어머니']));
+  if (eventType === 'reunion' || eventType === 'club') return Array.from(new Set([...hosts.slice(1).map((h) => h.label), ...GROUP_ROLES]));
+  if (eventType === 'other') return Array.from(new Set([...hosts.map((h) => h.label).filter(Boolean), ...GROUP_ROLES]));
+  return Array.from(new Set([...hosts.map((h) => h.label).filter(Boolean), '아버지', '어머니']));
+}
+
+/** 초대장 · 홍보물 · 목록에 쓰는 이름 한 줄 (행사 종류마다 달라요). 비어 있으면 ''. */
+export function hostNames(eventType: EventType, hosts: { label: string; name: string }[]): string {
+  const names = hosts.map((h) => h.name.trim());
+  switch (eventType) {
+    case 'first_birthday':
+    case '100days':
+      return names[0] ?? '';
+    case 'reunion':
+    case 'club':
+      return names[0] ?? '';
+    default:
+      return names.filter(Boolean).join(' · ');
+  }
+}
+
+/** 새 초대장의 기본 이름. 프로젝트 설정에서 언제든 바꿀 수 있어요. */
+export function defaultProjectTitle(eventType: EventType, hosts: { label: string; name: string }[], typeName: string): string {
+  const names = hostNames(eventType, hosts);
+  if (!names) return typeName;
+  if (eventType === 'first_birthday') return `${names} 돌잔치`;
+  if (eventType === '100days') return `${names} 백일`;
+  return names;
 }
 
 export const BANKS = [
@@ -169,11 +197,14 @@ export function blockSummary(block: Block): string {
   }
 }
 
-/** The two guest sides for 어느 쪽 손님 (참석 응답 · 방명록); empty when the event has a single host. */
-export function guestSides(project: Project): [string, string] | [] {
+/**
+ * 어느 쪽 손님(참석 응답 · 방명록)에서 게스트가 고르는 두 쪽. 쪽이 없는 행사는 빈 목록이라 이 항목이 안 보여요.
+ * 결혼식 신랑측 · 신부측 / 돌잔치 · 백일 아버지측 · 어머니측.
+ */
+export function guestSides(project: Pick<Project, 'eventType'>): [string, string] | [] {
   if (project.eventType === 'wedding') return ['신랑측', '신부측'];
-  const labels = project.hosts.map((h) => h.label).filter(Boolean);
-  return labels.length === 2 ? [`${labels[0]}측`, `${labels[1]}측`] : [];
+  if (project.eventType === 'first_birthday' || project.eventType === '100days') return ['아버지측', '어머니측'];
+  return [];
 }
 
 export function blockLabel(block: Block): string {

@@ -38,10 +38,14 @@ export function sortProjects(projects: Project[], sort: SortKey): Project[] {
   }
 }
 
+/**
+ * 정렬 이름 — 지난 행사 · 다가올 행사 모두 헷갈리지 않게 "행사일"을 기준으로 빠른순 / 늦은순.
+ * 빠른순 = 이른 날짜(지난 행사)가 위, 늦은순 = 나중 날짜(먼 미래)가 위.
+ */
 export const SORT_OPTIONS: { key: SortKey; label: string; desc: string }[] = [
   { key: 'updated', label: '최근 수정순', desc: '마지막으로 편집한 초대장부터' },
-  { key: 'eventDesc', label: '최근 행사순', desc: '행사일이 늦은 순서' },
-  { key: 'eventAsc', label: '오래된 행사순', desc: '행사일이 빠른 순서' },
+  { key: 'eventAsc', label: '행사일 빠른순', desc: '행사 날짜가 이른 것부터' },
+  { key: 'eventDesc', label: '행사일 늦은순', desc: '행사 날짜가 나중인 것부터' },
   { key: 'created', label: '최근 만든순', desc: '' },
   { key: 'name', label: '이름순', desc: '가나다 · ABC' },
 ];

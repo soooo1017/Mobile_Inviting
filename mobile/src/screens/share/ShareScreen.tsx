@@ -8,6 +8,7 @@ import type { RootStackParamList } from '../../navigation/types';
 import { useProjects } from '../../state/ProjectsContext';
 import { DarkToast } from '../../editor/ui';
 import { shareUrl, shareUrlLabel } from '../../share/link';
+import { ShareControl } from './ShareControl';
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { getProjectStatus } from '../../utils/projectStatus';
@@ -57,14 +58,18 @@ export function ShareScreen({ navigation, route }: Props) {
           </View>
         </View>
 
+        <ShareControl
+          project={project}
+          onChange={(shared) => {
+            updateProject(projectId, { shared });
+            setToast(shared ? '공유를 시작했어요 · 게스트 화면은 서버 연결 뒤에 열려요' : '공유를 중지했어요');
+          }}
+        />
         {started ? null : (
           <View style={styles.band}>
-            <Text style={styles.bandText}>
-              {'공유를 시작하기 전에는 다른 사람이 링크를 열면 "준비 중" 화면이 보여요.\nQR · 홍보물은 지금도 미리 만들어 볼 수 있어요.'}
-            </Text>
+            <Text style={styles.bandText}>{'QR · 홍보물은 지금도 미리 만들어 볼 수 있어요.'}</Text>
           </View>
         )}
-
         <View style={manageStyles.card}>
           <Pressable onPress={() => navigation.navigate('Qr', { projectId })} style={styles.row}>
             <View style={styles.thumb}>
@@ -89,19 +94,6 @@ export function ShareScreen({ navigation, route }: Props) {
         </View>
       </ScrollView>
 
-      {started ? null : (
-        <View style={manageStyles.footer}>
-          <Pressable
-            onPress={() => {
-              updateProject(projectId, { shared: true });
-              setToast('공유를 시작했어요 · 게스트 화면은 서버 연결 뒤에 열려요');
-            }}
-            style={styles.start}
-          >
-            <Text style={styles.startLabel}>공유 시작하기</Text>
-          </Pressable>
-        </View>
-      )}
       <DarkToast message={toast} onHide={() => setToast(null)} bottom={90} />
     </SafeAreaView>
   );

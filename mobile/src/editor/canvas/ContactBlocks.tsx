@@ -8,7 +8,7 @@ import { CircleAction, RowList, type Row } from './RowList';
 import { InvButton } from './BasicBlocks';
 import { CallIcon, CopyIcon, MailIcon, SmsIcon } from '../icons';
 import { shortBank } from '../format';
-import { GAP_HEIGHT, type BlockOfType } from '../types';
+import { GAP_HEIGHT, type BlockOfType, type FontId } from '../types';
 
 function EmptyHint({ text }: { text: string }) {
   const { theme } = useCanvas();
@@ -17,6 +17,19 @@ function EmptyHint({ text }: { text: string }) {
       <InvUiText size={13} soft>
         {text}
       </InvUiText>
+    </View>
+  );
+}
+
+/** 목록 방식 — 연락처 위에 제목(예: 연락주세요~)을 보여줘요. 제목이 없으면 목록만. */
+function TitledList({ title, font, children }: { title?: string; font?: FontId; children: ReactNode }) {
+  if (!title?.trim()) return <>{children}</>;
+  return (
+    <View>
+      <InvText font={font} size={16} bold leading={1.4} style={styles.listTitle}>
+        {title.trim()}
+      </InvText>
+      {children}
     </View>
   );
 }
@@ -77,7 +90,7 @@ export function PhoneBlockView({ block }: { block: BlockOfType<'phone'> }) {
   if (!rows.length) body = mode === 'edit' ? <EmptyHint text="연락처를 추가해주세요" /> : null;
   else if (p.view === 'button')
     body = <InvButton label={p.buttonLabel || '연락하기'} tone="outline" onPress={live ? () => setOpen(true) : undefined} />;
-  else body = <RowList rows={rows} lines={p.lines} font={block.style?.font} />;
+  else body = <TitledList title={p.title} font={block.style?.font}><RowList rows={rows} lines={p.lines} font={block.style?.font} /></TitledList>;
 
   return (
     <View style={{ marginBottom: GAP_HEIGHT[p.gapBelow] }}>
@@ -132,7 +145,7 @@ export function EmailBlockView({ block }: { block: BlockOfType<'email'> }) {
   let body;
   if (!rows.length) body = mode === 'edit' ? <EmptyHint text="이메일을 추가해주세요" /> : null;
   else if (p.view === 'button') body = <InvButton label={p.buttonLabel || '메일 보내기'} tone="outline" onPress={live ? onButton : undefined} />;
-  else body = <RowList rows={rows} lines={p.lines} font={block.style?.font} />;
+  else body = <TitledList title={p.title} font={block.style?.font}><RowList rows={rows} lines={p.lines} font={block.style?.font} /></TitledList>;
 
   return (
     <View style={{ marginBottom: GAP_HEIGHT[p.gapBelow] }}>
@@ -225,6 +238,10 @@ export function AccountBlockView({ block }: { block: BlockOfType<'account'> }) {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
+  },
+  listTitle: {
+    textAlign: 'center',
+    marginBottom: 6,
   },
   emptyHint: {
     borderWidth: 1,

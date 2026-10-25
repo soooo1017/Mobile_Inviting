@@ -38,29 +38,51 @@ export function Chips<T extends string | number>({
   );
 }
 
-export type ToggleItem = { key: string; label: string; sub?: string; value: boolean; onChange?: (v: boolean) => void; fixedLabel?: string };
+export type ToggleItem = {
+  key: string;
+  label: string;
+  sub?: string;
+  value: boolean;
+  onChange?: (v: boolean) => void;
+  fixedLabel?: string;
+  /** 이 항목을 켰을 때만 바로 아래에 이어서 보여주는 옵션 (예: 달력 → 행사일 동그라미 색). */
+  extra?: ReactNode;
+};
 
 export function ToggleList({ items }: { items: ToggleItem[] }) {
   return (
     <View style={styles.card}>
       {items.map((t, i) => (
-        <View key={t.key} style={[styles.toggleRow, i > 0 && styles.rowDivider]}>
-          <Text style={styles.toggleLabel}>
-            {t.label}
-            {t.sub ? <Text style={styles.toggleSub}>{`  ${t.sub}`}</Text> : null}
-          </Text>
-          {t.fixedLabel ? (
-            <Text style={styles.fixed}>{t.fixedLabel}</Text>
-          ) : (
-            <Switch
-              value={t.value}
-              onValueChange={t.onChange}
-              trackColor={{ false: color.line.strong, true: color.select.fill }}
-              thumbColor="#ffffff"
-            />
-          )}
+        <View key={t.key} style={i > 0 && styles.rowDivider}>
+          <View style={[styles.toggleRow, t.extra ? styles.toggleRowWithExtra : null]}>
+            <Text style={styles.toggleLabel}>
+              {t.label}
+              {t.sub ? <Text style={styles.toggleSub}>{`  ${t.sub}`}</Text> : null}
+            </Text>
+            {t.fixedLabel ? (
+              <Text style={styles.fixed}>{t.fixedLabel}</Text>
+            ) : (
+              <Switch
+                value={t.value}
+                onValueChange={t.onChange}
+                trackColor={{ false: color.line.strong, true: color.select.fill }}
+                thumbColor="#ffffff"
+              />
+            )}
+          </View>
+          {t.extra ? <View style={styles.toggleExtra}>{t.extra}</View> : null}
         </View>
       ))}
+    </View>
+  );
+}
+
+/** 토글 바로 아래에 이어 붙는 작은 선택 (라벨 + 칩). */
+export function InlineChips<T extends string>({ label, options, value, onChange }: { label: string; options: { value: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+  return (
+    <View style={styles.inline}>
+      <Text style={styles.inlineLabel}>{label}</Text>
+      <Chips options={options} value={value} onChange={onChange} />
     </View>
   );
 }
@@ -167,6 +189,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[6],
     paddingVertical: space[4],
     minHeight: 50,
+  },
+  toggleRowWithExtra: {
+    paddingBottom: space[2],
+  },
+  toggleExtra: {
+    paddingHorizontal: space[6],
+    paddingBottom: space[5],
+  },
+  inline: {
+    gap: space[3],
+  },
+  inlineLabel: {
+    ...textStyle({ size: 'small', weight: 'regular', color: color.ink.muted }),
   },
   rowDivider: {
     borderTopWidth: 1,

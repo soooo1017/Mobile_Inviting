@@ -1,3 +1,4 @@
+import { hostNames } from '../editor/format';
 import { Image, Pressable, Text, View, StyleSheet, type GestureResponderHandlers, type LayoutRectangle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import QRCode from 'react-native-qrcode-svg';
@@ -49,7 +50,7 @@ export function buildPosterData(project: Project, design: PosterDesign, fontId: 
   const custom = design.bg !== undefined;
   const ink = custom ? autoTextColor(bg) : theme.ink;
   const soft = custom ? mix(ink, bg, 0.3) : theme.inkSoft;
-  const names = project.hosts.map((h) => h.name.trim()).filter(Boolean).join(' · ') || project.title;
+  const names = hostNames(project.eventType, project.hosts) || project.title;
   const photoRectOnCard = photoFrame(design);
   const q = qrRect(design);
   const overPhoto = spec.photo.fixed || (q.x < photoRectOnCard.x + photoRectOnCard.w && photoRectOnCard.x < q.x + q.w && q.y < photoRectOnCard.y + photoRectOnCard.h && photoRectOnCard.y < q.y + q.h);

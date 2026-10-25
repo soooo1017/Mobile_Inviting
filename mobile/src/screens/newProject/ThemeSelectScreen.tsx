@@ -14,7 +14,7 @@ import { eventTypeMeta, type ThemeColors } from '../../types/project';
 import { deriveTheme } from '../../editor/invitationTheme';
 import { ThemeColorPicker } from '../../editor/ThemeColorPicker';
 import { useFontFamily } from '../../editor/fonts';
-import { formatWhen } from '../../editor/format';
+import { defaultProjectTitle, formatWhen } from '../../editor/format';
 import { FontList } from '../../editor/sheets/common';
 import type { FontId } from '../../editor/types';
 
@@ -26,7 +26,7 @@ export function ThemeSelectScreen({ navigation }: Props) {
   const startInvitation = useStartInvitation();
 
   const typeName = draft.eventType === 'other' ? draft.customTypeName : eventTypeMeta(draft.eventType).label;
-  const title = draft.hosts.map((h) => h.name).filter(Boolean).join(' · ') || typeName;
+  const title = defaultProjectTitle(draft.eventType, draft.hosts, typeName);
 
   const handleStart = () => {
     const project = createProject({
@@ -41,7 +41,7 @@ export function ThemeSelectScreen({ navigation }: Props) {
       colors: draft.colors,
     });
     // 처음 열면 빈 페이지 (추천 구성은 출시 뒤) — only the chosen 기본 글꼴 is set up.
-    startInvitation(project.id, { font: draft.font });
+    startInvitation(project.id, { font: draft.font, popup: { enabled: draft.popup.enabled, startDays: draft.popup.startDays } });
     navigation.dispatch(
       CommonActions.reset({ index: 0, routes: [{ name: 'Editor', params: { projectId: project.id } }] }),
     );
@@ -53,7 +53,7 @@ export function ThemeSelectScreen({ navigation }: Props) {
         <BackButton onPress={() => navigation.goBack()} />
         <Text style={styles.headerTitle}>테마 · 글꼴</Text>
       </View>
-      <Text style={styles.stepLabel}>4 / 4 · 나중에 바꿀 수 있어요</Text>
+      <Text style={styles.stepLabel}>5 / 5 · 나중에 바꿀 수 있어요</Text>
 
       <ScrollView contentContainerStyle={styles.body}>
         <Preview colors={draft.colors} font={draft.font} eyebrow={typeName} title={title || '우리의 초대장'} when={formatWhen(draft.eventAt)} />

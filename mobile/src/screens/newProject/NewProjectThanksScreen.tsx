@@ -72,7 +72,7 @@ export function NewProjectThanksScreen({ navigation }: Props) {
         </Text>
       </ScrollView>
       <View style={styles.footer}>
-        <PrimaryButton label="다음" onPress={() => navigation.navigate('ThemeSelect')} />
+        <PrimaryButton label="다음" onPress={() => navigation.navigate('NewProjectPopup')} />
       </View>
     </SafeAreaView>
   );

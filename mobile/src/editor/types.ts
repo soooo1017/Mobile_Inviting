@@ -38,6 +38,8 @@ export type ButtonProps = { label: string; url: string; shape: 'fill' | 'outline
 export type Contact = { id: string; role: string; name: string; phone: string };
 export type PhoneProps = {
   view: ContactView;
+  /** 목록 방식에서 연락처 위에 보이는 제목 (예: 연락주세요~). 비우면 안 보여요. */
+  title?: string;
   buttonLabel: string;
   contacts: Contact[];
   showCall: boolean;
@@ -50,6 +52,8 @@ export type PhoneProps = {
 export type EmailEntry = { id: string; role: string; name: string; email: string };
 export type EmailProps = {
   view: ContactView;
+  /** 목록 방식에서 이메일 위에 보이는 제목 (예: 문의하기). 비우면 안 보여요. */
+  title?: string;
   buttonLabel: string;
   entries: EmailEntry[];
   showMail: boolean;
@@ -132,7 +136,27 @@ export type BlockOfType<T extends BlockType> = Extract<Block, { type: T }>;
 export type PageKey = 'invite' | 'popup' | 'thanks';
 
 /** 안내 팝업 사용 여부 — 끄더라도 만들어 둔 내용(pages.popup)은 그대로 보관돼요. */
-export type PopupSettings = { enabled: boolean };
+export type PopupSettings = {
+  enabled: boolean;
+  /** 행사 며칠 전부터 뜰지 (0 = 행사 당일부터). null이면 공유하면 바로 뜨고, 아직 안 정했으면(없음) 기본값을 써요. */
+  startDays?: number | null;
+};
+/** 새 안내 팝업의 기본 시작: 행사 7일 전부터. */
+export const DEFAULT_POPUP_START_DAYS = 7;
+/** 저장된 값에서 실제 시작 일수 (없으면 기본 7일 전). */
+export function popupStartDays(popup: PopupSettings | undefined): number | null {
+  if (!popup || popup.startDays === undefined) return DEFAULT_POPUP_START_DAYS;
+  return popup.startDays;
+}
+/** 안내 팝업 시작 선택지 — null은 공유하면 바로. */
+export const POPUP_START_OPTIONS: { value: number | null; label: string }[] = [
+  { value: null, label: '공유하면 바로' },
+  { value: 14, label: '14일 전부터' },
+  { value: 7, label: '7일 전부터' },
+  { value: 3, label: '3일 전부터' },
+  { value: 1, label: '1일 전부터' },
+  { value: 0, label: '당일부터' },
+];
 
 /** 배경음악 — one per invitation. Both choices are kept so switching tabs doesn't lose the file. */
 export type BgmFile = { uri: string; name: string; size: number };

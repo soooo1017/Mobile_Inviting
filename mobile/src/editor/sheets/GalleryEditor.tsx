@@ -30,7 +30,7 @@ export function GalleryEditor({ block, onChange, onDone }: BlockSheetProps<'gall
   };
 
   return (
-    <FullScreenEditor visible title={`갤러리 · 사진 ${p.photos.length}장`} onClose={onDone} onDone={onDone}>
+    <FullScreenEditor visible title={`갤러리 · 사진 ${p.photos.length}장`} onClose={onDone} onDone={onDone} doneGuard={() => (p.photos.length ? null : '이미지를 추가해주세요')}>
       <Section label="레이아웃">
         <Chips<GalleryLayout>
           options={[

@@ -108,7 +108,7 @@ export function ImageSheet({ block, onChange, onDone }: Props<'image'>) {
 
   return (
     <>
-      <EditorSheet title="이미지" onDone={onDone}>
+      <EditorSheet title="이미지" onDone={onDone} doneGuard={() => (photo ? null : '이미지를 추가해주세요')}>
         <View style={styles.pickRow}>
           <View style={styles.thumb}>{photo ? <PhotoFrame photo={photo} aspect={1} /> : null}</View>
           <View style={styles.pickText}>

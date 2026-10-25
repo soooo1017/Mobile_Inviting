@@ -13,6 +13,9 @@ import { HeaderLink, ManageHeader, manageStyles } from './common';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Manage'>;
 
+/** 통계 화면(StatsScreen)은 만들어 두었지만 지금은 관리 화면에 보이지 않아요. 나중에 쓰려면 true로. */
+const SHOW_STATS = false;
+
 /** 관리 (E21) — 응답 · 방명록 · 통계 · 공유 · 설정으로 가는 첫 화면. 숫자는 있는 그대로(공유 전이면 0). */
 export function ManageScreen({ navigation, route }: Props) {
   const { getProject } = useProjects();
@@ -35,19 +38,24 @@ export function ManageScreen({ navigation, route }: Props) {
       onPress: () => navigation.navigate('ManageRsvp', { projectId }),
     },
     { label: '방명록', value: posts.length, unit: '개', sub: '', onPress: () => navigation.navigate('ManageGuestbook', { projectId }) },
-    {
-      label: '방문한 사람',
-      value: visits.people,
-      unit: '명',
-      sub: visits.peopleToday ? `오늘 +${visits.peopleToday}` : '',
-      onPress: () => navigation.navigate('ManageStats', { projectId }),
-    },
+    // 통계는 지금은 감춰 둬요(SHOW_STATS) — 화면 · 경로는 그대로 두었고, 켜면 방문한 사람 카드와 메뉴가 다시 나와요.
+    ...(SHOW_STATS
+      ? [
+          {
+            label: '방문한 사람',
+            value: visits.people,
+            unit: '명',
+            sub: visits.peopleToday ? `오늘 +${visits.peopleToday}` : '',
+            onPress: () => navigation.navigate('ManageStats', { projectId }),
+          },
+        ]
+      : []),
   ];
 
   const menu: { icon: string; label: string; value?: string; onPress: () => void }[] = [
     { icon: '✓', label: '참석 응답 현황', onPress: () => navigation.navigate('ManageRsvp', { projectId }) },
     { icon: '✎', label: '방명록 관리', onPress: () => navigation.navigate('ManageGuestbook', { projectId }) },
-    { icon: '▥', label: '통계', onPress: () => navigation.navigate('ManageStats', { projectId }) },
+    ...(SHOW_STATS ? [{ icon: '▥', label: '통계', onPress: () => navigation.navigate('ManageStats', { projectId }) }] : []),
     { icon: '↗', label: '공유하기', onPress: () => navigation.navigate('Share', { projectId }) },
     { icon: '▦', label: 'QR 코드', onPress: () => navigation.navigate('Qr', { projectId }) },
     { icon: '▤', label: '홍보물 만들기', onPress: () => navigation.navigate('Poster', { projectId }) },
