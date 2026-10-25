@@ -13,7 +13,7 @@ export type EventType =
  * 주인공(호스트) 입력 방식 — 행사 종류마다 달라요.
  * - fixed: 정해진 칸 (결혼식 신랑 · 신부 / 돌잔치 · 백일 아이 · 아버지 · 어머니 …)
  * - group: 모임명 + 직책(회장 · 부회장 · 총무 · 기타) + 이름 (동창회 · 동호회)
- * - free: 호스트 + 직접 추가(구분 + 이름) (기타)
+ * - free: 호스트 1부터 구분 + 이름을 직접 입력, 추가 가능 (기타)
  */
 export type HostMode = 'fixed' | 'group' | 'free';
 
@@ -22,7 +22,7 @@ export type EventTypeMeta = {
   label: string;
   subtitle: string;
   hostMode: HostMode;
-  /** 처음 만들어지는 칸 이름. group은 [모임명, 직책], free는 [호스트]. */
+  /** 처음 만들어지는 칸 이름. group은 [모임명, 직책], free는 [''] — 구분(회장 · 총무 …)은 사용자가 정해요. */
   hostLabels: string[];
   /** 앞에서부터 이만큼은 꼭 적어야 다음으로 가요. */
   requiredHosts: number;
@@ -37,7 +37,7 @@ export const EVENT_TYPES: EventTypeMeta[] = [
   { type: 'opening', label: '개업식', subtitle: '가게 · 대표', hostMode: 'fixed', hostLabels: ['가게', '대표'], requiredHosts: 2 },
   { type: 'reunion', label: '동창회', subtitle: '모임명 · 직책 · 이름', hostMode: 'group', hostLabels: ['모임명', '총무'], requiredHosts: 2 },
   { type: 'club', label: '동호회', subtitle: '모임명 · 직책 · 이름', hostMode: 'group', hostLabels: ['모임명', '총무'], requiredHosts: 2 },
-  { type: 'other', label: '기타', subtitle: '호스트 직접 입력', hostMode: 'free', hostLabels: ['호스트'], requiredHosts: 1 },
+  { type: 'other', label: '기타', subtitle: '호스트 직접 입력', hostMode: 'free', hostLabels: [''], requiredHosts: 1 },
 ];
 
 /** 동창회 · 동호회 직책 선택지 (기타는 직접 입력). */
@@ -75,6 +75,11 @@ export type Project = {
   venue?: Venue;
   thanks: ThanksSettings;
   shared: boolean;
+  /**
+   * 공유 링크 — 처음 만들 때 정하고, 공유를 시작하기 전까지만 바꿀 수 있어요. 없으면 예전 방식(프로젝트 id)이에요.
+   * `locked`는 한 번이라도 공유를 시작했다는 뜻이고, 공유를 중지해도 그대로 고정이에요.
+   */
+  link?: ProjectLink;
   /** Legacy fixed theme (이전 테마 6개). New invitations use `colors` instead; this keeps older ones looking the same. */
   themeId: string;
   /** 배경 · 포인트 · 글씨 색 picked on new-project step 4 / ⚙ 전체 설정. */
@@ -82,6 +87,19 @@ export type Project = {
   updatedAt: string; // ISO
   createdAt: string; // ISO
   counts: { rsvp: number; guestbook: number };
+};
+
+export type LinkMode = 'auto' | 'custom';
+export type ProjectLink = {
+  /** 링크 맨 뒤 부분 — 자동은 랜덤 8자, 문구는 `문구-랜덤4자`. */
+  slug: string;
+  mode: LinkMode;
+  /** 문구 방식일 때 사용자가 적은 문구. */
+  phrase: string;
+  /** 문구 뒤에 붙은 랜덤 4자 (문구 방식). */
+  rand: string;
+  /** 공유를 한 번이라도 시작했으면 true — 이후 바꿀 수 없어요. */
+  locked: boolean;
 };
 
 export type ProjectStatus = 'draft' | 'shared' | 'thanks' | 'past';

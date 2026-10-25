@@ -5,6 +5,15 @@ import { emptyDesign, type PosterDesign } from './model';
 const PREFIX = 'poster:v1:';
 const SAVE_DELAY_MS = 400;
 
+/** 이 초대장으로 홍보물을 만든 적이 있는지 — 링크를 바꿀 때 QR 안내를 한 번 더 보여줘요. */
+export async function hasPosterDesign(projectId: string): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(PREFIX + projectId)) !== null;
+  } catch {
+    return false;
+  }
+}
+
 /** 홍보물 설정을 초대장마다 폰에 기억해요 (템플릿 · 멘트 · 체크 · 위치 · 색). */
 export function usePosterDesign(projectId: string) {
   const [design, setDesignState] = useState<PosterDesign | null>(null);

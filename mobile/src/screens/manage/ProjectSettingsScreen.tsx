@@ -42,7 +42,7 @@ export function ProjectSettingsScreen({ navigation, route }: Props) {
 }
 
 function Settings({ project, navigation }: { project: Project; navigation: Props['navigation'] }) {
-  const { updateProject, setThanksSettings, deleteProject } = useProjects();
+  const { updateProject, setThanksSettings, deleteProject, setShared, setLink } = useProjects();
   const thanksMode = useThanksMode(project);
   const { invitation, setPopupEnabled, setPopupStart } = useInvitation(project.id);
   const popupOn = invitation?.popup?.enabled ?? false;
@@ -75,8 +75,9 @@ function Settings({ project, navigation }: { project: Project; navigation: Props
         <Section label="공유">
           <ShareControl
             project={project}
+            onLinkChange={(link) => setLink(project.id, link)}
             onChange={(shared) => {
-              updateProject(project.id, { shared });
+              setShared(project.id, shared);
               setToast(shared ? '공유를 시작했어요 · 게스트 화면은 서버 연결 뒤에 열려요' : '공유를 중지했어요');
             }}
           />
@@ -134,7 +135,7 @@ function Settings({ project, navigation }: { project: Project; navigation: Props
           ) : null}
           <Help>
             {thanks.enabled
-              ? '행사 다음 날 자정부터 공유한 링크가 감사페이지로 바뀌어요.'
+              ? '행사 다음 날 자정부터 링크가 감사페이지로 바뀌어요.'
               : '행사가 끝나도 같은 링크에서 초대장이 계속 보여요. 만들어 둔 감사페이지는 그대로 보관돼서, 다시 켜면 이어서 쓸 수 있어요.'}
           </Help>
         </Section>

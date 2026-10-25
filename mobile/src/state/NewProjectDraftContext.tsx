@@ -2,6 +2,7 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 import { DEFAULT_POPUP_START_DAYS, type FontId } from '../editor/types';
 import { DEFAULT_COLORS, type EventType, type ThanksSettings, type ThemeColors, type Venue } from '../types/project';
 import { eventTypeMeta } from '../types/project';
+import { freshLinkChoice, type LinkChoice } from '../share/link';
 
 export type NewProjectDraft = {
   eventType: EventType;
@@ -16,6 +17,8 @@ export type NewProjectDraft = {
   colors: ThemeColors;
   /** 기본 글꼴, picked next to the theme on the last step. */
   font: FontId;
+  /** 공유 링크 — 마지막 단계에서 자동 / 원하는 문구를 골라요. */
+  link: LinkChoice;
 };
 
 function initialDraft(): NewProjectDraft {
@@ -32,6 +35,7 @@ function initialDraft(): NewProjectDraft {
     popup: { enabled: false, startDays: DEFAULT_POPUP_START_DAYS },
     colors: DEFAULT_COLORS,
     font: 'pretendard',
+    link: freshLinkChoice(),
   };
 }
 

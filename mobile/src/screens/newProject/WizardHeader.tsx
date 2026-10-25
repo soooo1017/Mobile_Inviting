@@ -3,8 +3,8 @@ import { BackButton } from '../../components/BackButton';
 import { color, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 
-/** 새 초대장 단계 수: 행사 유형 → 기본 정보 → 감사 페이지 → 안내 팝업 → 테마 · 글꼴. */
-export const WIZARD_STEPS = 5;
+/** 새 초대장 단계 수: 행사 유형 → 기본 정보 → 감사 페이지 → 안내 팝업 → 테마 · 글꼴 → 공유 링크. */
+export const WIZARD_STEPS = 6;
 
 type Props = {
   onBack: () => void;

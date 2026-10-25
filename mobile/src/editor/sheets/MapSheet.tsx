@@ -56,7 +56,7 @@ export function MapSheet({ block, onChange, onDone, project, onProject }: Props)
             </View>
           ) : null}
         </View>
-        <Help>링크를 비워두면 주소로 검색해서 열어요. 검색이 잘 안 되면 지도 앱에서 장소 공유 링크를 복사해 넣어주세요.</Help>
+        <Help>{'링크를 비워두면 입력된 주소 및 장소로 검색해서 열어요.\n정확한 연결을 위해 장소 링크를 넣어주세요.'}</Help>
       </Section>
       <Section label="버튼 모양">
         <Chips

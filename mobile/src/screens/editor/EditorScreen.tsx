@@ -64,7 +64,7 @@ function Editor({
 }) {
   const { invitation, insertBlock, updateBlock, removeBlock, duplicateBlock, moveBlock, setFont, setCoverPhoto, setBgm, setPopupEnabled, setPopupStart, updateThanks } =
     useInvitation(project.id);
-  const { setThanksSettings } = useProjects();
+  const { setThanksSettings, setShared, setLink } = useProjects();
   const { height: screenH } = useWindowDimensions();
   // [감사페이지] 탭은 감사페이지를 쓰는 경우에만 보여요.
   const hasThanks = project.thanks.enabled;
@@ -417,7 +417,8 @@ function Editor({
             setPage('thanks');
             setSelectedId(null);
           }}
-          onShared={(shared) => updateProject(project.id, { shared })}
+          onShared={(shared) => setShared(project.id, shared)}
+          onLinkChange={(link) => setLink(project.id, link)}
           initialPage={settingsPage}
         />
 
@@ -436,7 +437,7 @@ function Editor({
                 />
               ))}
             </View>
-            <Text style={styles.daysHelp}>{`행사 다음 날 자정부터 공유한 링크가 감사페이지로 바뀌어요.\n기간 : ${thanksPeriod}`}</Text>
+            <Text style={styles.daysHelp}>{`행사 다음 날 자정부터 링크가 감사페이지로 바뀌어요.\n기간 : ${thanksPeriod}`}</Text>
           </View>
         </BottomSheet>
 

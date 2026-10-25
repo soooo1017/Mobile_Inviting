@@ -3,7 +3,7 @@ import { Image, Pressable, ScrollView, Text, View, StyleSheet } from 'react-nati
 import { BottomSheet } from '../components/BottomSheet';
 import { color, radius, space } from '../theme/tokens';
 import { textStyle } from '../theme/typography';
-import type { Project } from '../types/project';
+import type { Project, ProjectLink } from '../types/project';
 import { FontList } from './sheets/common';
 import { fontMeta } from './fonts';
 import { Help, Section, SelectRow, ToggleList } from './ui';
@@ -40,6 +40,7 @@ type Props = {
   onEditThanks: () => void;
   /** 공유 시작 · 중지. */
   onShared: (shared: boolean) => void;
+  onLinkChange: (link: ProjectLink) => void;
   /** 열 때 바로 보여줄 하위 화면 (예: 에디터의 배경음악 버튼 → 'bgm'). */
   initialPage?: Page;
 };
@@ -48,7 +49,7 @@ export type Page = 'main' | 'font' | 'cover' | 'bgm' | 'venue';
 const PAGE_TITLE: Record<Page, string> = { main: '전체 설정', font: '기본 글꼴', cover: '대표 사진', bgm: '배경음악', venue: '장소' };
 
 /** ⚙ 전체 설정 — things that apply to the whole invitation rather than one block. */
-export function SettingsSheet({ visible, onClose, project, font, onFont, onProject, invitation, onCover, onBgm, onPopupEnabled, onPopupStart, onEditPopup, onThanksEnabled, onEditThanks, onShared, initialPage }: Props) {
+export function SettingsSheet({ visible, onClose, project, font, onFont, onProject, invitation, onCover, onBgm, onPopupEnabled, onPopupStart, onEditPopup, onThanksEnabled, onEditThanks, onShared, onLinkChange, initialPage }: Props) {
   const [page, setPage] = useState<Page>(initialPage ?? 'main');
   const [wasVisible, setWasVisible] = useState(visible);
   if (visible !== wasVisible) {
@@ -89,7 +90,7 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
         ) : (
           <>
             <Section label="공유" sub="시작해야 링크로 볼 수 있어요">
-              <ShareControl project={project} onChange={onShared} />
+              <ShareControl project={project} onChange={onShared} onLinkChange={onLinkChange} />
             </Section>
             <Section label="기본 글꼴">
               <SelectRow label={fontMeta(font).label} onPress={() => setPage('font')} />
@@ -139,7 +140,7 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
               ) : null}
               <Help>
                 {project.thanks.enabled
-                  ? '행사 다음 날 자정부터 공유한 링크가 감사페이지로 바뀌어요. 관리 › 프로젝트 설정과 같은 설정이에요.'
+                  ? '행사 다음 날 자정부터 링크가 감사페이지로 바뀌어요. 관리 › 프로젝트 설정과 같은 설정이에요.'
                   : '사용하지 않으면 행사가 끝나도 초대장이 계속 보여요. 만들어 둔 감사페이지는 보관돼요.'}
               </Help>
             </Section>

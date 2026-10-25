@@ -36,7 +36,7 @@ export function NewProjectThanksScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>행사 후 감사 페이지를{'\n'}보여줄까요?</Text>
         <Text style={styles.desc}>
-          행사 다음 날 자정부터 공유한 링크가 감사 페이지로 바뀌어요.{'\n'}행사에 참석해주신 분에게 감사 인사를 드려요.
+          행사 다음 날 자정부터 링크가 감사 페이지로 바뀌어요.{'\n'}행사에 참석해주신 분에게 감사 인사를 드려요.
         </Text>
 
         <View style={styles.toggleGroup}>

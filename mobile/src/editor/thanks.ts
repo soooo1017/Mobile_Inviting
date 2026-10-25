@@ -79,7 +79,7 @@ export function defaultThanksSender(project: Project): string {
     case 'other':
       from = hosts
         .filter((h) => h.name.trim())
-        .map((h) => (h.label === '호스트' ? h.name.trim() : `${h.label} ${h.name.trim()}`))
+        .map((h) => `${h.label} ${h.name.trim()}`.trim())
         .join(' · ');
       break;
     default:

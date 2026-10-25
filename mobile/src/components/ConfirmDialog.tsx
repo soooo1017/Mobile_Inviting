@@ -11,6 +11,10 @@ type Props = {
   onCancel: () => void;
   onConfirm: () => void;
   confirmDisabled?: boolean;
+  /** danger(기본) = 지우기처럼 되돌릴 수 없는 일 · primary = 일반 확인. */
+  tone?: 'danger' | 'primary';
+  /** 알림만 보여줄 때 취소 버튼 없이 확인 하나. */
+  hideCancel?: boolean;
 };
 
 export function ConfirmDialog({
@@ -22,6 +26,8 @@ export function ConfirmDialog({
   onCancel,
   onConfirm,
   confirmDisabled,
+  tone = 'danger',
+  hideCancel,
 }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
@@ -31,11 +37,13 @@ export function ConfirmDialog({
           <Text style={styles.title}>{title}</Text>
           {children}
           <View style={styles.actions}>
-            <Pressable style={[styles.button, styles.cancelButton]} onPress={onCancel}>
-              <Text style={styles.cancelLabel}>{cancelLabel}</Text>
-            </Pressable>
+            {hideCancel ? null : (
+              <Pressable style={[styles.button, styles.cancelButton]} onPress={onCancel}>
+                <Text style={styles.cancelLabel}>{cancelLabel}</Text>
+              </Pressable>
+            )}
             <Pressable
-              style={[styles.button, styles.confirmButton, confirmDisabled && styles.confirmDisabled]}
+              style={[styles.button, styles.confirmButton, tone === 'primary' && styles.confirmPrimary, confirmDisabled && styles.confirmDisabled]}
               onPress={onConfirm}
               disabled={confirmDisabled}
             >
@@ -95,6 +103,9 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     backgroundColor: color.status.error,
+  },
+  confirmPrimary: {
+    backgroundColor: color.ink.primary,
   },
   confirmDisabled: {
     opacity: 0.45,

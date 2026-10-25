@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
-import type { Project } from '../types/project';
+import type { Project, ProjectLink } from '../types/project';
+import { isLinkLocked, lockedLink } from '../share/link';
 
 function daysFromNow(days: number, hh: number, mm: number): string {
   const d = new Date();
@@ -114,6 +115,10 @@ type ProjectsContextValue = {
   setThanksSettings: (id: string, thanks: Project['thanks']) => void;
   /** Used by the editor's 전체 설정 (colors, event date) — every block reads these live. */
   updateProject: (id: string, patch: Partial<Pick<Project, 'colors' | 'eventAt' | 'title' | 'venue' | 'shared'>>) => void;
+  /** 공유 시작 · 중지. 처음 시작하면 링크가 고정돼요 (중지해도 그대로). */
+  setShared: (id: string, shared: boolean) => void;
+  /** 링크 바꾸기 — 공유를 시작하기 전까지만 (고정된 링크는 무시). */
+  setLink: (id: string, link: ProjectLink) => void;
 };
 
 const ProjectsContext = createContext<ProjectsContextValue | null>(null);
@@ -147,6 +152,12 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, thanks, updatedAt: new Date().toISOString() } : p))),
       updateProject: (id, patch) =>
         setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: new Date().toISOString() } : p))),
+      setShared: (id, shared) =>
+        setProjects((prev) =>
+          prev.map((p) => (p.id === id ? { ...p, shared, link: shared ? lockedLink(p) : p.link, updatedAt: new Date().toISOString() } : p)),
+        ),
+      setLink: (id, link) =>
+        setProjects((prev) => prev.map((p) => (p.id === id && !isLinkLocked(p) ? { ...p, link: { ...link, locked: false }, updatedAt: new Date().toISOString() } : p))),
     }),
     [projects],
   );

@@ -21,7 +21,7 @@ export function NewProjectPopupScreen({ navigation }: Props) {
       <WizardHeader onBack={() => navigation.goBack()} step={4} stepLabel="안내 팝업" />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>{'초대장을 열면 먼저 뜨는\n안내 팝업을 쓸까요?'}</Text>
-        <Text style={styles.desc}>{'주차 · 셔틀 · 식사 · 드레스코드처럼\n행사 전에 꼭 알려야 하는 내용을 작은 창으로 먼저 보여줘요.'}</Text>
+        <Text style={styles.desc}>{'행사 전 중요한 내용(주차 · 셔틀 · 식사 · 드레스코드 등)을\n팝업 창으로 먼저 보여줘요.'}</Text>
         <View style={styles.toggleGroup}>
           <Pressable style={[styles.toggle, enabled && styles.toggleSelected]} onPress={() => set({ enabled: true })}>
             <Text style={[styles.toggleLabel, enabled && styles.toggleLabelSelected]}>안내 팝업 사용하기</Text>
@@ -35,7 +35,6 @@ export function NewProjectPopupScreen({ navigation }: Props) {
             <PopupStartPicker eventAt={draft.eventAt} value={startDays} onChange={(v) => set({ startDays: v })} />
           </View>
         ) : null}
-        <Text style={styles.footerHelper}>{'팝업에 들어갈 내용은 에디터에서 만들어요.\n사용 여부와 시작 시점은 나중에 ⚙ 전체 설정에서 바꿀 수 있어요.'}</Text>
       </ScrollView>
       <View style={styles.footer}>
         <PrimaryButton label="다음" onPress={() => navigation.navigate('ThemeSelect')} />
@@ -55,6 +54,5 @@ const styles = StyleSheet.create({
   toggleLabel: { ...textStyle({ size: 'control', weight: 'semibold', color: color.ink.primary }) },
   toggleLabelSelected: { color: color.select.on },
   section: { marginTop: space[8] },
-  footerHelper: { ...textStyle({ size: 'label', weight: 'regular', color: color.ink.muted }), lineHeight: 11.5 * 1.5, marginTop: space[8] },
   footer: { paddingHorizontal: space.screenX, paddingBottom: space[9], paddingTop: space[6] },
 });

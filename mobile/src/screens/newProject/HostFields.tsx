@@ -21,13 +21,13 @@ type Props = {
 export function hostsComplete(eventType: EventType, hosts: Host[]): boolean {
   const meta = eventTypeMeta(eventType);
   if (meta.hostMode === 'group') return !!hosts[0]?.name.trim() && !!hosts[1]?.name.trim() && !!hosts[1]?.label.trim();
-  if (meta.hostMode === 'free') return !!hosts[0]?.name.trim() && hosts.slice(1).every((h) => h.label.trim() && h.name.trim());
+  if (meta.hostMode === 'free') return hosts.length > 0 && hosts.every((h) => h.label.trim() && h.name.trim());
   return hosts.slice(0, meta.requiredHosts).every((h) => h.name.trim().length > 0);
 }
 
 /**
  * 주인공 입력 — 행사 종류마다 달라요.
- * 결혼식 신랑 · 신부 / 돌잔치 · 백일 아이 · 아버지 · 어머니(아이만 필수) / 동창회 · 동호회 모임명 + 직책 + 이름 / 기타 호스트 + 직접 추가.
+ * 결혼식 신랑 · 신부 / 돌잔치 · 백일 아이 · 아버지 · 어머니(아이만 필수) / 동창회 · 동호회 모임명 + 직책 + 이름 / 기타 호스트 1부터 구분 + 이름(추가 가능).
  */
 export function HostFields({ eventType, hosts, onChange, onFocus }: Props) {
   const meta = eventTypeMeta(eventType);
@@ -39,46 +39,40 @@ export function HostFields({ eventType, hosts, onChange, onFocus }: Props) {
   }
 
   if (meta.hostMode === 'free') {
-    const extra = hosts.slice(1);
     return (
       <>
-        <FieldLabel>주인공</FieldLabel>
-        <View style={styles.field}>
-          <Text style={styles.hostLabel}>호스트</Text>
-          <TextField value={hosts[0]?.name ?? ''} onChangeText={(v) => set(0, { name: v })} onFocus={onFocus} placeholder="이름 또는 행사 주인" />
-        </View>
-        {extra.map((h, k) => {
-          const i = k + 1;
-          return (
-            <View key={i} style={styles.extra}>
-              <View style={styles.extraHead}>
-                <Text style={styles.hostLabel}>구분과 이름</Text>
+        <FieldLabel>호스트</FieldLabel>
+        {hosts.map((h, i) => (
+          <View key={i} style={styles.extra}>
+            <View style={styles.extraHead}>
+              <Text style={styles.hostLabel}>{`호스트 ${i + 1}`}</Text>
+              {hosts.length > 1 ? (
                 <Pressable onPress={() => onChange(hosts.filter((_, n) => n !== i))} hitSlop={10}>
                   <Text style={styles.remove}>✕</Text>
                 </Pressable>
+              ) : null}
+            </View>
+            <View style={styles.chips}>
+              {FREE_ROLES.map((r) => (
+                <SelectChip key={r} label={r} selected={h.label === r} onPress={() => set(i, { label: r })} />
+              ))}
+            </View>
+            <View style={styles.pair}>
+              <View style={styles.roleBox}>
+                <TextField value={h.label} onChangeText={(v) => set(i, { label: v.slice(0, 7) })} onFocus={onFocus} placeholder="구분 (직접 입력)" maxLength={7} />
               </View>
-              <View style={styles.chips}>
-                {FREE_ROLES.map((r) => (
-                  <SelectChip key={r} label={r} selected={h.label === r} onPress={() => set(i, { label: r })} />
-                ))}
-              </View>
-              <View style={styles.pair}>
-                <View style={styles.roleBox}>
-                  <TextField value={h.label} onChangeText={(v) => set(i, { label: v.slice(0, 7) })} onFocus={onFocus} placeholder="구분 (직접 입력)" maxLength={7} />
-                </View>
-                <View style={styles.flex}>
-                  <TextField value={h.name} onChangeText={(v) => set(i, { name: v })} onFocus={onFocus} placeholder="이름" />
-                </View>
+              <View style={styles.flex}>
+                <TextField value={h.name} onChangeText={(v) => set(i, { name: v })} onFocus={onFocus} placeholder="이름" />
               </View>
             </View>
-          );
-        })}
+          </View>
+        ))}
         {hosts.length < MAX_FREE_HOSTS ? (
           <Pressable onPress={() => onChange([...hosts, { label: '', name: '' }])} style={styles.add}>
             <Text style={styles.addLabel}>+ 호스트 추가</Text>
           </Pressable>
         ) : null}
-        <HelperText>회장 · 부회장 · 총무처럼 구분을 적고 이름을 넣어 호스트를 더할 수 있어요.</HelperText>
+        <HelperText>회장 · 부회장 · 총무처럼 구분을 적고 이름을 넣어요. 호스트는 여러 명 넣을 수 있어요.</HelperText>
       </>
     );
   }

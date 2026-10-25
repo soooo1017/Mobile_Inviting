@@ -1,11 +1,8 @@
 import { ScrollView, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { useNewProjectDraft } from '../../state/NewProjectDraftContext';
-import { useProjects } from '../../state/ProjectsContext';
-import { useStartInvitation } from '../../state/InvitationsContext';
 import { BackButton } from '../../components/BackButton';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { color, radius, space } from '../../theme/tokens';
@@ -22,30 +19,9 @@ type Props = NativeStackScreenProps<RootStackParamList, 'ThemeSelect'>;
 
 export function ThemeSelectScreen({ navigation }: Props) {
   const { draft, update } = useNewProjectDraft();
-  const { createProject } = useProjects();
-  const startInvitation = useStartInvitation();
 
   const typeName = draft.eventType === 'other' ? draft.customTypeName : eventTypeMeta(draft.eventType).label;
   const title = defaultProjectTitle(draft.eventType, draft.hosts, typeName);
-
-  const handleStart = () => {
-    const project = createProject({
-      title,
-      eventType: draft.eventType,
-      customTypeName: draft.eventType === 'other' ? draft.customTypeName : undefined,
-      hosts: draft.hosts,
-      eventAt: draft.eventAt,
-      venue: draft.venue,
-      thanks: draft.thanks,
-      themeId: 'custom',
-      colors: draft.colors,
-    });
-    // 처음 열면 빈 페이지 (추천 구성은 출시 뒤) — only the chosen 기본 글꼴 is set up.
-    startInvitation(project.id, { font: draft.font, popup: { enabled: draft.popup.enabled, startDays: draft.popup.startDays } });
-    navigation.dispatch(
-      CommonActions.reset({ index: 0, routes: [{ name: 'Editor', params: { projectId: project.id } }] }),
-    );
-  };
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
@@ -53,7 +29,7 @@ export function ThemeSelectScreen({ navigation }: Props) {
         <BackButton onPress={() => navigation.goBack()} />
         <Text style={styles.headerTitle}>테마 · 글꼴</Text>
       </View>
-      <Text style={styles.stepLabel}>5 / 5 · 나중에 바꿀 수 있어요</Text>
+      <Text style={styles.stepLabel}>5 / 6 · 나중에 바꿀 수 있어요</Text>
 
       <ScrollView contentContainerStyle={styles.body}>
         <Preview colors={draft.colors} font={draft.font} eyebrow={typeName} title={title || '우리의 초대장'} when={formatWhen(draft.eventAt)} />
@@ -67,7 +43,7 @@ export function ThemeSelectScreen({ navigation }: Props) {
       </ScrollView>
 
       <View style={styles.footer}>
-        <PrimaryButton label="제작 시작하기" onPress={handleStart} />
+        <PrimaryButton label="다음" onPress={() => navigation.navigate('NewProjectLink')} />
       </View>
     </SafeAreaView>
   );
