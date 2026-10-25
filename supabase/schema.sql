@@ -109,7 +109,7 @@ create policy "notification_preferences: select own"
   on public.notification_preferences for select
   using (auth.uid() = user_id);
 
-drop policy if exists "notification_preferences: upsert own" on public.notification_preferences;
+drop policy if exists "notification_preferences: insert own" on public.notification_preferences;
 create policy "notification_preferences: insert own"
   on public.notification_preferences for insert
   with check (auth.uid() = user_id);
