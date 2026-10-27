@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -32,7 +32,7 @@ function formatPostAt(iso: string) {
  * [삭제하기] → 지울 글 고르기 → 한 번 더 확인.
  */
 export function GuestbookManageScreen({ navigation, route }: Props) {
-  const { getProject } = useProjects();
+  const { getProject, markSeen } = useProjects();
   const project = getProject(route.params.projectId);
   const { invitation, updateBlock } = useInvitation(route.params.projectId);
   const { posts, deletePosts } = useGuestData(route.params.projectId);
@@ -42,6 +42,12 @@ export function GuestbookManageScreen({ navigation, route }: Props) {
   const [picked, setPicked] = useState<string[]>([]);
   const [confirm, setConfirm] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  const projectId = route.params.projectId;
+  // 이 화면을 열면 지금까지의 방명록 글을 확인한 것으로 쳐서 "새 방명록" 표시가 사라져요.
+  useEffect(() => {
+    markSeen(projectId, 'guestbook');
+  }, [projectId, markSeen]);
 
   if (!project) return <SafeAreaView style={manageStyles.screen} />;
   const blocks = (invitation?.pages.invite ?? []).filter((b): b is BlockOfType<'guestbook'> => b.type === 'guestbook');

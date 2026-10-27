@@ -1,3 +1,4 @@
+import { getUnread, unreadText } from '../../utils/unread';
 import { Pressable, Text, View, StyleSheet } from 'react-native';
 import { BottomSheet } from '../../components/BottomSheet';
 import { color, radius, space } from '../../theme/tokens';
@@ -33,6 +34,7 @@ export function ActionSheet({
   if (!project) return <BottomSheet visible={visible} onClose={onClose}><View /></BottomSheet>;
 
   const status = getProjectStatus(project);
+  const unread = getUnread(project);
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
@@ -52,8 +54,11 @@ export function ActionSheet({
           <Text style={styles.bigButtonSubSelected}>내용 · 디자인</Text>
         </Pressable>
         <Pressable style={[styles.bigButton, styles.bigButtonOutline]} onPress={onManage}>
-          <Text style={styles.bigButtonLabel}>관리</Text>
-          <Text style={styles.bigButtonSub}>응답 · 공유 · 설정</Text>
+          <View style={styles.manageHead}>
+            <Text style={styles.bigButtonLabel}>관리</Text>
+            {unread.total > 0 ? <View style={styles.newDot} /> : null}
+          </View>
+          <Text style={[styles.bigButtonSub, unread.total > 0 && styles.bigButtonSubNew]}>{unread.total > 0 ? unreadText(unread) : '응답 · 공유 · 설정'}</Text>
         </Pressable>
       </View>
 
@@ -112,6 +117,9 @@ function MenuRow({ label, subtitle, onPress, first }: { label: string; subtitle?
 }
 
 const styles = StyleSheet.create({
+  manageHead: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  newDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#d64545' },
+  bigButtonSubNew: { color: color.status.error },
   header: {
     paddingHorizontal: space.screenX,
     gap: space[3],

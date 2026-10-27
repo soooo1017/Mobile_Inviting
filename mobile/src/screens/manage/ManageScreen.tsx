@@ -1,3 +1,4 @@
+import { getUnread } from '../../utils/unread';
 import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -52,9 +53,10 @@ export function ManageScreen({ navigation, route }: Props) {
       : []),
   ];
 
-  const menu: { icon: string; label: string; value?: string; onPress: () => void }[] = [
-    { icon: '✓', label: '참석 응답 현황', onPress: () => navigation.navigate('ManageRsvp', { projectId }) },
-    { icon: '✎', label: '방명록 관리', onPress: () => navigation.navigate('ManageGuestbook', { projectId }) },
+  const unread = getUnread(project);
+  const menu: { icon: string; label: string; value?: string; badge?: string; onPress: () => void }[] = [
+    { icon: '✓', label: '참석 응답 현황', badge: unread.rsvp > 0 ? `새 응답 ${unread.rsvp}` : undefined, onPress: () => navigation.navigate('ManageRsvp', { projectId }) },
+    { icon: '✎', label: '방명록 관리', badge: unread.guestbook > 0 ? `새 방명록 ${unread.guestbook}` : undefined, onPress: () => navigation.navigate('ManageGuestbook', { projectId }) },
     ...(SHOW_STATS ? [{ icon: '▥', label: '통계', onPress: () => navigation.navigate('ManageStats', { projectId }) }] : []),
     { icon: '↗', label: '공유하기', onPress: () => navigation.navigate('Share', { projectId }) },
     { icon: '▦', label: 'QR 코드', onPress: () => navigation.navigate('Qr', { projectId }) },
@@ -102,6 +104,11 @@ export function ManageScreen({ navigation, route }: Props) {
             <Pressable key={m.label} onPress={m.onPress} style={[styles.menuRow, i > 0 && manageStyles.divider]}>
               <Text style={styles.menuIcon}>{m.icon}</Text>
               <Text style={styles.menuLabel}>{m.label}</Text>
+              {m.badge ? (
+                <View style={styles.newPill}>
+                  <Text style={styles.newPillText}>{m.badge}</Text>
+                </View>
+              ) : null}
               <Text style={m.value ? styles.menuValue : styles.chevron}>{m.value ?? '›'}</Text>
             </Pressable>
           ))}
@@ -177,6 +184,15 @@ const styles = StyleSheet.create({
   menuLabel: {
     flex: 1,
     ...textStyle({ size: 'control', weight: 'regular', color: color.ink.primary }),
+  },
+  newPill: {
+    backgroundColor: color.status.errorTint,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 2,
+  },
+  newPillText: {
+    ...textStyle({ size: 'caption', weight: 'semibold', color: color.status.error }),
   },
   menuValue: {
     ...textStyle({ size: 'small', weight: 'regular', color: color.ink.muted }),

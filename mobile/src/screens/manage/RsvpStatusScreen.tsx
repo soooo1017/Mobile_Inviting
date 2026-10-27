@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -17,6 +17,22 @@ import { EmptyNote, Guide, isShared, ManageHeader, manageStyles, NotShared } fro
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ManageRsvp'>;
 type Filter = 'all' | 'yes' | 'no' | 'side0' | 'side1';
+/** 표를 늘어놓는 순서 — 응답한 시각 기준 최근 / 오래된, 또는 이름순. */
+type RsvpSort = 'recent' | 'oldest' | 'name';
+const SORT_LABEL: Record<RsvpSort, string> = { recent: '최근 응답순', oldest: '오래된 응답순', name: '이름순' };
+
+function sortResponses(list: RsvpResponse[], sort: RsvpSort): RsvpResponse[] {
+  const out = [...list];
+  if (sort === 'name') return out.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+  return out.sort((a, b) => (sort === 'recent' ? Date.parse(b.at) - Date.parse(a.at) : Date.parse(a.at) - Date.parse(b.at)));
+}
+
+/** 표에 보여주는 짧은 응답 시각 : 10. 18. 오후 9:12 */
+function formatShortAt(iso: string) {
+  const d = new Date(iso);
+  const h = d.getHours();
+  return `${d.getMonth() + 1}. ${d.getDate()}. ${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
 
 /** 응답 일시 : 2026년 10월 18일 오후 9:12 */
 function formatAt(iso: string) {
@@ -32,13 +48,20 @@ function heads(r: RsvpResponse) {
 
 /** 참석 응답 현황 (E23) — 몇 명이 오는지를 가장 크게. 표의 칸은 참석 응답 설정에서 켜둔 항목만. */
 export function RsvpStatusScreen({ navigation, route }: Props) {
-  const { getProject } = useProjects();
+  const { getProject, markSeen } = useProjects();
   const project = getProject(route.params.projectId);
   const { invitation } = useInvitation(route.params.projectId);
   const { responses } = useGuestData(route.params.projectId);
   const [filter, setFilter] = useState<Filter>('all');
   const [detail, setDetail] = useState<RsvpResponse | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [sort, setSort] = useState<RsvpSort>('recent');
+  const [sortOpen, setSortOpen] = useState(false);
+  const projectId = route.params.projectId;
+  // 이 화면을 열면 지금까지의 응답을 확인한 것으로 쳐서 "새 응답" 표시가 사라져요.
+  useEffect(() => {
+    markSeen(projectId, 'rsvp');
+  }, [projectId, markSeen]);
 
   if (!project) return <SafeAreaView style={manageStyles.screen} />;
   const back = () => navigation.goBack();
@@ -62,9 +85,10 @@ export function RsvpStatusScreen({ navigation, route }: Props) {
     const coming = attendingHeadcount(responses);
     const meals = responses.filter((r) => r.attending && r.meal).reduce((n, r) => n + heads(r), 0);
     const notComing = responses.filter((r) => !r.attending).length;
-    const shown = responses.filter((r) =>
+    const filtered = responses.filter((r) =>
       filter === 'yes' ? r.attending : filter === 'no' ? !r.attending : filter === 'side0' ? r.side === 0 : filter === 'side1' ? r.side === 1 : true,
     );
+    const shown = sortResponses(filtered, sort);
     // The side bar follows the filter: headcount on each side among the rows shown.
     const sideCount = [0, 1].map((s) => shown.filter((r) => r.side === s).reduce((n, r) => n + heads(r), 0));
     const sideTotal = sideCount[0] + sideCount[1];
@@ -120,6 +144,12 @@ export function RsvpStatusScreen({ navigation, route }: Props) {
               ) : null}
             </View>
           ) : null}
+          <View style={styles.sortRow}>
+            <Text style={styles.sortCount}>{`${shown.length}건`}</Text>
+            <Pressable onPress={() => setSortOpen(true)} style={styles.sortBtn} hitSlop={6}>
+              <Text style={styles.sortBtnLabel}>{`${SORT_LABEL[sort]} ▾`}</Text>
+            </Pressable>
+          </View>
           <View style={manageStyles.card}>
             <View style={[styles.tr, styles.th]}>
               {sides.length ? <Text style={[styles.thText, styles.cSide]}>구분</Text> : null}
@@ -136,9 +166,14 @@ export function RsvpStatusScreen({ navigation, route }: Props) {
                       {r.side !== undefined ? <SideTag side={r.side} label={sides[r.side]} /> : <Text style={styles.td}>–</Text>}
                     </View>
                   ) : null}
-                  <Text style={[styles.td, styles.cName, styles.tdName]} numberOfLines={1}>
-                    {r.name}
-                  </Text>
+                  <View style={styles.cName}>
+                    <Text style={[styles.td, styles.tdName]} numberOfLines={1}>
+                      {r.name}
+                    </Text>
+                    <Text style={styles.tdTime} numberOfLines={1}>
+                      {formatShortAt(r.at)}
+                    </Text>
+                  </View>
                   <Text style={[styles.td, styles.cAtt, !r.attending && styles.tdMuted]}>{r.attending ? '참석' : '불참'}</Text>
                   {f.companions ? <Text style={[styles.td, styles.cNum]}>{r.attending && r.companions ? r.companions : '–'}</Text> : null}
                   {f.meal ? <Text style={[styles.td, styles.cNum]}>{r.attending ? (r.meal ? 'O' : 'X') : '–'}</Text> : null}
@@ -158,6 +193,23 @@ export function RsvpStatusScreen({ navigation, route }: Props) {
             <Text style={manageStyles.outlineBtnLabel}>엑셀로 내려받기</Text>
           </Pressable>
         </View>
+        <BottomSheet visible={sortOpen} onClose={() => setSortOpen(false)} title="정렬">
+          <View style={styles.sortSheet}>
+            {(['recent', 'oldest', 'name'] as RsvpSort[]).map((k) => (
+              <Pressable
+                key={k}
+                onPress={() => {
+                  setSort(k);
+                  setSortOpen(false);
+                }}
+                style={styles.sortOption}
+              >
+                <Text style={[styles.sortOptionLabel, sort === k && styles.sortOptionOn]}>{SORT_LABEL[k]}</Text>
+                {sort === k ? <Text style={styles.sortCheck}>✓</Text> : null}
+              </Pressable>
+            ))}
+          </View>
+        </BottomSheet>
         <BottomSheet visible={detail !== null} onClose={() => setDetail(null)} title={detail?.name ?? ''}>
           {detail ? <ResponseDetail response={detail} fields={f} sides={sides} /> : null}
         </BottomSheet>
@@ -333,6 +385,47 @@ const styles = StyleSheet.create({
   },
   tdName: {
     fontFamily: 'Pretendard-SemiBold',
+  },
+  tdTime: {
+    ...textStyle({ size: 'caption', weight: 'regular', color: color.ink.placeholder }),
+    marginTop: 1,
+  },
+  sortRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sortCount: {
+    ...textStyle({ size: 'label', weight: 'medium', color: color.ink.secondary }),
+  },
+  sortBtn: {
+    borderWidth: 1,
+    borderColor: color.line.chip,
+    borderRadius: radius.pill,
+    backgroundColor: color.bg.surface,
+    paddingHorizontal: space[5],
+    paddingVertical: space[3],
+  },
+  sortBtnLabel: {
+    ...textStyle({ size: 'small', weight: 'medium', color: color.ink.primary }),
+  },
+  sortSheet: {
+    paddingHorizontal: space.screenX,
+  },
+  sortOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: space[6],
+  },
+  sortOptionLabel: {
+    ...textStyle({ size: 'control', weight: 'regular', color: color.ink.primary }),
+  },
+  sortOptionOn: {
+    color: color.accent.base,
+  },
+  sortCheck: {
+    ...textStyle({ size: 'control', weight: 'semibold', color: color.accent.base }),
   },
   tdMuted: {
     color: color.ink.placeholder,

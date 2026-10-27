@@ -32,6 +32,8 @@ const MOCK_PROJECTS: Project[] = [
     updatedAt: daysAgoUpdated(0),
     createdAt: daysAgoUpdated(20),
     counts: { rsvp: 21, guestbook: 4 },
+    // 새 소식 예시 — 마지막으로 확인한 뒤 새 응답 3개 (참석 응답 현황을 열면 사라져요).
+    seen: { rsvp: 18, guestbook: 4 },
   },
   {
     id: 'p2',
@@ -46,6 +48,8 @@ const MOCK_PROJECTS: Project[] = [
     updatedAt: daysAgoUpdated(1),
     createdAt: daysAgoUpdated(40),
     counts: { rsvp: 54, guestbook: 18 },
+    // 새 소식 예시 — 새 응답 2 · 새 방명록 3.
+    seen: { rsvp: 52, guestbook: 15 },
   },
   {
     id: 'p3',
@@ -117,6 +121,8 @@ type ProjectsContextValue = {
   updateProject: (id: string, patch: Partial<Pick<Project, 'colors' | 'eventAt' | 'title' | 'venue' | 'shared'>>) => void;
   /** 공유 시작 · 중지. 처음 시작하면 링크가 고정돼요 (중지해도 그대로). */
   setShared: (id: string, shared: boolean) => void;
+  /** 참석 응답 현황 · 방명록 관리를 열면 지금까지의 개수를 확인한 것으로 기록해요. */
+  markSeen: (id: string, kind: 'rsvp' | 'guestbook') => void;
   /** 링크 바꾸기 — 공유를 시작하기 전까지만 (고정된 링크는 무시). */
   setLink: (id: string, link: ProjectLink) => void;
 };
@@ -156,6 +162,13 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         setProjects((prev) =>
           prev.map((p) => (p.id === id ? { ...p, shared, link: shared ? lockedLink(p) : p.link, updatedAt: new Date().toISOString() } : p)),
         ),
+      markSeen: (id, kind) =>
+        setProjects((prev) => {
+          const target = prev.find((p) => p.id === id);
+          // 바뀔 게 없으면 같은 배열을 돌려줘서 다시 그리지 않아요.
+          if (!target || !target.seen || target.seen[kind] >= target.counts[kind]) return prev;
+          return prev.map((p) => (p.id === id ? { ...p, seen: { ...target.seen!, [kind]: target.counts[kind] } } : p));
+        }),
       setLink: (id, link) =>
         setProjects((prev) => prev.map((p) => (p.id === id && !isLinkLocked(p) ? { ...p, link: { ...link, locked: false }, updatedAt: new Date().toISOString() } : p))),
     }),

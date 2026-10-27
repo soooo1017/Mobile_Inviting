@@ -13,6 +13,7 @@ import {
   shouldShowThanksSetChip,
 } from '../../utils/projectStatus';
 import { ProjectThumb } from './ProjectThumb';
+import { NewBadge } from '../../components/NewBadge';
 
 type Props = {
   project: Project;
@@ -40,6 +41,7 @@ export function ProjectDetailCard({ project, onPress }: Props) {
       onPress={onPress}
       style={[styles.detailCard, status === 'past' && { backgroundColor: color.bg.cardPast }]}
     >
+      <NewBadge project={project} style={styles.detailBadge} />
       <View style={styles.detailMain}>
         <ProjectThumb project={project} style={styles.detailThumb} />
         <View style={styles.detailInfo}>
@@ -74,6 +76,7 @@ export function ProjectThumbCard({ project, onPress }: Props) {
           <ProjectStatusChip status={status} />
           {showThanksChip ? <ThanksSetChip /> : null}
         </View>
+        <NewBadge project={project} style={styles.thumbBadge} />
       </View>
       <Text style={styles.thumbTitle} numberOfLines={1}>{project.title}</Text>
     </Pressable>
@@ -98,6 +101,7 @@ export function ProjectListRow({ project, onPress }: Props) {
         ) : null}
       </View>
       <View style={styles.listRight}>
+        <NewBadge project={project} style={styles.listBadge} />
         <ProjectStatusChip status={status} />
         <Text style={[styles.listDday, tnum]}>{formatDday(project.eventAt)}</Text>
       </View>
@@ -113,6 +117,12 @@ const styles = StyleSheet.create({
     borderColor: color.line.default,
     borderRadius: radius.card,
     padding: space[7],
+  },
+  detailBadge: {
+    position: 'absolute',
+    top: space[5],
+    right: space[5],
+    zIndex: 1,
   },
   detailMain: {
     flexDirection: 'row',
@@ -179,6 +189,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: space[2],
   },
+  thumbBadge: {
+    position: 'absolute',
+    bottom: space[3],
+    right: space[3],
+  },
   thumbTitle: {
     ...textStyle({ size: 'button2', weight: 'semibold', color: color.ink.primary }),
   },
@@ -208,6 +223,9 @@ const styles = StyleSheet.create({
   listRight: {
     alignItems: 'flex-end',
     gap: space[3],
+  },
+  listBadge: {
+    alignSelf: 'flex-end',
   },
   listDday: {
     ...textStyle({ size: 'small', weight: 'medium', color: color.ink.secondary }),

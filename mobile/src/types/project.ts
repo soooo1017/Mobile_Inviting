@@ -87,6 +87,8 @@ export type Project = {
   updatedAt: string; // ISO
   createdAt: string; // ISO
   counts: { rsvp: number; guestbook: number };
+  /** 마지막으로 참석 응답 현황 · 방명록 관리를 열었을 때의 개수 — 그보다 늘어난 만큼이 "새 소식"이에요. 없으면 새 소식 없음. */
+  seen?: { rsvp: number; guestbook: number };
 };
 
 export type LinkMode = 'auto' | 'custom';
