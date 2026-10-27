@@ -1,3 +1,4 @@
+import { SHOW_SOCIAL_LOGIN } from '../config/features';
 import { useState } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,9 +51,11 @@ export function ResetRequestScreen({ navigation }: Props) {
           <PrimaryButton label="재설정 링크 보내기" onPress={handleSend} loading={loading} disabled={!email} />
         </View>
 
-        <Text style={styles.notice}>
-          카카오·Apple로 가입한 계정은{'\n'}해당 서비스에서 비밀번호를 관리합니다.
-        </Text>
+        {SHOW_SOCIAL_LOGIN ? (
+          <Text style={styles.notice}>
+            카카오·Apple로 가입한 계정은{'\n'}해당 서비스에서 비밀번호를 관리합니다.
+          </Text>
+        ) : null}
       </KeyboardAwareForm>
     </SafeAreaView>
   );

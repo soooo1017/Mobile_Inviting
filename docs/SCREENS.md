@@ -14,7 +14,7 @@
 | 1 | A1 | 스플래시(로딩) 화면 | 앱 실행 시 첫 진입, 1.2초 후 로그인 여부에 따라 MainTabs 또는 A2로 자동 전환 |
 | 2 | A2 | 홈 화면 (로그인 전) | 서비스 소개 + 블록 미리보기, `시작하기`(→ 로그인) / `계정이 없으신가요? 회원가입`(→ 회원가입) |
 | 3 | ~~A3~~ | ~~홈 화면(로그인 후) 대시보드~~ | **폐기·B6에 통합됨** — 대표 프로젝트 카드 1개 + 알림 행만 보여주는 별도 대시보드는 "내 초대장 목록"(B6)과 역할이 겹쳐 제거. `MainTabs`의 "홈" 탭이 이제 바로 B6(내 초대장 목록)을 보여준다 |
-| 4 | A4 | 로그인 화면 | 아이디 + 비밀번호 입력. 소셜 로그인(카카오/애플) 버튼은 UI만 있고 "준비 중" 안내만 뜸(미구현) |
+| 4 | A4 | 로그인 화면 | 아이디 + 비밀번호 입력. 소셜 로그인(카카오/애플) 버튼은 코드는 유지하고 **화면에서 숨김**(2026-10-27, `config/features.ts`의 `SHOW_SOCIAL_LOGIN`을 true로 바꾸면 돌아옴) |
 | 5 | A7 | 로그인 실패 화면 | A4에서 인증 실패 시 상태. "아이디/비밀번호 불일치"와 "이메일 인증 전"을 구분해 안내 |
 | 6 | A5 | 회원가입 화면 (2단계: 입력 → 이메일 인증 안내) | 아이디(로그인용, 영문·숫자·_ 4~20자, 실시간 중복확인) · 닉네임(표시용, 2~12자) · 이메일(인증용, 입력 중 `@naver.com`·`@gmail.com` 등 도메인 칩 제안) · 비밀번호 입력 → 가입 성공 시 "이메일을 확인해주세요" 안내 화면(`SignupSentScreen`)으로 이동, 재발송 가능 |
 | 7 | A6 | 비밀번호 찾기/재설정 화면 (2단계) | |
@@ -195,7 +195,7 @@
 | 26 | 마이페이지 화면 (`MyPageScreen`) | ✅ 실제 구현 | 계정/알림/지원/약관 섹션 허브. 로그아웃은 확인 팝업 없이 즉시 처리, 회원 탈퇴는 하단에 별도 배치 |
 | 26a | 닉네임 변경 (`NicknameEditScreen`) | ✅ Supabase 연동 | `auth.updateUser({ data: { nickname } })` + `profiles.nickname` 동기화 |
 | 26b | 비밀번호 변경 (`PasswordChangeScreen`) | ✅ Supabase 연동 | 현재 비밀번호를 `signInWithPassword`로 재확인한 뒤 `auth.updateUser({ password })` |
-| 26c | 소셜 계정 연동 (`SocialAccountsScreen`) | ⚠️ UI만 구현 | 카카오/Apple 모두 "연동 안 함"으로 정직하게 표시 — 실제 OAuth 연동 전이라 누르면 "준비 중" 안내 |
+| 26c | 소셜 계정 연동 (`SocialAccountsScreen`) | ⚠️ UI만 구현 | 카카오/Apple 모두 "연동 안 함"으로 정직하게 표시 — 실제 OAuth 연동 전이라 누르면 "준비 중" 안내 | — **현재 숨김**: My Page 계정 설정 목록에서 빠짐(`SHOW_SOCIAL_LOGIN`), 로그인 · 비밀번호 찾기의 카카오/Apple 안내도 같이 숨김
 | 26d | 회원 탈퇴 (`AccountDeletionScreen`) | ✅ Supabase 연동 | 탈퇴 사유 선택(+기타 상세) → 비밀번호 재확인 → 최종 확인 팝업 → `account_deletion_feedback`에 사유 기록 후 `delete_own_account()` RPC(SECURITY DEFINER)로 자가 삭제 |
 | 27 | 알림 설정 화면 (`NotificationSettingsScreen`) | ✅ Supabase 연동 | RSVP·방명록·감사페이지 전환·행사 일정·마케팅 5개 토글, `notification_preferences` 테이블에 토글마다 upsert (실제 푸시 발송 시스템은 아직 없음 — 설정값만 저장) |
 | 29 | 문의 (`InquiryScreen`) | ✅ 접수 구현 | 문의하기/문의내역 탭, 주제 5종(BottomSheet 선택) + 제목/내용. **[문의 보내기] → Supabase `inquiries` 테이블에 저장**(`supabase/schema.sql` 8번 — 본인 것만 읽기 · 쓰기, 답변 칸은 운영자만). 문의내역에 **답변 대기 / 답변 완료** 상태 + 답변 내용·날짜. 파일 첨부는 아직 준비 중. **운영자 답변은 지금은 Supabase 대시보드(Table Editor)에서 `reply`·`status`를 채워요. 앱 안에 관리자 화면은 두지 않고, 문의가 많아지면 운영자용 웹 페이지를 따로 만들어요(별도 도메인 · 관리자 권한 필요).** 사용 전 Supabase SQL Editor에서 schema.sql 8번을 한 번 실행해야 해요 |

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../state/AuthContext';
 import { Placeholder } from '../components/Placeholder';
+import { APP_NAME } from '../config/brand';
+import { textStyle } from '../theme/typography';
 import { color, motion } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Splash'>;
@@ -30,7 +32,7 @@ export function SplashScreen({ navigation }: Props) {
       <View style={styles.center}>
         <Placeholder circle width={64} height={64} label="로고" />
         <View style={styles.textGroup}>
-          <Placeholder width={168} height={28} label="앱 이름" />
+          <Text style={styles.appName}>{APP_NAME}</Text>
           <Placeholder width={120} height={18} label="로고 문구" />
         </View>
       </View>
@@ -42,6 +44,9 @@ export function SplashScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  appName: {
+    ...textStyle({ size: 'title1', weight: 'semibold', color: color.ink.primary }),
+  },
   screen: {
     flex: 1,
     backgroundColor: color.bg.canvas,

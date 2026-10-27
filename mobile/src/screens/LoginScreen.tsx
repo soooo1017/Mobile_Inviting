@@ -10,6 +10,7 @@ import { ScreenTitle } from '../components/ScreenTitle';
 import { TextField } from '../components/TextField';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { TextLink } from '../components/TextLink';
+import { SHOW_SOCIAL_LOGIN } from '../config/features';
 import { KakaoIcon } from '../components/icons/KakaoIcon';
 import { AppleIcon } from '../components/icons/AppleIcon';
 import { KeyboardAwareForm, useKeyboardAwareForm } from '../components/KeyboardAwareForm';
@@ -101,30 +102,34 @@ export function LoginScreen({ navigation }: Props) {
             <PrimaryButton label="로그인" onPress={handleLogin} loading={loading} />
           </View>
 
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerLabel}>간편 로그인</Text>
-            <View style={styles.dividerLine} />
-          </View>
+          {SHOW_SOCIAL_LOGIN ? (
+            <>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerLabel}>간편 로그인</Text>
+                <View style={styles.dividerLine} />
+              </View>
 
-          <View style={styles.socialRow}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => handleSocial('kakao')}
-              style={[styles.socialButton, styles.kakaoButton]}
-            >
-              <KakaoIcon />
-              <Text style={styles.kakaoLabel}>카카오</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => handleSocial('apple')}
-              style={[styles.socialButton, styles.appleButton]}
-            >
-              <AppleIcon />
-              <Text style={styles.appleLabel}>Apple</Text>
-            </Pressable>
-          </View>
+              <View style={styles.socialRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => handleSocial('kakao')}
+                  style={[styles.socialButton, styles.kakaoButton]}
+                >
+                  <KakaoIcon />
+                  <Text style={styles.kakaoLabel}>카카오</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => handleSocial('apple')}
+                  style={[styles.socialButton, styles.appleButton]}
+                >
+                  <AppleIcon />
+                  <Text style={styles.appleLabel}>Apple</Text>
+                </Pressable>
+              </View>
+            </>
+          ) : null}
 
           <View style={styles.linkRow}>
             <TextLink

@@ -1,3 +1,4 @@
+import { SHOW_SOCIAL_LOGIN } from '../../config/features';
 import { Fragment } from 'react';
 import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,7 +31,7 @@ export function MyPageScreen(_props: Props) {
   const accountRows: Row[] = [
     { label: '닉네임 변경', onPress: () => navigation.navigate('NicknameEdit') },
     { label: '비밀번호 변경', onPress: () => navigation.navigate('PasswordChange') },
-    { label: '소셜 계정 연동', onPress: () => navigation.navigate('SocialAccounts') },
+    ...(SHOW_SOCIAL_LOGIN ? [{ label: '소셜 계정 연동', onPress: () => navigation.navigate('SocialAccounts') }] : []),
   ];
   const notificationRows: Row[] = [
     { label: '알림 설정', onPress: () => navigation.navigate('NotificationSettings') },

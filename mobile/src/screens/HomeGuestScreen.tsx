@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
-import { Placeholder } from '../components/Placeholder';
+import { APP_NAME } from '../config/brand';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { TextLink } from '../components/TextLink';
 import { color, radius, space } from '../theme/tokens';
@@ -20,7 +20,7 @@ export function HomeGuestScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.top}>
-        <Placeholder width={84} height={16} label="앱 이름" />
+        <Text style={styles.appName}>{APP_NAME}</Text>
 
         <Text style={styles.headline}>
           사진과 글을 골라 쌓아서{'\n'}나만의 초대장을
@@ -68,6 +68,9 @@ export function HomeGuestScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  appName: {
+    ...textStyle({ size: 'body', weight: 'semibold', color: color.ink.primary }),
+  },
   screen: {
     flex: 1,
     backgroundColor: color.bg.canvas,
