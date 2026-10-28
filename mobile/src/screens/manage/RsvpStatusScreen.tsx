@@ -238,7 +238,7 @@ function SideStat({ label, value }: { label: string; value: number }) {
 export function SideTag({ side, label }: { side: 0 | 1; label: string }) {
   return (
     <View style={[styles.tag, side === 0 ? styles.split0 : styles.split1]}>
-      <Text style={[styles.tagText, side === 0 ? styles.split0Text : styles.split1Text]}>{label}</Text>
+      <Text numberOfLines={1} style={[styles.tagText, side === 0 ? styles.split0Text : styles.split1Text]}>{label}</Text>
     </View>
   );
 }
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     color: color.ink.placeholder,
   },
   cSide: {
-    width: 58,
+    width: 76,
   },
   cName: {
     flex: 1,
@@ -446,6 +446,7 @@ const styles = StyleSheet.create({
   },
   tag: {
     alignSelf: 'flex-start',
+    flexShrink: 0,
     borderRadius: radius.pill,
     paddingHorizontal: 7,
     paddingVertical: 2,
