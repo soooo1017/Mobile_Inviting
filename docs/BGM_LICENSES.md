@@ -59,6 +59,7 @@ BGM/
 | ID | 상태 | 곡 | 작곡 | 연주 | 라이선스 | 출처 | 받은 날 | 파일 | 확인 |
 |---|---|---|---|---|---|---|---|---|
 | bgm001 | 확정 | Salut d'amour, Op. 12 | Edward Elgar | Emanuel Salvador · Pau Casan (파일 태그 기준) | **CC BY** (버전은 사이트가 보여주지 않아 표기 안 함 — 2026-10-31 결정) | Musopen — https://musopen.org/music/5232-salut-damour-op-12/#recordings | 2026-10-31 | mp3 192kbps · 2분 44초 · 3.9MB | ✅ 사용 결정 · ☐ 라이선스 화면 캡처 보관 · ☐ (선택) 버전 문의 |
+| bgm002 | 확정 | Schumann Papillons Op. 2 - No. 5 | Robert Schumann | Gregory Tait (파일 태그) · Greg Tait (사이트 표기) | **PD** (CC + PD 아이콘, 퍼블릭 도메인 — 표기 의무 없음) | Musopen — https://musopen.org/music/2360-papillons-op-2/#recordings | 2026-11-01 | mp3 128kbps · 1분 44초 · 1.7MB (앱용 변환 불필요) | ✅ 사용 결정 · ☐ 증빙 4종 폴더 보관 |
 
 ### 상태 (곡 표의 "상태" 칸)
 | 상태 | 뜻 |
