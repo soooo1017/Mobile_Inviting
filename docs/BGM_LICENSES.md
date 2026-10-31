@@ -22,6 +22,8 @@
 ## 2. 받을 때 남길 것
 곡 제목 · 연주자 · **곡 페이지 주소** · **라이선스 이름과 버전 · 링크** · 받은 날짜 · 표기 문구 · **라이선스 화면 캡처**(파일은 따로 보관).
 
+> **Musopen에서 라이선스 버전(CC BY 3.0 / 4.0 등)을 확인하는 법**: 곡 목록의 라이선스 아이콘은 링크가 아닌 아이콘 글꼴이라 눌러도 아무것도 안 나와요(소스에도 곡 줄이 없고 자바스크립트로 채워져요). ① 녹음 줄의 제목을 눌러 상세 페이지 확인 ② Terms of Use(`musopen.org/tos/`)의 라이선스 설명 확인 ③ 그래도 없으면 Musopen에 메일로 문의하고 답장을 보관. 사이트 안내문: "All the music we host is royalty and copyright free. For specific restrictions when applicable, check the license icons." 첫 묶음은 **PD 표시 곡**을 우선(표기 의무가 없어 확인 부담이 적어요).
+
 ## 3. 곡 목록
 
 | # | 곡 | 작곡 | 연주 | 라이선스 | 출처 | 받은 날 | 파일 | 확인 |
