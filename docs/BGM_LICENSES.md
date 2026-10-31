@@ -24,11 +24,41 @@
 
 > **Musopen에서 라이선스 버전(CC BY 3.0 / 4.0 등)을 확인하는 법**: 곡 목록의 라이선스 아이콘은 링크가 아닌 아이콘 글꼴이라 눌러도 아무것도 안 나와요(소스에도 곡 줄이 없고 자바스크립트로 채워져요). ① 녹음 줄의 제목을 눌러 상세 페이지 확인 ② Terms of Use(`musopen.org/tos/`)의 라이선스 설명 확인 ③ 그래도 없으면 Musopen에 메일로 문의하고 답장을 보관. 사이트 안내문: "All the music we host is royalty and copyright free. For specific restrictions when applicable, check the license icons." 첫 묶음은 **PD 표시 곡**을 우선(표기 의무가 없어 확인 부담이 적어요).
 
+## 2-1. 폴더 · 파일 이름 규칙 (2026-10-31)
+
+음원과 증빙은 코드 저장소(git)에 넣지 않고 본인 컴퓨터 + 개인 클라우드에 두어요. 곡이 늘어나도 같은 규칙을 써요.
+
+- 영문 소문자 · 숫자 · `-` · `_`만 써요 (한글 · 공백 없음 — 나중에 서버 · 앱에 올릴 때 이름 문제를 막아요).
+- **곡 ID**는 `bgm001`처럼 3자리 번호. 한 번 쓴 번호는 곡을 지워도 다시 쓰지 않아요. 이 문서 표의 ID와 같아요.
+- **폴더**: `ID_라이선스_제목` — 라이선스 태그는 `pd` · `cc0` · `ccby` 중 하나. 예: `bgm001_ccby_salut-damour`
+- **파일**: `ID_종류[_날짜].확장자` (날짜는 `YYYYMMDD`, 캡처 파일에만 붙여요)
+
+| 종류 | 뜻 |
+|---|---|
+| `audio_original` | 받은 원본 음원 (수정 금지) |
+| `audio_app` | 앱에 넣을 편집본 (1~3분 · 128kbps MP3) |
+| `proof_row` | 목록에서 해당 곡 한 줄(연주자 · 라이선스 아이콘) 캡처 |
+| `proof_list` | 목록 전체 화면 캡처 (주소창 + 일시가 보이게) |
+| `proof_page` | 곡 설명 페이지 캡처 (주소창 + 일시가 보이게) |
+| `source.txt` | 곡 · 연주자 · 라이선스 · 주소 · 캡처 일시를 글자로 기록 (캡처의 주소창은 복사가 안 돼서) |
+
+```
+BGM/
+  bgm001_ccby_salut-damour/
+    bgm001_audio_original.mp3
+    bgm001_proof_row_20261031.png
+    bgm001_proof_list_20261031.png
+    bgm001_proof_page_20261031.png
+    bgm001_source.txt
+    bgm001_audio_app.mp3      (앱용을 만들면 추가)
+```
+- 같은 종류를 다시 캡처하면 **날짜만 다르게** 새 파일로 저장해요(예전 파일은 지우지 않아요 — 사이트 조건이 바뀐 걸 보여주는 증빙).
+
 ## 3. 곡 목록
 
-| # | 곡 | 작곡 | 연주 | 라이선스 | 출처 | 받은 날 | 파일 | 확인 |
+| ID | 곡 | 작곡 | 연주 | 라이선스 | 출처 | 받은 날 | 파일 | 확인 |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Salut d'amour, Op. 12 | Edward Elgar | Emanuel Salvador · Pau Casan (파일 태그 기준) | **CC BY** (버전은 사이트가 보여주지 않아 표기 안 함 — 2026-10-31 결정) | Musopen — https://musopen.org/music/5232-salut-damour-op-12/#recordings | 2026-10-31 | mp3 192kbps · 2분 44초 · 3.9MB | ✅ 사용 결정 · ☐ 라이선스 화면 캡처 보관 · ☐ (선택) 버전 문의 |
+| bgm001 | Salut d'amour, Op. 12 | Edward Elgar | Emanuel Salvador · Pau Casan (파일 태그 기준) | **CC BY** (버전은 사이트가 보여주지 않아 표기 안 함 — 2026-10-31 결정) | Musopen — https://musopen.org/music/5232-salut-damour-op-12/#recordings | 2026-10-31 | mp3 192kbps · 2분 44초 · 3.9MB | ✅ 사용 결정 · ☐ 라이선스 화면 캡처 보관 · ☐ (선택) 버전 문의 |
 
 ### 표기 문구 (앱 "음원 출처 · 라이선스" 화면에 곡마다 한 줄)
 ```
