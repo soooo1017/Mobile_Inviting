@@ -1,6 +1,6 @@
 # 배경음악(BGM) 음원 · 라이선스 관리
 
-> 상태: **첫 곡 확보 중 (2026-10-31)**. 음원 파일은 git에 넣지 않고(용량), 서버 연결 때 Supabase Storage에 올려요. 이 문서는 **어떤 곡을 어떤 조건으로 받았는지** 증빙을 남기는 표예요.
+> 상태: **첫 곡 확정 (2026-10-31)** — Musopen이 CC BY 버전을 보여주지 않아 "CC BY"로 표기해요(핵심 조건인 저작자 표시는 3.0 · 4.0 같음). 이후 곡은 PD(퍼블릭 도메인) 표시 곡을 우선해요. 음원 파일은 git에 넣지 않고(용량), 서버 연결 때 Supabase Storage에 올려요. 이 문서는 **어떤 곡을 어떤 조건으로 받았는지** 증빙을 남기는 표예요.
 
 ## 1. 우리가 쓰는 기준
 
@@ -28,12 +28,12 @@
 
 | # | 곡 | 작곡 | 연주 | 라이선스 | 출처 | 받은 날 | 파일 | 확인 |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Salut d'amour, Op. 12 | Edward Elgar | Emanuel Salvador · Pau Casan (파일 태그 기준) | **CC BY** (버전 확인 필요) | Musopen — https://musopen.org/music/5232-salut-damour-op-12/#recordings (파일 이름의 `pmlp03415`는 IMSLP **악보** 번호라 녹음 라이선스와 무관) | 2026-10-31 | mp3 192kbps · 2분 44초 · 3.9MB | ☐ CC BY 버전(Musopen 녹음 줄의 cc 아이콘 링크 주소 끝 숫자) ☐ 연주자 표기 이름 ☐ 라이선스 화면 캡처 |
+| 1 | Salut d'amour, Op. 12 | Edward Elgar | Emanuel Salvador · Pau Casan (파일 태그 기준) | **CC BY** (버전은 사이트가 보여주지 않아 표기 안 함 — 2026-10-31 결정) | Musopen — https://musopen.org/music/5232-salut-damour-op-12/#recordings | 2026-10-31 | mp3 192kbps · 2분 44초 · 3.9MB | ✅ 사용 결정 · ☐ 라이선스 화면 캡처 보관 · ☐ (선택) 버전 문의 |
 
 ### 표기 문구 (앱 "음원 출처 · 라이선스" 화면에 곡마다 한 줄)
 ```
 "Salut d'amour, Op. 12" (Edward Elgar) — 연주: Emanuel Salvador, Pau Casan
-출처: Musopen · 라이선스: CC BY [버전] (https://creativecommons.org/licenses/by/[버전]/)
+출처: Musopen (https://musopen.org/music/5232-salut-damour-op-12/) · 라이선스: CC BY
 ```
 
 ## 4. 앱에 넣기 전 처리
