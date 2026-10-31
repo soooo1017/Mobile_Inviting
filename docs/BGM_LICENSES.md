@@ -26,7 +26,7 @@
 
 | # | 곡 | 작곡 | 연주 | 라이선스 | 출처 | 받은 날 | 파일 | 확인 |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Salut d'amour, Op. 12 | Edward Elgar | Emanuel Salvador · Pau Casan (파일 태그 기준) | **CC BY** (버전 확인 필요) | Musopen — https://musopen.org/music/5232-salut-damour-op-12/#recordings (음원은 IMSLP `PMLP03415` 녹음으로 보임) | 2026-10-31 | mp3 192kbps · 2분 44초 · 3.9MB | ☐ CC BY 버전 ☐ 연주자 표기 이름 ☐ 라이선스 화면 캡처 |
+| 1 | Salut d'amour, Op. 12 | Edward Elgar | Emanuel Salvador · Pau Casan (파일 태그 기준) | **CC BY** (버전 확인 필요) | Musopen — https://musopen.org/music/5232-salut-damour-op-12/#recordings (파일 이름의 `pmlp03415`는 IMSLP **악보** 번호라 녹음 라이선스와 무관) | 2026-10-31 | mp3 192kbps · 2분 44초 · 3.9MB | ☐ CC BY 버전(Musopen 녹음 줄의 cc 아이콘 링크 주소 끝 숫자) ☐ 연주자 표기 이름 ☐ 라이선스 화면 캡처 |
 
 ### 표기 문구 (앱 "음원 출처 · 라이선스" 화면에 곡마다 한 줄)
 ```
