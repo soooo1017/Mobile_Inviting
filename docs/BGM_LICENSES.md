@@ -54,12 +54,14 @@ BGM/
 - 날짜는 파일 이름이 아니라 `source.txt` 안에 적어요. 같은 종류를 다시 캡처하면 `001-3. proof_row_2`처럼 `_2`, `_3`을 붙여 새 파일로 저장해요(예전 파일은 지우지 않아요 — 사이트 조건이 바뀐 걸 보여주는 증빙).
 - 서버(Supabase Storage)에 올릴 때는 한글 · 공백 · 점이 들어간 이름을 쓰지 않고, 곡 번호로 `bgm001.mp3`처럼 영문 ID 이름으로 바꿔서 올려요.
 
+> **앱 출시 전 할 일**: 확정한 곡의 앱용 파일(`bgm001.mp3` …)을 Supabase Storage의 공개 폴더에 올리고, 앱 · 손님 웹페이지가 그 주소로 재생하도록 연결해요. (출시 전에 하기로 2026-11-01 결정. 그 전까지 앱 코드는 곡 정보만 두고 파일은 git에 넣지 않아요.)
+
 ## 3. 곡 목록
 
 | ID | 상태 | 곡 | 작곡 | 연주 | 라이선스 | 출처 | 받은 날 | 파일 | 확인 |
 |---|---|---|---|---|---|---|---|---|
-| bgm001 | 확정 | Salut d'amour, Op. 12 | Edward Elgar | Emanuel Salvador · Pau Casan (파일 태그 기준) | **CC BY** (버전은 사이트가 보여주지 않아 표기 안 함 — 2026-10-31 결정) | Musopen — https://musopen.org/music/5232-salut-damour-op-12/#recordings | 2026-10-31 | mp3 192kbps · 2분 44초 · 3.9MB | ✅ 사용 결정 · ☐ 라이선스 화면 캡처 보관 · ☐ (선택) 버전 문의 |
-| bgm002 | 확정 | Schumann Papillons Op. 2 - No. 5 | Robert Schumann | Gregory Tait (파일 태그) · Greg Tait (사이트 표기) | **PD** (CC + PD 아이콘, 퍼블릭 도메인 — 표기 의무 없음) | Musopen — https://musopen.org/music/2360-papillons-op-2/#recordings | 2026-11-01 | mp3 128kbps · 1분 44초 · 1.7MB (앱용 변환 불필요) | ✅ 사용 결정 · ☐ 증빙 4종 폴더 보관 |
+| bgm001 | 확정 | Salut d'amour, Op. 12 | Edward Elgar | Emanuel Salvador · Pau Casan (파일 태그 기준) | **CC BY** (Musopen 목록에 `cc` 원 + 사람 모양 `BY` 원 아이콘, 버전은 사이트가 보여주지 않아 표기 안 함 — 2026-10-31 결정) | Musopen — https://musopen.org/music/5232-salut-damour-op-12/#recordings | 2026-10-31 | mp3 192kbps · 2분 44초 · 3.9MB | ✅ 사용 결정 · ☐ 라이선스 화면 캡처 보관 · ☐ (선택) 버전 문의 |
+| bgm002 | 확정 | Schumann Papillons Op. 2 - No. 5 | Robert Schumann | Greg Tait (Musopen 사이트 표기 · 파일 태그는 Gregory Tait — 앱에는 사이트 표기를 씀) | **PD** (Musopen 목록에 `cc` 원 + `PD` 원 아이콘 두 개로 표시, 퍼블릭 도메인 — 표기 의무 없음) | Musopen — https://musopen.org/music/2360-papillons-op-2/#recordings | 2026-11-01 | mp3 128kbps · 1분 44초 · 1.7MB (앱용 변환 불필요) | ✅ 사용 결정 · ☐ 증빙 4종 폴더 보관 |
 
 ### 상태 (곡 표의 "상태" 칸)
 | 상태 | 뜻 |
@@ -71,11 +73,34 @@ BGM/
 
 음원은 앱에 올리지 않아도 미리 많이(100~200곡) 모아 둘 수 있고, 유행에 맞춰 **확정** 곡 중에서만 골라 올려요.
 
-### 표기 문구 (앱 "음원 출처 · 라이선스" 화면에 곡마다 한 줄)
+### 표기 문구 (초대장 맨 아래 · "음원 출처 · 라이선스" 곡 상세, 같은 구조)
+CC BY 곡은 표기가 의무라서 초대장 맨 아래(손님 페이지 포함)에 꼭 들어가요. 퍼블릭 도메인 곡도 같은 구조로 보여줘서 화면을 통일해요(의무는 아님).
 ```
-"Salut d'amour, Op. 12" (Edward Elgar) — 연주: Emanuel Salvador, Pau Casan
-출처: Musopen (https://musopen.org/music/5232-salut-damour-op-12/) · 라이선스: CC BY
+♪ 배경음악
+제목  "Salut d'amour, Op. 12" (Edward Elgar)
+연주  Emanuel Salvador, Pau Casan
+출처  Musopen        라이선스  CC BY
 ```
+```
+♪ 배경음악
+제목  "Papillons, Op. 2 No. 5" (Robert Schumann)
+연주  Greg Tait
+출처  Musopen        라이선스  퍼블릭 도메인
+```
+- 곡 상세 화면에는 라이선스 아이콘을 Musopen처럼 보여줘요: CC BY = `cc` 원 + 사람 모양 `BY` 원, 퍼블릭 도메인 = `cc` 원 + `PD` 원. (프로토타입은 비슷하게 직접 그린 것. 앱에는 Creative Commons 공식 아이콘 사용 조건을 확인한 뒤 결정)
+- 곡 목록(음원 출처 · 라이선스)은 **곡 이름 · 작곡가 · 원제**만 보이고, 누르면 곡 상세가 열려요(곡이 많아져도 목록이 짧게).
+
+### 3-1. 후보 곡 아이디어 (아직 확인 안 한 목록)
+**주의**: 곡(작곡) 자체가 퍼블릭 도메인이어도 **연주 녹음마다 라이선스가 달라요.** 아래는 "이 곡을 Musopen에서 찾아보자"는 후보일 뿐이고, 곡 페이지의 **녹음(Recordings) 목록에서 라이선스 아이콘이 `cc`+`PD`(퍼블릭 도메인) 또는 `cc`+`BY`인 녹음**만 받아요. (NC · ND · SA 아이콘이 붙은 녹음은 제외. 이 세션에서는 Musopen에 접속할 수 없어서 라이선스를 직접 확인하지 못했어요.)
+
+| 행사 | 후보 곡 (Musopen 검색어) | 분위기 |
+|---|---|---|
+| 결혼식 | Pachelbel Canon in D · Mendelssohn Wedding March · Wagner Bridal Chorus (Lohengrin) · Bach Air on the G String · Bach Jesu, Joy of Man's Desiring · Schubert Ave Maria | 잔잔한 · 입장 |
+| 결혼식 · 모임 | Debussy Clair de Lune · Satie Gymnopédie No. 1 · Chopin Nocturne Op. 9 No. 2 | 잔잔한 |
+| 돌잔치 | Brahms Lullaby (Wiegenlied) · Tchaikovsky Waltz of the Flowers · Mozart Piano Sonata No. 16 (K. 545) | 밝은 · 포근한 |
+| 개업식 · 집들이 · 생일 | Vivaldi Four Seasons - Spring · Handel Arrival of the Queen of Sheba · Strauss Blue Danube · Mozart Eine kleine Nachtmusik | 밝은 · 경쾌한 |
+
+받았으면 위 3항 곡 목록 표에 `후보`로 한 줄 추가(ID는 bgm003부터) → 증빙 4종까지 모이면 `확정`.
 
 ## 4. 앱에 넣기 전 처리
 - 1~3분 길이로 맞추고(필요하면 자르기 · 페이드 인/아웃), **MP3 128kbps**로 줄여요(곡당 약 2~3MB).
