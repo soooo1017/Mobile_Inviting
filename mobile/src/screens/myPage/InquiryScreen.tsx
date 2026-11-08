@@ -20,7 +20,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Inquiry'>;
 
 type Tab = 'form' | 'history';
 
-const TOPICS = ['이용 방법 문의', '오류·버그 신고', '디자인·테마 문의', '계정·로그인 문제', '기타'];
+const SUGGEST_TOPIC = '아이디어 · 기능 제안';
+const TOPICS = ['이용 방법 문의', '오류·버그 신고', '디자인·테마 문의', '계정·로그인 문제', SUGGEST_TOPIC, '기타'];
 
 /** 보낸 문의 한 건 (supabase `inquiries` 표). 답변은 관리자가 대시보드에서 달아요. */
 type Inquiry = { id: string; topic: string; title: string; content: string; status: 'pending' | 'answered'; reply: string | null; replied_at: string | null; created_at: string };
@@ -33,11 +34,12 @@ const fmtDay = (iso: string) => {
 export function InquiryScreen({ route, navigation }: Props) {
   const [tab, setTab] = useState<Tab>(route.params?.tab ?? 'form');
   const { scrollRef, fieldLayout, onFieldFocus } = useKeyboardAwareForm();
-  const [topic, setTopic] = useState<string | null>(null);
+  const [topic, setTopic] = useState<string | null>(route.params?.suggest ? SUGGEST_TOPIC : null);
   const [topicSheetOpen, setTopicSheetOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
 
+  const suggesting = topic === SUGGEST_TOPIC;
   const canSubmit = Boolean(topic) && title.trim().length > 0 && content.trim().length > 0;
 
   const { auth } = useAuth();
@@ -83,7 +85,7 @@ export function InquiryScreen({ route, navigation }: Props) {
     setContent('');
     setItems(null);
     setTab('history');
-    setToast('문의를 보냈어요. 답변은 문의내역에서 확인할 수 있어요.');
+    setToast(suggesting ? '제안을 보냈어요. 소중한 의견 고마워요!' : '문의를 보냈어요. 답변은 문의내역에서 확인할 수 있어요.');
   };
 
   return (
@@ -115,17 +117,17 @@ export function InquiryScreen({ route, navigation }: Props) {
                 value={title}
                 onChangeText={setTitle}
                 onFocus={() => onFieldFocus('title')}
-                placeholder="제목을 입력해주세요"
+                placeholder={suggesting ? '어떤 기능이 있으면 좋을까요?' : '제목을 입력해주세요'}
               />
             </View>
 
             <View style={styles.field} onLayout={fieldLayout('content')}>
-              <FieldLabel>문의 내용</FieldLabel>
+              <FieldLabel>{suggesting ? '제안 내용' : '문의 내용'}</FieldLabel>
               <TextField
                 value={content}
                 onChangeText={setContent}
                 onFocus={() => onFieldFocus('content')}
-                placeholder="문의하실 내용을 자세히 적어주세요"
+                placeholder={suggesting ? '어떤 상황에서 필요했는지 알려주시면 큰 도움이 돼요' : '문의하실 내용을 자세히 적어주세요'}
                 multiline
                 style={styles.contentInput}
               />
@@ -136,7 +138,7 @@ export function InquiryScreen({ route, navigation }: Props) {
             </Pressable>
 
             <View style={styles.buttonWrap}>
-              <PrimaryButton label="문의 보내기" onPress={handleSubmit} disabled={!canSubmit} loading={sending} />
+              <PrimaryButton label={suggesting ? '제안 보내기' : '문의 보내기'} onPress={handleSubmit} disabled={!canSubmit} loading={sending} />
             </View>
           </KeyboardAwareForm>
         ) : items === null ? (
@@ -153,11 +155,12 @@ export function InquiryScreen({ route, navigation }: Props) {
             {items.map((it) => {
               const open = openId === it.id;
               const answered = it.status === 'answered';
+              const isSuggest = it.topic === SUGGEST_TOPIC;
               return (
                 <Pressable key={it.id} onPress={() => setOpenId(open ? null : it.id)} style={styles.card}>
                   <View style={styles.cardHead}>
                     <View style={[styles.statusChip, answered ? styles.statusOn : styles.statusOff]}>
-                      <Text style={[styles.statusLabel, answered && styles.statusLabelOn]}>{answered ? '답변 완료' : '답변 대기'}</Text>
+                      <Text style={[styles.statusLabel, answered && styles.statusLabelOn]}>{answered ? '답변 완료' : isSuggest ? '접수됨' : '답변 대기'}</Text>
                     </View>
                     <Text style={styles.cardTopic}>{it.topic}</Text>
                     <Text style={styles.cardDate}>{fmtDay(it.created_at)}</Text>
@@ -174,7 +177,7 @@ export function InquiryScreen({ route, navigation }: Props) {
                           <Text style={styles.replyBody}>{it.reply}</Text>
                         </View>
                       ) : (
-                        <Text style={styles.waiting}>답변을 준비하고 있어요. 조금만 기다려 주세요.</Text>
+                        <Text style={styles.waiting}>{isSuggest ? '소중한 의견 고마워요. 꼼꼼히 읽어보고 앱에 반영할게요.' : '답변을 준비하고 있어요. 조금만 기다려 주세요.'}</Text>
                       )}
                     </>
                   ) : null}

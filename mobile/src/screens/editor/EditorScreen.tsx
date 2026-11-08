@@ -396,7 +396,13 @@ function Editor({
           bottom={mode === 'edit' ? 84 : 28}
         />
 
-        <AddBlockSheet visible={addAt !== null} where={addWhere} onPick={addBlock} onClose={() => setAddAt(null)} types={isPopup ? POPUP_BLOCK_TYPES : undefined} />
+        <AddBlockSheet visible={addAt !== null} where={addWhere} onPick={addBlock} onClose={() => setAddAt(null)} types={isPopup ? POPUP_BLOCK_TYPES : undefined}
+          onSuggest={() => {
+            setAddAt(null);
+            // 시트가 다 닫힌 뒤에 화면을 넘겨요 (iOS에서 모달이 닫히는 중에 넘기면 무시될 수 있어요).
+            setTimeout(() => navigation.navigate('Inquiry', { suggest: true }), 350);
+          }}
+        />
 
         <SettingsSheet
           visible={settingsOpen}

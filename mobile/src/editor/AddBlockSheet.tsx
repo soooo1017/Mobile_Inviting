@@ -45,10 +45,12 @@ type Props = {
   onClose: () => void;
   /** Only these kinds are offered (안내 팝업은 짧은 것만). Default: all. */
   types?: BlockType[];
+  /** '제안하기'를 누르면 — 문의의 '아이디어 · 기능 제안'으로 넘어가요. 없으면 안내 줄을 숨겨요. */
+  onSuggest?: () => void;
 };
 
 /** Same sheet whether opened from the editor's bottom button or a "+" in 순서 편집. */
-export function AddBlockSheet({ visible, where, onPick, onClose, types }: Props) {
+export function AddBlockSheet({ visible, where, onPick, onClose, types, onSuggest }: Props) {
   const categories = CATEGORIES.map((cat) => ({ ...cat, tiles: cat.tiles.filter((t) => !types || types.includes(t.type)) })).filter((cat) => cat.tiles.length);
   return (
     <BottomSheet visible={visible} onClose={onClose} title="추가하기">
@@ -68,6 +70,14 @@ export function AddBlockSheet({ visible, where, onPick, onClose, types }: Props)
           </View>
         ))}
       </View>
+      {onSuggest ? (
+        <Text style={styles.suggest}>
+          {'원하는 항목이 없나요? '}
+          <Text onPress={onSuggest} style={styles.suggestLink} accessibilityRole="link">
+            제안하기
+          </Text>
+        </Text>
+      ) : null}
     </BottomSheet>
   );
 }
@@ -106,6 +116,15 @@ const styles = StyleSheet.create({
   },
   glyph: {
     ...textStyle({ size: 'title3', weight: 'regular', color: color.ink.secondary }),
+  },
+  suggest: {
+    ...textStyle({ size: 'caption', weight: 'regular', color: color.ink.muted }),
+    textAlign: 'center',
+    marginTop: space[8],
+    paddingBottom: space[3],
+  },
+  suggestLink: {
+    ...textStyle({ size: 'caption', weight: 'semibold', color: color.accent.base }),
   },
   tileLabel: {
     ...textStyle({ size: 'label', weight: 'semibold', color: color.ink.primary }),

@@ -27,7 +27,7 @@ export type RootStackParamList = {
   NotificationSettings: undefined;
   SocialAccounts: undefined;
   AccountDeletion: undefined;
-  Inquiry: { tab?: 'form' | 'history' };
+  Inquiry: { tab?: 'form' | 'history'; /** true → 주제를 '아이디어 · 기능 제안'으로 미리 골라서 열어요. */ suggest?: boolean };
   Terms: undefined;
   PrivacyPolicy: undefined;
   BgmSources: undefined;
