@@ -159,8 +159,12 @@ export const POPUP_START_OPTIONS: { value: number | null; label: string }[] = [
 ];
 
 /** 배경음악 — one per invitation. Both choices are kept so switching tabs doesn't lose the file. */
-export type BgmFile = { uri: string; name: string; size: number };
-export type Bgm = { mode: 'off' | 'list' | 'file'; trackId?: string; file?: BgmFile };
+export type BgmFile = { uri: string; name: string; size: number; /** 초 — 노래 편집에서 불러온 뒤 알게 돼요. */ duration?: number };
+/**
+ * 배경음악. start · end(초) = 노래 편집에서 정한 재생 구간(없으면 처음부터 끝까지), speed = 재생 속도(없으면 1×).
+ * uploadAgreed = 내 음악의 저작권 책임 안내에 확인했어요.
+ */
+export type Bgm = { mode: 'off' | 'list' | 'file'; trackId?: string; file?: BgmFile; start?: number; end?: number; speed?: number; uploadAgreed?: boolean };
 
 /** 감사페이지 간단 모드: empty title/message fall back to the event type's default wording. */
 export type ThanksSimple = { title?: string; message?: string; showSender: boolean; sender?: string };

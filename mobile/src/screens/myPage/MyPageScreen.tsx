@@ -43,6 +43,7 @@ export function MyPageScreen(_props: Props) {
   const policyRows: Row[] = [
     { label: '이용약관', onPress: () => navigation.navigate('Terms') },
     { label: '개인정보처리방침', onPress: () => navigation.navigate('PrivacyPolicy') },
+    { label: '음원 출처 · 라이선스', onPress: () => navigation.navigate('BgmSources') },
   ];
 
   return (

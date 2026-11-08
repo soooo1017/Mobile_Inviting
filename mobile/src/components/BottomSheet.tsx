@@ -9,9 +9,11 @@ type Props = {
   title?: string;
   children: React.ReactNode;
   maxHeight?: ViewStyle['maxHeight'];
+  /** 오른쪽 위 ✕ 대신 쓰는 글자 버튼 (예: 완료). */
+  action?: { label: string; onPress: () => void };
 };
 
-export function BottomSheet({ visible, onClose, title, children, maxHeight }: Props) {
+export function BottomSheet({ visible, onClose, title, children, maxHeight, action }: Props) {
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -21,9 +23,15 @@ export function BottomSheet({ visible, onClose, title, children, maxHeight }: Pr
         {title ? (
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
-            <Pressable onPress={onClose} hitSlop={10}>
-              <Text style={styles.close}>✕</Text>
-            </Pressable>
+            {action ? (
+              <Pressable onPress={action.onPress} hitSlop={10}>
+                <Text style={styles.action}>{action.label}</Text>
+              </Pressable>
+            ) : (
+              <Pressable onPress={onClose} hitSlop={10}>
+                <Text style={styles.close}>✕</Text>
+              </Pressable>
+            )}
           </View>
         ) : null}
         {children}
@@ -67,5 +75,8 @@ const styles = StyleSheet.create({
   },
   close: {
     ...textStyle({ size: 'title2', weight: 'regular', color: color.ink.secondary }),
+  },
+  action: {
+    ...textStyle({ size: 'control', weight: 'semibold', color: color.accent.base }),
   },
 });

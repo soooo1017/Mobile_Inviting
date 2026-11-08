@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CommonActions } from '@react-navigation/native';
@@ -6,7 +6,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { useProjects } from '../../state/ProjectsContext';
 import { DEFAULT_THANKS_PAGE, useInvitation } from '../../state/InvitationsContext';
-import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus, type AudioSource } from 'expo-audio';
+import type { AudioSource } from 'expo-audio';
 import { BottomSheet } from '../../components/BottomSheet';
 import { SelectChip } from '../../components/SelectChip';
 import { DarkToast } from '../../editor/ui';
@@ -14,7 +14,9 @@ import { SimpleThanksView } from '../../editor/canvas/SimpleThanks';
 import { ThanksSimpleSheet } from '../../editor/sheets/ThanksSimpleSheet';
 import { coverPhoto } from '../../editor/photos';
 import { useThanksMode } from '../../editor/thanksMode';
-import { bgmSource } from '../../editor/bgm';
+import { bgmClip, bgmSource, bgmTrackById } from '../../editor/bgm';
+import { BgmCredit } from '../../editor/BgmSources';
+import { useClipPlayer } from '../../editor/useClipPlayer';
 import { formatMonthDay, thanksEndDate, thanksStartDate } from '../../utils/projectStatus';
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
@@ -30,7 +32,7 @@ import { BlockDeleteContext } from '../../editor/EditorSheet';
 import { ModalSafeArea } from '../../components/ModalSafeArea';
 import { EyeIcon, GearIcon, SortIcon } from '../../editor/icons';
 import { blockLabel, blockSummary } from '../../editor/format';
-import { defaultBlock, POPUP_BLOCK_TYPES, type Block, type BlockType, type PageKey } from '../../editor/types';
+import { defaultBlock, POPUP_BLOCK_TYPES, type Bgm, type Block, type BlockType, type PageKey } from '../../editor/types';
 import type { Project } from '../../types/project';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Editor'>;
@@ -419,6 +421,7 @@ function Editor({
           }}
           onShared={(shared) => setShared(project.id, shared)}
           onLinkChange={(link) => setLink(project.id, link)}
+          onNotify={showToast}
           initialPage={settingsPage}
         />
 
@@ -449,7 +452,7 @@ function Editor({
           blocks={isPopup ? invitation.pages.invite : blocks}
           popupBlocks={page !== 'thanks' && popupOn && invitation.pages.popup.length ? invitation.pages.popup : null}
           base={canvasValue}
-          music={page !== 'thanks' ? bgmSource(invitation.bgm) : null}
+          bgm={page !== 'thanks' ? invitation.bgm : undefined}
         />
       </SafeAreaView>
     </CanvasContext.Provider>
@@ -463,7 +466,7 @@ function PreviewModal({
   blocks,
   popupBlocks,
   base,
-  music,
+  bgm,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -471,7 +474,7 @@ function PreviewModal({
   /** 안내 팝업 — shown over the invitation when it opens, like for guests. null = no popup. */
   popupBlocks: Block[] | null;
   base: CanvasContextValue;
-  music: AudioSource | null;
+  bgm: Bgm | undefined;
 }) {
   const [toast, setToast] = useState<string | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
@@ -482,6 +485,8 @@ function PreviewModal({
     if (visible) setPopupOpen(true);
   }
   const value = useMemo<CanvasContextValue>(() => ({ ...base, mode: 'preview', showToast: setToast }), [base]);
+  const music = bgmSource(bgm);
+  const creditTrack = bgm?.mode === 'list' ? bgmTrackById(bgm.trackId) : undefined;
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <CanvasContext.Provider value={value}>
@@ -495,8 +500,14 @@ function PreviewModal({
           <View style={styles.flex}>
             <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
               <Canvas blocks={blocks} />
+              {creditTrack ? (
+                <View style={[styles.credit, { borderTopColor: base.theme.rule }]}>
+                  <Text style={[styles.creditTitle, { color: base.theme.ink }]}>♪ 배경음악</Text>
+                  <BgmCredit track={creditTrack} bgm={bgm} ink={base.theme.ink} />
+                </View>
+              ) : null}
             </ScrollView>
-            {visible && music ? <MusicButton source={music} /> : null}
+            {visible && music ? <MusicButton source={music} bgm={bgm} /> : null}
             {popupOpen && popupBlocks ? <GuestPopup blocks={popupBlocks} onClose={() => setPopupOpen(false)} /> : null}
           </View>
           <DarkToast message={toast} onHide={() => setToast(null)} bottom={28} />
@@ -510,26 +521,17 @@ function PreviewModal({
  * ♪ 배경음악 button, top right of the invitation. Guests' browsers block autoplay with sound,
  * so music starts when they tap it — the preview behaves the same way.
  */
-function MusicButton({ source }: { source: AudioSource }) {
-  const player = useAudioPlayer(source);
-  const status = useAudioPlayerStatus(player);
-  useEffect(() => {
-    setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
-  }, []);
-  useEffect(() => {
-    // Loop like the guest page will; a song that ends restarts from the top.
-    if (status.didJustFinish) {
-      player.seekTo(0).then(() => player.play()).catch(() => {});
-    }
-  }, [status.didJustFinish, player]);
+function MusicButton({ source, bgm }: { source: AudioSource; bgm: Bgm | undefined }) {
+  // 정한 구간만, 정한 속도로 반복해요 — 손님 초대장도 같아요.
+  const { playing, play, pause } = useClipPlayer(source, bgmClip(bgm));
   return (
     <Pressable
-      onPress={() => (status.playing ? player.pause() : player.play())}
-      style={[styles.music, status.playing && styles.musicOn]}
+      onPress={() => (playing ? pause() : play())}
+      style={[styles.music, playing && styles.musicOn]}
       hitSlop={8}
-      accessibilityLabel={status.playing ? '배경음악 끄기' : '배경음악 켜기'}
+      accessibilityLabel={playing ? '배경음악 끄기' : '배경음악 켜기'}
     >
-      <Text style={[styles.musicGlyph, !status.playing && styles.musicGlyphOff]}>♪</Text>
+      <Text style={[styles.musicGlyph, !playing && styles.musicGlyphOff]}>♪</Text>
     </Pressable>
   );
 }
@@ -575,6 +577,19 @@ const styles = StyleSheet.create({
   },
   daysHelp: {
     ...textStyle({ size: 'small', weight: 'regular', color: color.ink.muted }),
+  },
+  credit: {
+    marginTop: space[7],
+    paddingHorizontal: space[10],
+    paddingTop: space[7],
+    paddingBottom: space[10],
+    borderTopWidth: 1,
+    opacity: 0.75,
+  },
+  creditTitle: {
+    ...textStyle({ size: 'micro', weight: 'semibold' }),
+    textAlign: 'center',
+    marginBottom: space[3],
   },
   music: {
     position: 'absolute',

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { BottomSheet } from '../components/BottomSheet';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { color, radius, space } from '../theme/tokens';
 import { textStyle } from '../theme/typography';
 import type { Project, ProjectLink } from '../types/project';
@@ -10,7 +11,9 @@ import { Help, Section, SelectRow, ToggleList } from './ui';
 import { popupStartDays, type Bgm, type FontId, type Invitation } from './types';
 import { CoverPicker } from './CoverPicker';
 import { BgmSettings } from './BgmSettings';
-import { bgmSummary } from './bgm';
+import { BgmEdit } from './BgmEdit';
+import { BgmSourceDetail, BgmSourceList } from './BgmSources';
+import { bgmSummary, bgmTrackById } from './bgm';
 import { coverPhoto } from './photos';
 import { VenueFields } from './VenueFields';
 import { EventInfoRows } from './EventInfoRows';
@@ -41,15 +44,27 @@ type Props = {
   /** 공유 시작 · 중지. */
   onShared: (shared: boolean) => void;
   onLinkChange: (link: ProjectLink) => void;
+  /** 설정 창을 닫으면서 알려줄 말 (예: 배경음악을 저장했어요). */
+  onNotify?: (message: string) => void;
   /** 열 때 바로 보여줄 하위 화면 (예: 에디터의 배경음악 버튼 → 'bgm'). */
   initialPage?: Page;
 };
 
-export type Page = 'main' | 'font' | 'cover' | 'bgm' | 'venue';
-const PAGE_TITLE: Record<Page, string> = { main: '전체 설정', font: '기본 글꼴', cover: '대표 사진', bgm: '배경음악', venue: '장소' };
+export type Page = 'main' | 'font' | 'cover' | 'bgm' | 'bgedit' | 'bgmsrc' | 'bgmsrc1' | 'venue';
+const PAGE_TITLE: Record<Page, string> = {
+  main: '전체 설정',
+  font: '기본 글꼴',
+  cover: '대표 사진',
+  bgm: '배경음악',
+  bgedit: '노래 편집',
+  bgmsrc: '음원 출처 · 라이선스',
+  bgmsrc1: '음원 정보',
+  venue: '장소',
+};
+const BACK_LABEL: Partial<Record<Page, string>> = { bgedit: '배경음악으로', bgmsrc: '배경음악으로', bgmsrc1: '음원 목록으로' };
 
 /** ⚙ 전체 설정 — things that apply to the whole invitation rather than one block. */
-export function SettingsSheet({ visible, onClose, project, font, onFont, onProject, invitation, onCover, onBgm, onPopupEnabled, onPopupStart, onEditPopup, onThanksEnabled, onEditThanks, onShared, onLinkChange, initialPage }: Props) {
+export function SettingsSheet({ visible, onClose, project, font, onFont, onProject, invitation, onCover, onBgm, onPopupEnabled, onPopupStart, onEditPopup, onThanksEnabled, onEditThanks, onShared, onLinkChange, onNotify, initialPage }: Props) {
   const [page, setPage] = useState<Page>(initialPage ?? 'main');
   const [wasVisible, setWasVisible] = useState(visible);
   if (visible !== wasVisible) {
@@ -59,18 +74,46 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
   const cover = coverPhoto(invitation);
   const [bgmLabel, bgmValue] = bgmSummary(invitation.bgm);
   const popupOn = invitation.popup?.enabled ?? false;
+  const [srcId, setSrcId] = useState<string | undefined>(undefined);
+  const editDirty = useRef(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
 
   const close = () => {
     setPage('main');
     onClose();
   };
+  const back = () => {
+    if (page === 'bgedit') {
+      if (editDirty.current) setDiscardOpen(true);
+      else setPage('bgm');
+    } else if (page === 'bgmsrc1') setPage('bgmsrc');
+    else if (page === 'bgmsrc') setPage('bgm');
+    else setPage('main');
+  };
+  /** 배경음악 › 완료 — 창을 닫고 어떻게 저장됐는지 알려줘요. */
+  const finishBgm = () => {
+    const [name, extra] = bgmSummary(invitation.bgm);
+    const off = !invitation.bgm || invitation.bgm.mode === 'off';
+    const none = !off && name === '곡을 골라주세요';
+    close();
+    onNotify?.(
+      off ? '배경음악 없이 저장했어요' : none ? '곡을 고르지 않아서 배경음악 없이 저장했어요' : `배경음악을 저장했어요 · ${name}${extra && /^(구간|\d)/.test(extra) ? ` (${extra})` : ''}`,
+    );
+  };
 
   return (
-    <BottomSheet visible={visible} onClose={close} title={PAGE_TITLE[page]} maxHeight="88%">
+    <>
+    <BottomSheet
+      visible={visible}
+      onClose={close}
+      title={PAGE_TITLE[page]}
+      maxHeight={page === 'bgedit' ? '95%' : '88%'}
+      action={page === 'bgm' ? { label: '완료', onPress: finishBgm } : undefined}
+    >
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {page !== 'main' ? (
-          <Pressable onPress={() => setPage('main')} hitSlop={8}>
-            <Text style={styles.back}>‹ 전체 설정으로</Text>
+          <Pressable onPress={back} hitSlop={8}>
+            <Text style={styles.back}>{`‹ ${BACK_LABEL[page] ?? '전체 설정으로'}`}</Text>
           </Pressable>
         ) : null}
         {page === 'font' ? (
@@ -81,7 +124,29 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
         ) : page === 'cover' ? (
           <CoverPicker invitation={invitation} onSelect={onCover} />
         ) : page === 'bgm' ? (
-          <BgmSettings bgm={invitation.bgm} onChange={onBgm} />
+          <BgmSettings bgm={invitation.bgm} onChange={onBgm} onEdit={() => setPage('bgedit')} onOpenSources={() => setPage('bgmsrc')} />
+        ) : page === 'bgedit' ? (
+          <BgmEdit
+            bgm={invitation.bgm ?? { mode: 'off' }}
+            dirtyRef={editDirty}
+            onApply={(next) => {
+              onBgm(next);
+              editDirty.current = false;
+              setPage('bgm');
+            }}
+          />
+        ) : page === 'bgmsrc' ? (
+          <BgmSourceList
+            onOpen={(id) => {
+              setSrcId(id);
+              setPage('bgmsrc1');
+            }}
+          />
+        ) : page === 'bgmsrc1' ? (
+          (() => {
+            const track = bgmTrackById(srcId);
+            return track ? <BgmSourceDetail track={track} /> : null;
+          })()
         ) : page === 'venue' ? (
           <>
             <VenueFields project={project} onVenue={(venue) => onProject({ venue })} />
@@ -148,10 +213,29 @@ export function SettingsSheet({ visible, onClose, project, font, onFont, onProje
         )}
       </ScrollView>
     </BottomSheet>
+    <ConfirmDialog
+      visible={discardOpen}
+      title="변경한 내용을 버릴까요?"
+      cancelLabel="계속 편집"
+      confirmLabel="버리기"
+      onCancel={() => setDiscardOpen(false)}
+      onConfirm={() => {
+        setDiscardOpen(false);
+        editDirty.current = false;
+        setPage('bgm');
+      }}
+    >
+      <Text style={styles.discardBody}>적용하기를 누르지 않으면 바꾼 구간과 속도가 원래대로 돌아가요.</Text>
+    </ConfirmDialog>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  discardBody: {
+    ...textStyle({ size: 'label', weight: 'regular', lineHeight: 'body', color: color.ink.secondary }),
+    marginTop: space[3],
+  },
   body: {
     paddingHorizontal: space.screenX,
     paddingBottom: space[6],

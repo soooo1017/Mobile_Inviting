@@ -30,6 +30,8 @@ export type RootStackParamList = {
   Inquiry: { tab?: 'form' | 'history' };
   Terms: undefined;
   PrivacyPolicy: undefined;
+  BgmSources: undefined;
+  BgmSource: { trackId: string };
 };
 
 export type MainTabParamList = {
