@@ -82,7 +82,7 @@ export type EditProps = {
   onGroupLayout: (rect: LayoutRectangle) => void;
 };
 
-const ACCENT_EDIT = '#5f5486';
+const ACCENT_EDIT = '#6f5bd6';
 const BAD = '#e0506a';
 
 function textDefaults(key: TextKey, d: PosterDesign, data: PosterData): { color: string; bold: boolean } {

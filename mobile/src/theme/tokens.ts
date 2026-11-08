@@ -21,15 +21,15 @@ export const color = {
     inactive: '#9a95a0',
   },
   accent: {
-    base: '#5f5486',
-    tint: '#efedfd',
-    tintSoft: '#f6f4fd',
-    tintBorder: '#cdc6e0',
+    base: '#6f5bd6',
+    tint: '#f0ecff',
+    tintSoft: '#f6f3ff',
+    tintBorder: '#d9d1f3',
   },
   select: {
-    fill: '#6d5bb0',
+    fill: '#6f5bd6',
     on: '#ffffff',
-    onSub: '#e6e1f5',
+    onSub: '#e9e4ff',
   },
   line: {
     default: '#e5dfd6',

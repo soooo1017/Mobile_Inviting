@@ -19,15 +19,15 @@
   --ink-inactive: #9a95a0;
 
   /* accent (라벤더 미스트) — 링크·상태칩·탭 활성 */
-  --accent: #5f5486;
-  --accent-tint: #efedfd;
-  --accent-tint-soft: #f6f4fd;
-  --accent-tint-border: #cdc6e0;
+  --accent: #6f5bd6;
+  --accent-tint: #f0ecff;
+  --accent-tint-soft: #f6f3ff;
+  --accent-tint-border: #d9d1f3;
 
   /* select (바이올렛) — 모든 "선택됨" 표시: 타일·칩·월·기간·체크 토글·필터 적용·[편집] */
-  --select: #6d5bb0;
+  --select: #6f5bd6;
   --on-select: #ffffff;
-  --on-select-sub: #e6e1f5;
+  --on-select-sub: #e9e4ff;
 
   /* lines */
   --line: #e5dfd6;

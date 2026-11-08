@@ -3,10 +3,10 @@ import Svg, { Circle, Path, Rect, Text as SvgText } from 'react-native-svg';
 import { color } from '../theme/tokens';
 import type { BgmLicense } from './bgm';
 
-/** 노래 편집 화면에서 쓰는 선명한 보라 — 앱 전체 포인트 색을 바꿀지는 따로 정해요. */
+/** 노래 편집 화면 전용 보조 색 — 포인트 보라(accent)는 theme/tokens.ts를 따라가요. */
 export const BGM = {
-  accent: '#6f5bd6',
-  tint: '#f0ecff',
+  accent: color.accent.base,
+  tint: color.accent.tint,
   panel: '#f6f3ff',
   strip: '#efebfa',
   barOff: '#cfc7e6',
