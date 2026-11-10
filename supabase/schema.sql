@@ -188,3 +188,315 @@ drop policy if exists "inquiries: insert own" on public.inquiries;
 create policy "inquiries: insert own"
   on public.inquiries for insert
   with check (auth.uid() = user_id and status = 'pending' and reply is null);
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 9) 하객용 웹 페이지 · 서버 저장 (2026-11-10)  — docs/SERVER_STORAGE.md §13
+--
+-- 방식: 공유하기 전에는 초대장이 폰에만 있고, [공유 시작]을 누르면 서버에 올라가요.
+-- 공유 중에는 고칠 때마다 서버에도 자동으로 반영돼요(링크에 바로 적용). 공유가 끝나면(중지 · 만료) 다시 폰이 기준이에요.
+-- 하객은 로그인 없이 링크만 열어요. 하객이 쓰는 건 아래 함수(RPC)로만 해서 표를 직접 읽거나 쓰지 못하게 막아요.
+-- 이 부분은 여러 번 실행해도 안전해요(이미 있으면 건너뛰거나 덮어써요).
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- 9-1) 초대장 — 공유를 시작한 초대장만 한 줄씩 있어요(작성 중인 초대장은 폰에만 있어요).
+create table if not exists public.invitations (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users (id) on delete cascade,
+  -- 폰 안에서 쓰는 초대장 번호. 같은 초대장을 다시 올릴 때(첫 공유가 끊겼다 다시 시도 등) 한 줄로 합치려고 둬요.
+  local_id text not null,
+  -- 링크 주소(https://도메인/i/<slug>). 서버 전체에서 하나뿐이에요. 앱이 만든 영문 소문자 · 숫자 · - 만 허용.
+  slug text not null check (slug ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$' and char_length(slug) between 4 and 40),
+  title text not null,
+  event_type text not null,
+  event_at timestamptz not null,
+  -- 초대장 내용 전체(글 · 사진 주소 · 배경음악 설정 · 색 · 글꼴 · 안내 팝업). 항목 종류가 늘어도 표는 그대로예요.
+  content jsonb not null default '{}'::jsonb,
+  -- 감사페이지 설정과 내용
+  thanks jsonb not null default '{}'::jsonb,
+  -- shared = 공유 중(링크가 열려요, 고치면 바로 반영) / stopped = 공유 중지(링크는 "공유가 끝났어요")
+  status text not null default 'shared' check (status in ('shared', 'stopped')),
+  shared_at timestamptz not null default now(),
+  -- 서버에서 지워지는 날 = 행사일 + 1년 (아래 트리거가 계산해요 — 앱이 바꿀 수 없어요)
+  expires_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (owner_id, local_id)
+);
+
+create unique index if not exists invitations_slug_idx on public.invitations (slug);
+create index if not exists invitations_owner_idx on public.invitations (owner_id, updated_at desc);
+create index if not exists invitations_expires_idx on public.invitations (expires_at);
+
+create or replace function public.invitations_before_write()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.expires_at := new.event_at + interval '1 year';
+  new.updated_at := now();
+  -- 링크 주소는 한 번 올린 뒤로 바꿀 수 없어요(공유를 시작하면 링크는 영구 고정).
+  if tg_op = 'UPDATE' then
+    new.slug := old.slug;
+    new.owner_id := old.owner_id;
+    new.local_id := old.local_id;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists invitations_before_write_trg on public.invitations;
+create trigger invitations_before_write_trg
+  before insert or update on public.invitations
+  for each row execute function public.invitations_before_write();
+
+alter table public.invitations enable row level security;
+
+-- 만든 사람만 자기 초대장을 읽고 · 올리고 · 고치고 · 지워요. 하객은 이 표를 직접 못 봐요(아래 함수로만).
+drop policy if exists "invitations: select own" on public.invitations;
+create policy "invitations: select own" on public.invitations for select using (auth.uid() = owner_id);
+drop policy if exists "invitations: insert own" on public.invitations;
+create policy "invitations: insert own" on public.invitations for insert with check (auth.uid() = owner_id);
+drop policy if exists "invitations: update own" on public.invitations;
+create policy "invitations: update own" on public.invitations for update using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
+drop policy if exists "invitations: delete own" on public.invitations;
+create policy "invitations: delete own" on public.invitations for delete using (auth.uid() = owner_id);
+
+-- 9-2) 참석 응답 — 하객이 남기고, 만든 사람만 읽어요.
+create table if not exists public.rsvp_responses (
+  id uuid primary key default gen_random_uuid(),
+  invitation_id uuid not null references public.invitations (id) on delete cascade,
+  -- 같은 기기에서 같은 사람이 다시 보내면 덮어써요(마지막 응답이 유효). 하객 브라우저가 만든 무작위 번호이고 이름 · 연락처와 무관해요.
+  visitor_id uuid not null,
+  name text not null check (char_length(name) between 1 and 40),
+  attending boolean not null,
+  side smallint check (side in (0, 1)),
+  companions smallint not null default 0 check (companions between 0 and 20),
+  meal boolean,
+  phone text check (char_length(phone) <= 30),
+  message text check (char_length(message) <= 500),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (invitation_id, visitor_id)
+);
+create index if not exists rsvp_invitation_idx on public.rsvp_responses (invitation_id, updated_at desc);
+
+alter table public.rsvp_responses enable row level security;
+drop policy if exists "rsvp: select own invitation" on public.rsvp_responses;
+create policy "rsvp: select own invitation" on public.rsvp_responses for select
+  using (exists (select 1 from public.invitations i where i.id = invitation_id and i.owner_id = auth.uid()));
+
+-- 9-3) 방명록 — 하객이 남기고, 만든 사람은 읽고 지워요. "우리만 보기"는 하객에게 안 보여요.
+create table if not exists public.guestbook_posts (
+  id uuid primary key default gen_random_uuid(),
+  invitation_id uuid not null references public.invitations (id) on delete cascade,
+  visitor_id uuid not null,
+  name text not null check (char_length(name) between 1 and 40),
+  side smallint check (side in (0, 1)),
+  body text not null check (char_length(body) between 1 and 1000),
+  secret boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists guestbook_invitation_idx on public.guestbook_posts (invitation_id, created_at desc);
+
+alter table public.guestbook_posts enable row level security;
+drop policy if exists "guestbook: select own invitation" on public.guestbook_posts;
+create policy "guestbook: select own invitation" on public.guestbook_posts for select
+  using (exists (select 1 from public.invitations i where i.id = invitation_id and i.owner_id = auth.uid()));
+drop policy if exists "guestbook: delete own invitation" on public.guestbook_posts;
+create policy "guestbook: delete own invitation" on public.guestbook_posts for delete
+  using (exists (select 1 from public.invitations i where i.id = invitation_id and i.owner_id = auth.uid()));
+
+-- 9-4) 방문 통계 — 개인정보 없는 익명 숫자. 방문한 사람 = visitor_id 수(같은 기기는 1명), 열어본 횟수 = open_count 합.
+create table if not exists public.invitation_visits (
+  invitation_id uuid not null references public.invitations (id) on delete cascade,
+  visitor_id uuid not null,
+  open_count integer not null default 1,
+  first_at timestamptz not null default now(),
+  last_at timestamptz not null default now(),
+  primary key (invitation_id, visitor_id)
+);
+
+alter table public.invitation_visits enable row level security;
+drop policy if exists "visits: select own invitation" on public.invitation_visits;
+create policy "visits: select own invitation" on public.invitation_visits for select
+  using (exists (select 1 from public.invitations i where i.id = invitation_id and i.owner_id = auth.uid()));
+
+-- 9-5) 하객용 함수 — 로그인 없이(anon) 쓸 수 있고, 표 대신 이 함수가 검사하고 읽고 써요.
+-- "열려 있는 초대장" = 공유 중(shared)이고 아직 만료되지 않은 것.
+create or replace function public.get_public_invitation(p_slug text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+stable
+as $$
+declare
+  inv public.invitations;
+begin
+  select * into inv from public.invitations where slug = lower(p_slug);
+  if not found then
+    return jsonb_build_object('state', 'missing');
+  end if;
+  if inv.expires_at < now() then
+    return jsonb_build_object('state', 'ended');
+  end if;
+  if inv.status <> 'shared' then
+    return jsonb_build_object('state', 'stopped');
+  end if;
+  return jsonb_build_object(
+    'state', 'live',
+    'id', inv.id,
+    'title', inv.title,
+    'event_type', inv.event_type,
+    'event_at', inv.event_at,
+    'content', inv.content,
+    'thanks', inv.thanks,
+    'updated_at', inv.updated_at
+  );
+end;
+$$;
+
+-- 하객이 남긴 응답 · 글이 너무 많이 쌓이지 않게: 같은 기기가 한 시간에 5번까지만 남길 수 있어요.
+create or replace function public.submit_rsvp(
+  p_slug text, p_visitor uuid, p_name text, p_attending boolean,
+  p_side smallint default null, p_companions smallint default 0, p_meal boolean default null,
+  p_phone text default null, p_message text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  inv_id uuid;
+begin
+  select id into inv_id from public.invitations
+    where slug = lower(p_slug) and status = 'shared' and expires_at >= now();
+  if inv_id is null then
+    raise exception '열려 있지 않은 초대장이에요' using errcode = 'P0001';
+  end if;
+  if (select count(*) from public.rsvp_responses
+        where invitation_id = inv_id and visitor_id = p_visitor and updated_at > now() - interval '1 hour') >= 5 then
+    raise exception '잠시 뒤에 다시 시도해 주세요' using errcode = 'P0002';
+  end if;
+  insert into public.rsvp_responses (invitation_id, visitor_id, name, attending, side, companions, meal, phone, message)
+  values (inv_id, p_visitor, trim(p_name), p_attending, p_side, coalesce(p_companions, 0), p_meal, nullif(trim(p_phone), ''), nullif(trim(p_message), ''))
+  on conflict (invitation_id, visitor_id) do update
+    set name = excluded.name, attending = excluded.attending, side = excluded.side, companions = excluded.companions,
+        meal = excluded.meal, phone = excluded.phone, message = excluded.message, updated_at = now();
+end;
+$$;
+
+create or replace function public.post_guestbook(
+  p_slug text, p_visitor uuid, p_name text, p_body text,
+  p_side smallint default null, p_secret boolean default false
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  inv_id uuid;
+begin
+  select id into inv_id from public.invitations
+    where slug = lower(p_slug) and status = 'shared' and expires_at >= now();
+  if inv_id is null then
+    raise exception '열려 있지 않은 초대장이에요' using errcode = 'P0001';
+  end if;
+  if (select count(*) from public.guestbook_posts
+        where invitation_id = inv_id and visitor_id = p_visitor and created_at > now() - interval '1 hour') >= 5 then
+    raise exception '잠시 뒤에 다시 시도해 주세요' using errcode = 'P0002';
+  end if;
+  insert into public.guestbook_posts (invitation_id, visitor_id, name, side, body, secret)
+  values (inv_id, p_visitor, trim(p_name), p_side, trim(p_body), coalesce(p_secret, false));
+end;
+$$;
+
+-- 하객에게 보여주는 방명록: 공개 글만, 최근 순. 기기 번호(visitor_id)는 돌려주지 않아요.
+create or replace function public.list_guestbook(p_slug text, p_limit integer default 50)
+returns table (id uuid, name text, side smallint, body text, created_at timestamptz)
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select g.id, g.name, g.side, g.body, g.created_at
+  from public.guestbook_posts g
+  join public.invitations i on i.id = g.invitation_id
+  where i.slug = lower(p_slug) and i.status = 'shared' and i.expires_at >= now() and not g.secret
+  order by g.created_at desc
+  limit least(greatest(p_limit, 1), 200);
+$$;
+
+-- 방문 기록: 열려 있는 초대장일 때만 세요(공유 전 · 중지 후 방문은 세지 않아요).
+create or replace function public.record_visit(p_slug text, p_visitor uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  inv_id uuid;
+begin
+  select id into inv_id from public.invitations
+    where slug = lower(p_slug) and status = 'shared' and expires_at >= now();
+  if inv_id is null then
+    return;
+  end if;
+  insert into public.invitation_visits (invitation_id, visitor_id) values (inv_id, p_visitor)
+  on conflict (invitation_id, visitor_id) do update set open_count = public.invitation_visits.open_count + 1, last_at = now();
+end;
+$$;
+
+revoke all on function public.get_public_invitation(text) from public;
+revoke all on function public.submit_rsvp(text, uuid, text, boolean, smallint, smallint, boolean, text, text) from public;
+revoke all on function public.post_guestbook(text, uuid, text, text, smallint, boolean) from public;
+revoke all on function public.list_guestbook(text, integer) from public;
+revoke all on function public.record_visit(text, uuid) from public;
+grant execute on function public.get_public_invitation(text) to anon, authenticated;
+grant execute on function public.submit_rsvp(text, uuid, text, boolean, smallint, smallint, boolean, text, text) to anon, authenticated;
+grant execute on function public.post_guestbook(text, uuid, text, text, smallint, boolean) to anon, authenticated;
+grant execute on function public.list_guestbook(text, integer) to anon, authenticated;
+grant execute on function public.record_visit(text, uuid) to anon, authenticated;
+
+-- 9-6) 만료된 초대장 지우기 — 응답 · 방명록 · 방문 기록은 같이 지워져요(on delete cascade).
+-- 사진 · 음악 파일은 SQL로는 실제 파일이 안 지워져서, 나중에 Edge Function으로 따로 지워요(SERVER_STORAGE.md §13).
+-- 하루 한 번 돌리려면 Dashboard → Database → Extensions에서 pg_cron을 켠 뒤 아래 주석을 풀어 한 번 실행해요.
+create or replace function public.purge_expired_invitations()
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  n integer;
+begin
+  delete from public.invitations where expires_at < now();
+  get diagnostics n = row_count;
+  return n;
+end;
+$$;
+revoke all on function public.purge_expired_invitations() from public, anon, authenticated;
+
+-- select cron.schedule('purge-expired-invitations', '0 18 * * *', $$select public.purge_expired_invitations()$$);  -- 매일 03:00 (한국 시간)
+
+-- 9-7) 사진 · 음악 보관함(Storage).
+--  · invitation-media: 만든 사람이 올린 사진 · 내 음악. 하객이 볼 수 있게 공개 주소로 읽고, 올리기 · 지우기는 자기 폴더(<내 user id>/…)만.
+--  · bgm: 앱이 제공하는 배경음악(bgm001.mp3 …). 운영자가 Dashboard → Storage에서 직접 올려요(앱은 읽기만).
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values
+  ('invitation-media', 'invitation-media', true, 15728640,
+   array['image/jpeg', 'image/png', 'image/webp', 'audio/mpeg', 'audio/mp4', 'audio/x-m4a', 'audio/m4a']),
+  ('bgm', 'bgm', true, 15728640, array['audio/mpeg'])
+on conflict (id) do nothing;
+
+drop policy if exists "invitation-media: upload own folder" on storage.objects;
+create policy "invitation-media: upload own folder" on storage.objects for insert to authenticated
+  with check (bucket_id = 'invitation-media' and (storage.foldername(name))[1] = auth.uid()::text);
+drop policy if exists "invitation-media: update own folder" on storage.objects;
+create policy "invitation-media: update own folder" on storage.objects for update to authenticated
+  using (bucket_id = 'invitation-media' and (storage.foldername(name))[1] = auth.uid()::text);
+drop policy if exists "invitation-media: delete own folder" on storage.objects;
+create policy "invitation-media: delete own folder" on storage.objects for delete to authenticated
+  using (bucket_id = 'invitation-media' and (storage.foldername(name))[1] = auth.uid()::text);
