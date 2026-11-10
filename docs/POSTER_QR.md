@@ -75,5 +75,5 @@
 ## 5. 개발 메모
 - 부품: `react-native-qrcode-svg` · `react-native-view-shot` · `expo-media-library`(legacy API) · `expo-sharing` (모두 Expo Go에서 쓸 수 있는 것들). `app.json`에 `expo-media-library` 플러그인(사진 저장 권한 문구) 추가.
 - 홍보물은 템플릿의 기본 크기(base 단위) 좌표로 저장해서 화면 크기가 달라도 같은 모습. `mobile/src/poster/model.ts`(템플릿 · 겹침 규칙) · `PosterArt.tsx`(그리기) · `PosterEditor.tsx`(끌기 · 두 손가락 · 겹침 되돌리기) · `PosterScreen.tsx`(3단계).
-- 링크는 `mobile/src/share/link.ts`의 **예시 주소**(`invite.example/i/<자동 8자 또는 문구-랜덤6자>`). 진짜 도메인과 서버가 정해지면 이 한 곳(`SHARE_BASE_URL`)만 바꿔요.
+- 링크는 `mobile/src/share/link.ts`의 `SHARE_BASE_URL`(`https://moiso-ten.vercel.app/i/<자동 8자 또는 문구-랜덤6자>`, 2026-11-10부터 진짜 하객 페이지 주소). 내 도메인을 연결하면 `mobile/.env`의 `EXPO_PUBLIC_GUEST_BASE_URL`만 바꿔요(예전 초대장 링크도 자동으로 새 주소로 보여요).
 - 폰에서 확인할 것: `docs/DEVICE_CHECKLIST.md` 12번.

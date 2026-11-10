@@ -2,12 +2,13 @@ import type { LinkMode, Project, ProjectLink } from '../types/project';
 
 /**
  * 초대장 링크 — 초대장을 만들 때 정하고, **공유를 시작하기 전까지만** 바꿀 수 있어요 (QR · 홍보물도 이 주소를 써요).
- * 서버 연결 전이라 아직 열리지 않는 예시 주소예요. 진짜 도메인이 정해지면 SHARE_BASE_URL 한 곳만 바꿔요.
+ * 하객이 여는 웹 페이지 주소(Vercel)가 기본값이에요. 내 도메인을 연결하면 `.env`의 EXPO_PUBLIC_GUEST_BASE_URL만 바꾸면 돼요.
  *
  * 링크 모양: `주소/i/<뒷부분>` — 뒷부분은 자동(랜덤 8자) 또는 원하는 문구 + `-` + 랜덤 6자.
  * 랜덤 글자가 붙어서 추측하기 어렵고, 서버 없이도 겹칠 일이 거의 없어요.
  */
-export const SHARE_BASE_URL = 'https://invite.example/i';
+const DEFAULT_GUEST_BASE = 'https://moiso-ten.vercel.app';
+export const SHARE_BASE_URL = `${(process.env.EXPO_PUBLIC_GUEST_BASE_URL || DEFAULT_GUEST_BASE).replace(/\/+$/, '')}/i`;
 
 export const LINK_PHRASE_MIN = 3;
 export const LINK_PHRASE_MAX = 12;
