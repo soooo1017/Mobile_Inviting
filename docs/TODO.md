@@ -7,7 +7,11 @@
 - [ ] Supabase에서 `schema.sql` 다시 실행 — 하객 함수 변경(없는 주소도 "준비 중"으로 · **하객 화면용 색 · 장소 추가**) 반영용
 - [ ] 폰에서 `DEVICE_CHECKLIST.md` 점검 — **§10 하객 페이지(앱에서 공유한 링크를 폰 브라우저로 열기)** 포함, — 특히 §6 노래 편집(구간 반복 · 속도 · 드래그), 가입 위저드, 링크, 배지. Android는 처음부터 한 번 더
 - [ ] Supabase에서 `supabase/schema.sql` 1~8번 실행
-- [ ] 🕐 나중에(다른 환경이라 보류): 음원 `bgm001.mp3` · `bgm002.mp3`(영문 ID 이름, mp3만 — 증빙은 올리지 않아요)를 Supabase Storage 공개 버킷 `bgm`에 업로드 → **업로드가 끝난 뒤** 주소 `https://<프로젝트>.supabase.co/storage/v1/object/public/bgm`(끝 `/` 없이)를 ① 앱 `mobile/.env`의 `EXPO_PUBLIC_BGM_BASE_URL` ② Vercel 환경변수 `NEXT_PUBLIC_BGM_BASE_URL`(Production · Preview)에 넣고 Redeploy → 주소 `…/bgm/bgm001.mp3`가 브라우저에서 재생되는지 확인 (`SERVER_STORAGE.md` §12, `WEB_VERCEL.md` §6). 파일이 없을 때 주소만 먼저 넣으면 ♪ 버튼은 보이는데 소리가 안 나요
+- [ ] 🕐 나중에(다른 환경이라 보류) — 배경음악 연결 (순서대로)
+  1. 음원 `bgm001.mp3` · `bgm002.mp3`(영문 ID 이름, mp3만 — 증빙은 올리지 않아요)를 Supabase Storage 공개 버킷 `bgm`에 업로드
+  2. **폴더 주소를 한 번만** 입력(곡마다 따로 넣지 않아요 — 앱 · 웹이 `폴더 주소/곡번호.mp3`로 알아서 만들어요): `https://<프로젝트>.supabase.co/storage/v1/object/public/bgm`(끝 `/` 없이)을 ① 앱 `mobile/.env`의 `EXPO_PUBLIC_BGM_BASE_URL` ② Vercel 환경변수 `NEXT_PUBLIC_BGM_BASE_URL`(Production · Preview)에 넣고 Redeploy
+  3. `…/bgm/bgm001.mp3`가 브라우저에서 재생되는지 확인 (`SERVER_STORAGE.md` §12, `WEB_VERCEL.md` §6)
+  - 곡을 더 올릴 때(bgm003~)는 파일 업로드 + 앱 `bgm.ts` · 웹 `web/lib/bgm.ts`에 곡 정보 추가만 하면 돼요(주소 입력은 이미 끝). 파일이 없을 때 주소만 먼저 넣으면 ♪ 버튼은 보이는데 소리가 안 나요
 - [ ] Google Play · Apple 개발자 계정 가입 (승인에 며칠 — `STORE_RELEASE.md`)
 
 ## 내용 채우기
