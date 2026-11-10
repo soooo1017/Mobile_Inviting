@@ -414,7 +414,8 @@ declare
 begin
   select * into inv from public.invitations where slug = lower(p_slug);
   if not found then
-    return jsonb_build_object('state', 'missing');
+    -- 없는 주소와 작성 중인 주소를 똑같이 "준비 중"으로 돌려줘요 — 주소를 이것저것 넣어 보면서 누가 쓰는 주소인지 알아내지 못하게.
+    return jsonb_build_object('state', 'preparing');
   end if;
   if inv.expires_at < now() then
     return jsonb_build_object('state', 'ended');
