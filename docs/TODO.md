@@ -7,11 +7,8 @@
 - [x] Supabase에서 `schema.sql` 다시 실행 — 하객 함수 변경(하객 화면용 색 · 장소 추가) 반영 · 완료(2026-11-10, 사용자 확인)
 - [ ] **Supabase에서 `schema.sql` 한 번 더 실행** — 관리 화면 서버 연결용(날짜별 방문 표 · 주인용 요약 함수 · 방명록 공개 판단, `SERVER_STORAGE.md` §13-5). 안 하면 앱 통계 · 목록 숫자가 비어 있어요
 - [ ] 폰에서 `DEVICE_CHECKLIST.md` 점검 — **§10 하객 페이지(앱에서 공유한 링크를 폰 브라우저로 열기)** 포함, 특히 §6 노래 편집(구간 반복 · 속도 · 드래그), 가입 위저드, 링크, 배지. Android는 처음부터 한 번 더
-- [ ] 🕐 나중에(다른 환경이라 보류) — 배경음악 연결 (순서대로)
-  1. 음원 `bgm001.mp3` · `bgm002.mp3`(영문 ID 이름, mp3만 — 증빙은 올리지 않아요)를 Supabase Storage 공개 버킷 `bgm`에 업로드
-  2. **폴더 주소를 한 번만** 입력(곡마다 따로 넣지 않아요 — 앱 · 웹이 `폴더 주소/곡번호.mp3`로 알아서 만들어요): `https://<프로젝트>.supabase.co/storage/v1/object/public/bgm`(끝 `/` 없이)을 ① 앱 `mobile/.env`의 `EXPO_PUBLIC_BGM_BASE_URL` ② Vercel 환경변수 `NEXT_PUBLIC_BGM_BASE_URL`(Production · Preview)에 넣고 Redeploy
-  3. `…/bgm/bgm001.mp3`가 브라우저에서 재생되는지 확인 (`SERVER_STORAGE.md` §12, `WEB_VERCEL.md` §6)
-  - 곡을 더 올릴 때(bgm003~)는 파일 업로드 + 앱 `bgm.ts` · 웹 `web/lib/bgm.ts`에 곡 정보 추가만 하면 돼요(주소 입력은 이미 끝). 파일이 없을 때 주소만 먼저 넣으면 ♪ 버튼은 보이는데 소리가 안 나요
+- [x] 배경음악 음원 업로드 · 앱 연결 — 완료(2026-11-10): `bgm001.mp3` · `bgm002.mp3`를 Storage `bgm` 버킷에 올리고 `mobile/.env`의 `EXPO_PUBLIC_BGM_BASE_URL`을 채워 앱에서 미리 듣기 확인(사용자)
+- [ ] 배경음악 하객 페이지 연결 — Vercel 환경변수 `NEXT_PUBLIC_BGM_BASE_URL`(앱과 같은 폴더 주소, 끝 `/` 없이, Production · Preview)을 추가하고 Redeploy → 공유한 링크를 폰 브라우저로 열어 ♪ 버튼 · 재생 · 맨 아래 출처 표기 확인. 곡을 더 올릴 때(bgm003~)는 파일 업로드 + 앱 `bgm.ts` · 웹 `web/lib/bgm.ts`에 곡 정보 추가만 하면 돼요(주소 입력은 끝)
 - [ ] Google Play · Apple 개발자 계정 가입 (승인에 며칠 — `STORE_RELEASE.md`)
 
 ## 내용 채우기
@@ -38,7 +35,7 @@
 ## 기능 · 기타
 - [ ] 템플릿 추가
 - [ ] 문의 접수용 운영자 웹 (지금은 Supabase 대시보드에서 답변)
-- [ ] 통계 화면 복구 (`SHOW_STATS`) — 서버 데이터 연결은 끝남(§13-5), 숨김만 풀면 돼요
+- ❎ 통계 화면 복구 — 안 하기로 함(2026-11-10). 서버 연결은 끝나 있어서 나중에 `SHOW_STATS`만 켜면 돼요
 - [x] 참석 응답 · 방명록 엑셀/CSV 내려받기 — 구현함(2026-11-10, `SERVER_STORAGE.md` §13-6, 폰 확인 전, `npm install` 필요)
 - [ ] 초대장 · 감사 페이지 이미지(.png) / PDF 내려받기 — [데이터 내려받기]에서 "준비 중"(`DownloadSheet.tsx`의 `IMAGE_EXPORT_READY`)
 - [ ] 아이디어 제안 입구 늘리기 — 에디터 [+ 추가하기] 시트는 ✅. 남은 후보: 테마 · 색 고르는 곳 "원하는 스타일이 없나요?", 배경음악 곡 목록 "듣고 싶은 곡 제안하기", 초대장 완성 직후 한 번만 "아쉬운 점 알려주기"
