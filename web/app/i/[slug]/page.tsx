@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { cache, type ReactNode } from 'react';
 import InvitationView from '../../../components/InvitationView';
 import { getPublicInvitation } from '../../../lib/invitation';
-import { guestView } from '../../../lib/format';
+import { guestTitle, guestView } from '../../../lib/format';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -16,7 +16,7 @@ const load = cache(getPublicInvitation);
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const inv = await load(slug);
-  return { title: inv.state === 'live' ? inv.title : '모이소 초대장', robots: { index: false, follow: false } };
+  return { title: inv.state === 'live' ? guestTitle(inv.event_type, inv.public_meta?.hosts) : '모이소 초대장', robots: { index: false, follow: false } };
 }
 
 function Message({ title, sub }: { title: string; sub?: string }): ReactNode {

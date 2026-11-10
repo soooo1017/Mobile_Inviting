@@ -26,7 +26,8 @@ export function NewProjectLinkScreen({ navigation }: Props) {
   const { scrollRef, fieldLayout, onFieldFocus } = useKeyboardAwareForm();
 
   const typeName = draft.eventType === 'other' ? draft.customTypeName : eventTypeMeta(draft.eventType).label;
-  const title = defaultProjectTitle(draft.eventType, draft.hosts, typeName);
+  // 직접 정한 이름이 있으면 그걸, 비워 뒀으면 주인공 이름으로.
+  const title = draft.title.trim() || defaultProjectTitle(draft.eventType, draft.hosts, typeName);
   const ready = choiceReady(draft.link);
 
   const handleStart = () => {

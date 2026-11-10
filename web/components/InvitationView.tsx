@@ -8,7 +8,7 @@ import { GuestbookSheet, RsvpSheet } from './forms';
 import { themeFromMeta } from '../lib/color';
 import { PRETENDARD_CSS, googleFontUrls } from '../lib/fonts';
 import { bgmEditNotes, bgmTrackById, bgmUrl } from '../lib/bgm';
-import { guestSides, kstDateKey, popupActive, resolveThanks } from '../lib/format';
+import { guestSides, guestTitle, kstDateKey, popupActive, resolveThanks } from '../lib/format';
 import { DEFAULT_POPUP_START_DAYS, FORMAT_SIZE, type Bgm, type Block, type BlockOfType, type FontId, type Photo } from '../lib/model';
 import type { LiveInvitation } from '../lib/invitation';
 import { rpc } from '../lib/supabase';
@@ -41,7 +41,7 @@ export default function InvitationView({ slug, inv, nowIso, view }: Props) {
 
   const ctx: GuestCtx = {
     slug,
-    title: inv.title,
+    title: guestTitle(inv.event_type, meta?.hosts),
     eventAt: inv.event_at,
     eventType: inv.event_type,
     now,

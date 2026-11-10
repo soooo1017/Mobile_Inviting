@@ -8,6 +8,8 @@ export type NewProjectDraft = {
   eventType: EventType;
   customTypeName: string;
   hosts: { label: string; name: string }[];
+  /** 초대장 이름 — 내 목록 · 관리 화면에서 구분하는 이름이에요. 비워 두면 주인공 이름으로 자동으로 들어가요. */
+  title: string;
   eventAt: string;
   venue?: Venue;
   thanks: ThanksSettings;
@@ -29,6 +31,7 @@ function initialDraft(): NewProjectDraft {
     eventType: 'wedding',
     customTypeName: '',
     hosts: eventTypeMeta('wedding').hostLabels.map((label) => ({ label, name: '' })),
+    title: '',
     eventAt: eventAt.toISOString(),
     venue: undefined,
     thanks: { enabled: true, days: 7, hasContent: false },

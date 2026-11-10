@@ -78,7 +78,7 @@ function Settings({ project, navigation }: { project: Project; navigation: Props
             onLinkChange={(link) => setLink(project.id, link)}
             onChange={(shared) => {
               setShared(project.id, shared);
-              setToast(shared ? '공유를 시작했어요 · 게스트 화면은 서버 연결 뒤에 열려요' : '공유를 중지했어요');
+              setToast(shared ? '공유를 시작했어요 · 링크가 열려요' : '공유를 중지했어요');
             }}
           />
         </Section>

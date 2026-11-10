@@ -212,6 +212,25 @@ export function resolveThanks(eventType: string, hosts: Hosts, simple: { title?:
   };
 }
 
+/**
+ * 하객에게 보이는 이름(브라우저 탭 · 캘린더에 추가한 일정) — 주인이 목록에서 구분하려고 붙인 "초대장 이름"은 하객에게 보이지 않아요.
+ * 주인공 이름으로 만들어요: 결혼식 "민석 · 지원", 돌잔치 "하준 돌잔치", 백일 "하준 백일", 동창회 · 동호회는 모임 이름. 이름이 없으면 "초대장".
+ */
+export function guestTitle(eventType: string, hosts: { label: string; name: string }[] | null | undefined): string {
+  const names = (hosts ?? []).map((h) => h?.name?.trim() ?? '');
+  switch (eventType) {
+    case 'first_birthday':
+      return names[0] ? `${names[0]} 돌잔치` : '초대장';
+    case '100days':
+      return names[0] ? `${names[0]} 백일` : '초대장';
+    case 'reunion':
+    case 'club':
+      return names[0] || '초대장';
+    default:
+      return names.filter(Boolean).join(' · ') || '초대장';
+  }
+}
+
 // ── 어떤 화면을 보여줄지 ──────────────────────────────────────────────────────
 
 export type GuestView = 'invite' | 'thanks' | 'ended';

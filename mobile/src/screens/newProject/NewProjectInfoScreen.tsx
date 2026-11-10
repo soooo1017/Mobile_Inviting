@@ -16,6 +16,7 @@ import { KeyboardAwareForm, useKeyboardAwareForm } from '../../components/Keyboa
 import { color, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { eventTypeMeta, SIDO_LIST, type MapLink } from '../../types/project';
+import { defaultProjectTitle } from '../../editor/format';
 import { formatEventDateTime } from '../../utils/projectStatus';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NewProjectInfo'>;
@@ -51,6 +52,8 @@ export function NewProjectInfoScreen({ navigation }: Props) {
   };
 
   const canProceed = hostsComplete(draft.eventType, draft.hosts);
+  // 이름을 비워 두면 들어갈 이름 — 칸의 안내 글씨로 보여줘요.
+  const autoTitle = defaultProjectTitle(draft.eventType, draft.hosts, draft.eventType === 'other' ? draft.customTypeName : eventTypeMeta(draft.eventType).label);
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
@@ -67,6 +70,19 @@ export function NewProjectInfoScreen({ navigation }: Props) {
         <View onLayout={fieldLayout('hosts')}>
           <HostFields eventType={draft.eventType} hosts={draft.hosts} onChange={(hosts) => update({ hosts })} onFocus={() => onFieldFocus('hosts')} />
         </View>
+        <View style={styles.section} onLayout={fieldLayout('title')}>
+          <FieldLabel>초대장 이름</FieldLabel>
+          <TextField
+            value={draft.title}
+            onChangeText={(title) => update({ title })}
+            onFocus={() => onFieldFocus('title')}
+            placeholder={autoTitle || '초대장을 구분할 이름'}
+            maxLength={30}
+            returnKeyType="done"
+          />
+          <HelperText>{'내 초대장 목록에서 구분하는 이름이에요. 하객에게는 보이지 않아요.\n비워 두면 위 이름으로 자동으로 들어가고, 나중에 프로젝트 설정에서 바꿀 수 있어요.'}</HelperText>
+        </View>
+
         <View style={styles.section}>
           <FieldLabel>행사 일시</FieldLabel>
           <View style={styles.dateTimeRow}>
