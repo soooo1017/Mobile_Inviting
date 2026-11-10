@@ -93,12 +93,12 @@ export type Project = {
 
 export type LinkMode = 'auto' | 'custom';
 export type ProjectLink = {
-  /** 링크 맨 뒤 부분 — 자동은 랜덤 8자, 문구는 `문구-랜덤4자`. */
+  /** 링크 맨 뒤 부분 — 자동은 랜덤 8자, 문구는 `문구-랜덤6자`. */
   slug: string;
   mode: LinkMode;
   /** 문구 방식일 때 사용자가 적은 문구. */
   phrase: string;
-  /** 문구 뒤에 붙은 랜덤 4자 (문구 방식). */
+  /** 문구 뒤에 붙은 랜덤 6자 (문구 방식). */
   rand: string;
   /** 공유를 한 번이라도 시작했으면 true — 이후 바꿀 수 없어요. */
   locked: boolean;

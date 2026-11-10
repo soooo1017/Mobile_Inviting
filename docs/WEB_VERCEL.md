@@ -4,7 +4,7 @@
 
 ## 1. 지금 상태
 - ✅ **배포 완료 (2026-11-10)**: https://moiso-ten.vercel.app — `/`(소개)와 `/아무글자`("아직 준비 중인 초대장이에요") 모두 확인. ※ 이후 앱의 링크 모양(`주소/i/<뒷부분>`)에 맞춰 하객 페이지 주소를 `/i/<뒷부분>`으로 옮겼어요(2026-11-10). 이후 브랜치에 푸시하면 Vercel이 자동으로 다시 배포해요.
-- `web/`에 Next.js 앱 뼈대가 있어요: `/`(서비스 소개 한 줄), `/i/<주소>`(지금은 "아직 준비 중인 초대장이에요").
+- `web/`에 Next.js 앱 뼈대가 있어요: `/`(서비스 소개 한 줄), `/i/<주소>`(서버에서 읽어 — 없는 주소 · 작성 중인 주소는 `/`로 보내고, 공유 중이면 이름 · 일시, 공유가 끝났거나 행사가 끝났으면 안내).
 - 서버(Supabase)에 초대장이 아직 없어서 모든 링크가 "준비 중"으로 보여요. 연결하는 건 다음 단계.
 - 왜 Next.js: `/<주소>` 하나로 모든 초대장을 보여주는 구조가 쉽고, 나중에 링크마다 서버에서 내용을 만들 수 있어요. **카카오톡 링크 미리보기(제목 · 사진)는 지금 단계에서는 하지 않기로 했어요(2026-11-10)** — 필요해지면 그때 `generateMetadata`로 추가해요.
 
@@ -36,3 +36,12 @@ npm run dev     # http://localhost:3000/i/아무글자
 ## 5. 주의
 - 비밀 키(Supabase service role 등)는 절대 `NEXT_PUBLIC_`으로 시작하는 변수나 git에 넣지 않아요. 브라우저에 노출되는 건 anon 키뿐이고, 보호는 RLS가 해요.
 - `web/.env*.local`은 git에서 제외돼 있어요.
+
+## 6. 서버(Supabase) 연결 값 넣기 (2026-11-10)
+하객 페이지가 초대장을 읽으려면 Vercel에 Supabase 값 두 개가 필요해요. **안 넣으면 모든 `/i/<주소>`가 `/`로 가요**(열 수 있는 초대장이 없는 것과 같아요).
+1. Vercel → 프로젝트 → **Settings → Environment Variables**
+2. `NEXT_PUBLIC_SUPABASE_URL` = 앱 `mobile/.env`의 `EXPO_PUBLIC_SUPABASE_URL` 값
+3. `NEXT_PUBLIC_SUPABASE_ANON_KEY` = 앱 `mobile/.env`의 `EXPO_PUBLIC_SUPABASE_ANON_KEY` 값 (anon 키는 공개해도 되는 키예요 — `service_role` 키는 절대 넣지 않아요)
+4. Environments는 Production · Preview 모두 체크 → Save → **Deployments에서 Redeploy** (값을 바꾼 뒤엔 다시 배포해야 반영돼요)
+- 로컬에서는 `web/.env.local`에 같은 두 줄을 넣어요(`web/.env.example` 참고).
+- **동작**: `/i/<주소>`는 서버의 `get_public_invitation`을 불러요 → 없는 주소 · 작성 중 → **`/`(서비스 첫 화면)로 이동**(둘을 똑같이 처리해서 누가 쓰는 주소인지 알 수 없어요) / 공유 중 → 초대장(지금은 이름 · 일시만) / 공유 중지 → "공유가 끝난 초대장이에요" / 행사 끝 → "행사가 끝난 초대장이에요" / 서버 오류 → "잠시 후 다시 열어주세요".

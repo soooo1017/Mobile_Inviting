@@ -4,7 +4,7 @@ import type { LinkMode, Project, ProjectLink } from '../types/project';
  * 초대장 링크 — 초대장을 만들 때 정하고, **공유를 시작하기 전까지만** 바꿀 수 있어요 (QR · 홍보물도 이 주소를 써요).
  * 서버 연결 전이라 아직 열리지 않는 예시 주소예요. 진짜 도메인이 정해지면 SHARE_BASE_URL 한 곳만 바꿔요.
  *
- * 링크 모양: `주소/i/<뒷부분>` — 뒷부분은 자동(랜덤 8자) 또는 원하는 문구 + `-` + 랜덤 4자.
+ * 링크 모양: `주소/i/<뒷부분>` — 뒷부분은 자동(랜덤 8자) 또는 원하는 문구 + `-` + 랜덤 6자.
  * 랜덤 글자가 붙어서 추측하기 어렵고, 서버 없이도 겹칠 일이 거의 없어요.
  */
 export const SHARE_BASE_URL = 'https://invite.example/i';
@@ -12,7 +12,7 @@ export const SHARE_BASE_URL = 'https://invite.example/i';
 export const LINK_PHRASE_MIN = 3;
 export const LINK_PHRASE_MAX = 12;
 const AUTO_LENGTH = 8;
-const RAND_LENGTH = 4;
+const RAND_LENGTH = 6;
 const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 /** 사이트의 다른 주소와 겹칠 수 있어서 쓰지 못하는 문구. */
 const RESERVED_PHRASES = ['admin', 'login', 'api', 'app', 'www', 'help', 'invite', 'static', 'assets', 'terms', 'privacy', 'support', 'test', 'guest', 'share'];
@@ -24,7 +24,7 @@ function randomChars(length: number): string {
 }
 
 /**
- * 서버에서 주소(slug)가 이미 쓰이고 있다고 할 때 새로 뽑은 링크 — 문구 방식은 뒤의 랜덤 4자만, 자동은 8자 전체를 다시 뽑아요.
+ * 서버에서 주소(slug)가 이미 쓰이고 있다고 할 때 새로 뽑은 링크 — 문구 방식은 뒤의 랜덤 6자만, 자동은 8자 전체를 다시 뽑아요.
  * 이미 공유를 시작해 고정된 링크는 바꿀 수 없어서 null이에요.
  */
 export function regeneratedLink(project: Project): ProjectLink | null {

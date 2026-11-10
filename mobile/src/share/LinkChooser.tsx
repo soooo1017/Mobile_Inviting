@@ -13,7 +13,7 @@ type Props = {
 const BASE_LABEL = SHARE_BASE_URL.replace(/^https?:\/\//, '');
 
 /**
- * 링크 고르기 — ① 자동으로 만들기(랜덤 8자) ② 원하는 문구로 만들기(영문 소문자 · 숫자 · -, 3~12자 + 랜덤 4자).
+ * 링크 고르기 — ① 자동으로 만들기(랜덤 8자) ② 원하는 문구로 만들기(영문 소문자 · 숫자 · -, 3~12자 + 랜덤 6자).
  * 새 초대장 6/6과 링크 변경(공유하기 · 프로젝트 설정 · ⚙ 전체 설정)에서 같이 써요.
  */
 export function LinkChooser({ value, onChange, onFocus }: Props) {
@@ -51,7 +51,7 @@ export function LinkChooser({ value, onChange, onFocus }: Props) {
                 {`${BASE_LABEL}/${value.phrase || 'minseok'}-`}
                 <Text style={styles.rand}>{value.rand}</Text>
               </Text>
-              <Text style={styles.note}>문구 뒤에 보안을 위해 랜덤 글자(4자)가 붙어요.</Text>
+              <Text style={styles.note}>문구 뒤에 보안을 위해 랜덤 글자(6자)가 붙어요. 같은 문구를 다른 사람이 써도 괜찮아요.</Text>
             </View>
           ) : null}
         </View>
