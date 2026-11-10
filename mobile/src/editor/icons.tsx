@@ -117,6 +117,16 @@ export function ExpandIcon({ size = 14, color }: IconProps) {
 const PIN = 'M8 1.2c-2.9 0-5.1 2.2-5.1 5 0 3.6 5.1 8.6 5.1 8.6s5.1-5 5.1-8.6c0-2.8-2.2-5-5.1-5z';
 
 /** 네이버 지도 버튼: a green pin with N (the app's colour, not its official logo). */
+/** 장소를 나타내는 위치 표시(핀) — 선만 있는 모양이라 글씨 색을 그대로 따라가요. 홍보물의 장소 앞에 써요. */
+export function PlaceIcon({ size = 14, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16">
+      <Path d={PIN} fill="none" stroke={color} strokeWidth={1.4} strokeLinejoin="round" />
+      <Circle cx={8} cy={6.2} r={1.9} fill="none" stroke={color} strokeWidth={1.4} />
+    </Svg>
+  );
+}
+
 export function NaverMapIcon({ size = 14 }: { size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 16 16">

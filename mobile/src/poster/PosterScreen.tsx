@@ -130,7 +130,7 @@ export function PosterScreen({ navigation, route }: Props) {
           </View>
 
           <View style={manageStyles.card}>
-            <CheckRow label="이름" value={data.names} on={design.show.name} onToggle={() => update({ show: { ...design.show, name: !design.show.name } })} />
+            <CheckRow label="제목" value={data.names} on={design.show.name} onToggle={() => update({ show: { ...design.show, name: !design.show.name } })} />
             <CheckRow label="일시" value={data.dateText} on={design.show.date} onToggle={() => update({ show: { ...design.show, date: !design.show.date } })} divider />
             <CheckRow
               label="장소"

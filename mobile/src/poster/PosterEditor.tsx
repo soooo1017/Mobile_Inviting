@@ -33,7 +33,7 @@ import {
 const HINT = '글 · 사진 · QR을 눌러 내 마음대로 꾸며 보세요';
 const REVERT_MS = 3000;
 const SNAP = 5;
-const TEXT_LABEL: Record<TextKey, string> = { ment: '초대 멘트', name: '이름', date: '일시', place: '장소' };
+const TEXT_LABEL: Record<TextKey, string> = { ment: '초대 멘트', name: '제목', date: '일시', place: '장소' };
 const GRAD = ['#ff3b30', '#ffcc00', '#34c759', '#00c7be', '#0a84ff', '#bf5af2'];
 
 type Warn = { kind: 'min' | 'bad'; text: string; id: number } | null;

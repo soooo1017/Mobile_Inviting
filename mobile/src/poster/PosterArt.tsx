@@ -1,4 +1,4 @@
-import { hostNames } from '../editor/format';
+import { PlaceIcon } from '../editor/icons';
 import { Image, Pressable, Text, View, StyleSheet, type GestureResponderHandlers, type LayoutRectangle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import QRCode from 'react-native-qrcode-svg';
@@ -50,7 +50,8 @@ export function buildPosterData(project: Project, design: PosterDesign, fontId: 
   const custom = design.bg !== undefined;
   const ink = custom ? autoTextColor(bg) : theme.ink;
   const soft = custom ? mix(ink, bg, 0.3) : theme.inkSoft;
-  const names = hostNames(project.eventType, project.hosts) || project.title;
+  // 홍보물 제목 = 초대장 이름(새 초대장 2/6 · 프로젝트 설정에서 정해요).
+  const names = project.title;
   const photoRectOnCard = photoFrame(design);
   const q = qrRect(design);
   const overPhoto = spec.photo.fixed || (q.x < photoRectOnCard.x + photoRectOnCard.w && photoRectOnCard.x < q.x + q.w && q.y < photoRectOnCard.y + photoRectOnCard.h && photoRectOnCard.y < q.y + q.h);
@@ -110,30 +111,44 @@ export function PosterArt({ design, data, edit }: { design: PosterDesign; data: 
     const def = textDefaults(k, design, data);
     const size = spec.fonts[k] * st.scale;
     const content = k === 'ment' ? design.ment.trim() : k === 'name' ? data.names : k === 'date' ? data.dateText : data.place;
+    const textColor = st.color ?? def.color;
+    const align = spec.group.align === 'center' ? 'center' : 'left';
+    const main = (
+      <Text
+        allowFontScaling={false}
+        style={{
+          fontFamily: def.bold ? familyBold : family,
+          fontSize: size,
+          lineHeight: Math.round(size * 1.35),
+          letterSpacing: k === 'ment' ? 1 : 0,
+          color: textColor,
+          textAlign: align,
+        }}
+      >
+        {content}
+      </Text>
+    );
+    if (k !== 'place') return main;
+    // 장소는 앞에 위치 표시(핀)를 붙여서 "장소"라는 걸 한눈에 알 수 있게 해요(장소 이름만 적어도 — 예: "루다네").
+    const lineHeight = Math.round(size * 1.35);
+    const iconSize = Math.round(size * 1.05);
     return (
-      <>
-        <Text
-          allowFontScaling={false}
-          style={{
-            fontFamily: def.bold ? familyBold : family,
-            fontSize: size,
-            lineHeight: Math.round(size * 1.35),
-            letterSpacing: k === 'ment' ? 1 : 0,
-            color: st.color ?? def.color,
-            textAlign: spec.group.align === 'center' ? 'center' : 'left',
-          }}
-        >
-          {content}
-        </Text>
-        {k === 'place' && design.show.address && data.address ? (
-          <Text
-            allowFontScaling={false}
-            style={{ fontFamily: family, fontSize: size * 0.85, lineHeight: Math.round(size * 0.85 * 1.35), color: st.color ?? def.color, textAlign: spec.group.align === 'center' ? 'center' : 'left' }}
-          >
-            {data.address}
-          </Text>
-        ) : null}
-      </>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: align === 'center' ? 'center' : 'flex-start' }}>
+        <View style={{ marginTop: Math.round((lineHeight - iconSize) / 2), marginRight: Math.round(size * 0.28) }}>
+          <PlaceIcon size={iconSize} color={textColor} />
+        </View>
+        <View style={{ flexShrink: 1 }}>
+          {main}
+          {design.show.address && data.address ? (
+            <Text
+              allowFontScaling={false}
+              style={{ fontFamily: family, fontSize: size * 0.85, lineHeight: Math.round(size * 0.85 * 1.35), color: textColor, textAlign: align }}
+            >
+              {data.address}
+            </Text>
+          ) : null}
+        </View>
+      </View>
     );
   };
 
