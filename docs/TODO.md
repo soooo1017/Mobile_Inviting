@@ -3,7 +3,7 @@
 > 2026-11-08 정리. 끝낸 건 지우지 말고 ✅로 바꿔요. 자세한 내용은 각 문서를 봐요.
 
 ## 지금 바로 (폰 · 서버)
-- [ ] Vercel 환경변수 2개 넣고 Redeploy — `NEXT_PUBLIC_SUPABASE_URL` · `NEXT_PUBLIC_SUPABASE_ANON_KEY`(값은 Supabase 대시보드 → Project Settings → API의 Project URL · anon public 키, `docs/WEB_VERCEL.md` §6). 하객 페이지가 서버에서 초대장을 읽을 때 필요해요(안 넣으면 모든 `/i/…`가 첫 화면으로 가요 — 지금은 공유 기능이 없어 급하지 않아요)
+- [x] Vercel 환경변수 2개 넣고 Redeploy — 완료(2026-11-10, `https://moiso-ten.vercel.app/api/health`가 configured · publishable · reachable 모두 true)
 - [ ] Supabase에서 `schema.sql` 다시 실행 — 하객 함수 변경(없는 주소도 "준비 중"으로) 반영용
 - [ ] 폰에서 `DEVICE_CHECKLIST.md` 점검 — 특히 §6 노래 편집(구간 반복 · 속도 · 드래그), 가입 위저드, 링크, 배지. Android는 처음부터 한 번 더
 - [ ] Supabase에서 `supabase/schema.sql` 1~8번 실행
