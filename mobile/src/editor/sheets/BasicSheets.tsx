@@ -135,10 +135,16 @@ export function ImageSheet({ block, onChange, onDone, photoChoices }: Props<'ima
     }
   };
 
+  const removeAdded = () => {
+    // 추가한 사진을 빼면 + 칸이 다시 나와요. 그 사진이 고른 사진이었다면 선택도 비워요.
+    if (photo && added && photo.uri === added.uri) onChange({ ...block, props: { ...block.props, photo: undefined, crop: { x: 0, y: 0, scale: 1 } } });
+    setAdded(undefined);
+  };
+
   if (choosing) {
     return (
       <EditorSheet title="사진 선택" onBack={() => setChoosing(false)} onDone={() => setChoosing(false)} doneLabel="닫기" maxHeight={0.75}>
-        <PhotoChoiceGrid groups={choices} selectedUri={photo?.uri} onSelect={useChoice} extra={added} onAdd={addFromAlbum} />
+        <PhotoChoiceGrid groups={choices} selectedUri={photo?.uri} onSelect={useChoice} extra={added} onAdd={addFromAlbum} onRemoveExtra={removeAdded} />
       </EditorSheet>
     );
   }
