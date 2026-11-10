@@ -172,3 +172,18 @@ textarea.inp { resize: none; min-height: 110px; }
 
 .thanks { padding: 36px 28px; display: flex; flex-direction: column; gap: 22px; }
 .msg { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; }
+
+/* 아이패드 · 컴퓨터처럼 넓은 화면: 폰 화면 같은 카드를 가운데 두고 양옆은 살짝 어둡게 */
+@media (min-width: 600px) {
+  .inv-root {
+    background: color-mix(in srgb, #000 24%, var(--paper));
+    padding: 24px 0;
+  }
+  .inv-col {
+    min-height: calc(100dvh - 48px);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  }
+  .music-wrap { top: 38px; }
+}
