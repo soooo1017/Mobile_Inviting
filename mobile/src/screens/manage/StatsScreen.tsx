@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, StyleSheet } from 'react-native';
+import { RefreshControl, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -23,7 +23,7 @@ function shortDate(daysAgo: number) {
 export function StatsScreen({ navigation, route }: Props) {
   const { getProject } = useProjects();
   const project = getProject(route.params.projectId);
-  const { responses, visits } = useGuestData(route.params.projectId);
+  const { responses, visits, status, refreshing, pull } = useGuestData(route.params.projectId);
 
   if (!project) return <SafeAreaView style={manageStyles.screen} />;
   const rate = visits.people ? `${Math.round((responses.length / visits.people) * 100)}%` : '–';
@@ -36,7 +36,10 @@ export function StatsScreen({ navigation, route }: Props) {
       {!isShared(project) ? (
         <NotShared what="방문 기록이" onShare={() => navigation.navigate('Share', { projectId: project.id })} />
       ) : (
-        <ScrollView contentContainerStyle={manageStyles.body}>
+        <ScrollView contentContainerStyle={manageStyles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={pull} />}>
+          {status === 'offline' || status === 'error' ? (
+            <Text style={manageStyles.help}>{status === 'offline' ? '인터넷이 연결되지 않아 지난번 숫자를 보여드려요.' : '숫자를 불러오지 못했어요. 아래로 당겨 다시 시도해 주세요.'}</Text>
+          ) : null}
           <View style={styles.kpis}>
             <View style={styles.kpi}>
               <Text style={styles.kpiValue}>

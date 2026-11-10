@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Linking, Pressable, RefreshControl, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -51,7 +51,7 @@ export function RsvpStatusScreen({ navigation, route }: Props) {
   const { getProject, markSeen } = useProjects();
   const project = getProject(route.params.projectId);
   const { invitation } = useInvitation(route.params.projectId);
-  const { responses } = useGuestData(route.params.projectId);
+  const { responses, status, refreshing, pull } = useGuestData(route.params.projectId);
   const [filter, setFilter] = useState<Filter>('all');
   const [detail, setDetail] = useState<RsvpResponse | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -59,9 +59,10 @@ export function RsvpStatusScreen({ navigation, route }: Props) {
   const [sortOpen, setSortOpen] = useState(false);
   const projectId = route.params.projectId;
   // 이 화면을 열면 지금까지의 응답을 확인한 것으로 쳐서 "새 응답" 표시가 사라져요.
+  // (서버에서 읽은 뒤에 표시해야, 방금 읽은 것이 "새 소식"으로 남지 않아요.)
   useEffect(() => {
-    markSeen(projectId, 'rsvp');
-  }, [projectId, markSeen]);
+    if (status === 'ready') markSeen(projectId, 'rsvp');
+  }, [projectId, markSeen, status, responses.length]);
 
   if (!project) return <SafeAreaView style={manageStyles.screen} />;
   const back = () => navigation.goBack();
@@ -104,7 +105,12 @@ export function RsvpStatusScreen({ navigation, route }: Props) {
 
     body = (
       <>
-        <ScrollView contentContainerStyle={manageStyles.body}>
+        <ScrollView contentContainerStyle={manageStyles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={pull} />}>
+          {status === 'offline' || status === 'error' ? (
+            <Text style={manageStyles.help}>
+              {status === 'offline' ? '인터넷이 연결되지 않아 지난번에 불러온 응답을 보여드려요. 연결되면 아래로 당겨 새로고침해 주세요.' : '응답을 불러오지 못했어요. 아래로 당겨 다시 시도해 주세요.'}
+            </Text>
+          ) : null}
           <View style={styles.hero}>
             <View style={styles.heroMain}>
               <Text style={styles.heroLabel}>참석 예정</Text>
@@ -180,7 +186,7 @@ export function RsvpStatusScreen({ navigation, route }: Props) {
                 </Pressable>
               ))
             ) : (
-              <EmptyNote text={responses.length ? '조건에 맞는 응답이 없어요' : '아직 받은 응답이 없어요'} />
+              <EmptyNote text={responses.length ? '조건에 맞는 응답이 없어요' : status === 'loading' ? '불러오는 중이에요…' : '아직 받은 응답이 없어요'} />
             )}
           </View>
         </ScrollView>

@@ -239,8 +239,8 @@ export function GuestbookSheet({ block, onClose, onPosted }: { block: BlockOfTyp
       p_name: name.trim(),
       p_body: body.trim(),
       p_side: askSide ? side : null,
-      // "우리만 보기"는 하객에게 보이지 않아요(주인만 봐요).
-      p_secret: privateOnly,
+      // 공개 · 우리만 보기는 서버가 방명록 설정을 보고 정해요(글마다 박아 두지 않아서, 주인이 설정을 바꾸면 쌓인 글에도 바로 적용돼요).
+      p_secret: false,
     });
     setBusy(false);
     if (!res.ok) return setError(sendError(res.code));

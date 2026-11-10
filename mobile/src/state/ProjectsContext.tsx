@@ -126,6 +126,11 @@ type ProjectsContextValue = {
   setShared: (id: string, shared: boolean) => void;
   /** 참석 응답 현황 · 방명록 관리를 열면 지금까지의 개수를 확인한 것으로 기록해요. */
   markSeen: (id: string, kind: 'rsvp' | 'guestbook') => void;
+  /**
+   * (서버) 초대장마다 참석 응답 · 방명록 글 수를 최신으로 — 키는 초대장 번호. 처음 알게 된 초대장은 "지금까지 것은 이미 본 것"으로 쳐요
+   * (그래야 새 폰에서 로그인해도 예전 응답이 전부 "새 응답"으로 뜨지 않아요). 이후 늘어난 만큼이 새 소식이에요.
+   */
+  setCounts: (counts: Record<string, { rsvp: number; guestbook: number }>) => void;
   /** 링크 바꾸기 — 공유를 시작하기 전까지만 (고정된 링크는 무시). */
   setLink: (id: string, link: ProjectLink) => void;
   /** (서버 동기화) 목록 전체를 이 내용으로 바꿔요 — 로그인 · 서버에서 가져온 뒤. */
@@ -165,7 +170,11 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: new Date().toISOString() } : p))),
       setShared: (id, shared) =>
         setProjects((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, shared, link: shared ? lockedLink(p) : p.link, updatedAt: new Date().toISOString() } : p)),
+          prev.map((p) =>
+            p.id === id
+              ? { ...p, shared, link: shared ? lockedLink(p) : p.link, seen: p.seen ?? (shared ? { rsvp: 0, guestbook: 0 } : undefined), updatedAt: new Date().toISOString() }
+              : p,
+          ),
         ),
       markSeen: (id, kind) =>
         setProjects((prev) => {
@@ -175,6 +184,22 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
           return prev.map((p) => (p.id === id ? { ...p, seen: { ...target.seen!, [kind]: target.counts[kind] } } : p));
         }),
       hydrate: (list) => setProjects(list),
+      setCounts: (counts) =>
+        setProjects((prev) => {
+          let changed = false;
+          const next = prev.map((p) => {
+            const c = counts[p.id];
+            if (!c) return p;
+            const sameCounts = p.counts.rsvp === c.rsvp && p.counts.guestbook === c.guestbook;
+            // 확인한 개수가 현재 개수보다 크면(응답이 지워진 경우) 현재 개수로 맞춰요.
+            const seen = p.seen ? { rsvp: Math.min(p.seen.rsvp, c.rsvp), guestbook: Math.min(p.seen.guestbook, c.guestbook) } : { ...c };
+            const sameSeen = p.seen && p.seen.rsvp === seen.rsvp && p.seen.guestbook === seen.guestbook;
+            if (sameCounts && sameSeen) return p;
+            changed = true;
+            return { ...p, counts: { ...c }, seen };
+          });
+          return changed ? next : prev;
+        }),
       setLink: (id, link) =>
         setProjects((prev) => prev.map((p) => (p.id === id && !isLinkLocked(p) ? { ...p, link: { ...link, locked: false }, updatedAt: new Date().toISOString() } : p))),
     }),

@@ -400,6 +400,18 @@ drop policy if exists "visits: select own invitation" on public.invitation_visit
 create policy "visits: select own invitation" on public.invitation_visits for select
   using (exists (select 1 from public.invitations i where i.id = invitation_id and i.owner_id = auth.uid()));
 
+-- 9-4b) 날짜별 방문 — 하루에 한 사람을 한 줄로 세요(통계 그래프 "최근 14일 방문한 사람"). 개인정보 없는 익명 번호예요.
+create table if not exists public.invitation_visit_days (
+  invitation_id uuid not null references public.invitations (id) on delete cascade,
+  visitor_id uuid not null,
+  day date not null,
+  primary key (invitation_id, visitor_id, day)
+);
+alter table public.invitation_visit_days enable row level security;
+drop policy if exists "visit days: select own invitation" on public.invitation_visit_days;
+create policy "visit days: select own invitation" on public.invitation_visit_days for select
+  using (exists (select 1 from public.invitations i where i.id = invitation_id and i.owner_id = auth.uid()));
+
 -- 9-5) 하객용 함수 — 로그인 없이(anon) 쓸 수 있고, 표 대신 이 함수가 검사하고 읽고 써요.
 -- "열려 있는 초대장" = 공유 중(shared)이고 아직 만료되지 않은 것.
 create or replace function public.get_public_invitation(p_slug text)
@@ -515,6 +527,11 @@ as $$
   from public.guestbook_posts g
   join public.invitations i on i.id = g.invitation_id
   where i.slug = lower(p_slug) and i.status = 'shared' and i.expires_at >= now() and not g.secret
+    -- 방명록을 "공개"로 해 둔 초대장만 보여줘요. "우리만 보기"로 바꾸면 이미 쌓인 글도 하객에게 안 보이고(주인만 봐요), 다시 공개로 바꾸면 보여요.
+    and exists (
+      select 1 from jsonb_array_elements(coalesce(i.content -> 'pages' -> 'invite', '[]'::jsonb)) b
+      where b ->> 'type' = 'guestbook' and coalesce(b -> 'props' ->> 'visibility', 'public') = 'public'
+    )
   order by g.created_at desc
   limit least(greatest(p_limit, 1), 200);
 $$;
@@ -536,6 +553,10 @@ begin
   end if;
   insert into public.invitation_visits (invitation_id, visitor_id) values (inv_id, p_visitor)
   on conflict (invitation_id, visitor_id) do update set open_count = public.invitation_visits.open_count + 1, last_at = now();
+  -- 날짜별 "방문한 사람"(통계 그래프용): 같은 사람이 같은 날 여러 번 열어도 하루 1명으로 세요(한국 시간 기준 날짜).
+  insert into public.invitation_visit_days (invitation_id, visitor_id, day)
+  values (inv_id, p_visitor, (now() at time zone 'Asia/Seoul')::date)
+  on conflict do nothing;
 end;
 $$;
 
@@ -549,6 +570,55 @@ grant execute on function public.submit_rsvp(text, uuid, text, boolean, smallint
 grant execute on function public.post_guestbook(text, uuid, text, text, smallint, boolean) to anon, authenticated;
 grant execute on function public.list_guestbook(text, integer) to anon, authenticated;
 grant execute on function public.record_visit(text, uuid) to anon, authenticated;
+
+-- 9-5b) 주인용 요약 — 앱의 목록 · 관리 화면이 숫자를 보여줄 때 써요(내 초대장만, 표의 보호 규칙(RLS)이 그대로 적용돼요).
+--  · owner_guest_counts(): 내 초대장마다 참석 응답 수 · 방명록 글 수
+--  · visit_stats(local_id): 방문한 사람 · 열어본 횟수 · 오늘 방문한 사람 · 최근 N일 날짜별 방문한 사람(오래된 날 → 오늘)
+create or replace function public.owner_guest_counts()
+returns table (local_id text, rsvp integer, guestbook integer)
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select i.local_id,
+         (select count(*)::integer from public.rsvp_responses r where r.invitation_id = i.id),
+         (select count(*)::integer from public.guestbook_posts g where g.invitation_id = i.id)
+  from public.invitations i
+  where i.owner_id = auth.uid();
+$$;
+
+create or replace function public.visit_stats(p_local_id text, p_days integer default 14)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  inv_id uuid;
+  n integer := least(greatest(coalesce(p_days, 14), 1), 60);
+  today date := (now() at time zone 'Asia/Seoul')::date;
+  people integer;
+  opens integer;
+  daily jsonb;
+begin
+  select id into inv_id from public.invitations where owner_id = auth.uid() and local_id = p_local_id;
+  if inv_id is null then
+    return jsonb_build_object('people', 0, 'opens', 0, 'today', 0, 'daily', (select jsonb_agg(0) from generate_series(1, n)));
+  end if;
+  select count(*)::integer, coalesce(sum(open_count), 0)::integer into people, opens from public.invitation_visits where invitation_id = inv_id;
+  select jsonb_agg(coalesce(d.c, 0) order by g.day) into daily
+  from generate_series(today - (n - 1), today, interval '1 day') as g(day)
+  left join (select day, count(*)::integer as c from public.invitation_visit_days where invitation_id = inv_id group by day) d on d.day = g.day::date;
+  return jsonb_build_object('people', people, 'opens', opens, 'today', coalesce((daily ->> (n - 1))::integer, 0), 'daily', daily);
+end;
+$$;
+
+revoke all on function public.owner_guest_counts() from public, anon;
+revoke all on function public.visit_stats(text, integer) from public, anon;
+grant execute on function public.owner_guest_counts() to authenticated;
+grant execute on function public.visit_stats(text, integer) to authenticated;
 
 -- 9-6) 만료된 초대장 지우기 — 응답 · 방명록 · 방문 기록은 같이 지워져요(on delete cascade).
 -- 사진 · 음악 파일은 SQL로는 실제 파일이 안 지워져서, 나중에 Edge Function으로 따로 지워요(SERVER_STORAGE.md §13).

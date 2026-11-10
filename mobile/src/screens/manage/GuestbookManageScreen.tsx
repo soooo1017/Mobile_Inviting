@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -35,7 +35,7 @@ export function GuestbookManageScreen({ navigation, route }: Props) {
   const { getProject, markSeen } = useProjects();
   const project = getProject(route.params.projectId);
   const { invitation, updateBlock } = useInvitation(route.params.projectId);
-  const { posts, deletePosts } = useGuestData(route.params.projectId);
+  const { posts, deletePosts, status, refreshing, pull } = useGuestData(route.params.projectId);
   const [side, setSide] = useState<'all' | 0 | 1>('all');
   const [page, setPage] = useState(0);
   const [picking, setPicking] = useState(false);
@@ -45,9 +45,10 @@ export function GuestbookManageScreen({ navigation, route }: Props) {
 
   const projectId = route.params.projectId;
   // 이 화면을 열면 지금까지의 방명록 글을 확인한 것으로 쳐서 "새 방명록" 표시가 사라져요.
+  // (서버에서 읽은 뒤에 표시해야, 방금 읽은 것이 "새 소식"으로 남지 않아요.)
   useEffect(() => {
-    markSeen(projectId, 'guestbook');
-  }, [projectId, markSeen]);
+    if (status === 'ready') markSeen(projectId, 'guestbook');
+  }, [projectId, markSeen, status, posts.length]);
 
   if (!project) return <SafeAreaView style={manageStyles.screen} />;
   const blocks = (invitation?.pages.invite ?? []).filter((b): b is BlockOfType<'guestbook'> => b.type === 'guestbook');
@@ -88,7 +89,12 @@ export function GuestbookManageScreen({ navigation, route }: Props) {
   } else {
     body = (
       <>
-        <ScrollView contentContainerStyle={manageStyles.body}>
+        <ScrollView contentContainerStyle={manageStyles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={pull} />}>
+          {status === 'offline' || status === 'error' ? (
+            <Text style={manageStyles.help}>
+              {status === 'offline' ? '인터넷이 연결되지 않아 지난번에 불러온 글을 보여드려요. 연결되면 아래로 당겨 새로고침해 주세요.' : '글을 불러오지 못했어요. 아래로 당겨 다시 시도해 주세요.'}
+            </Text>
+          ) : null}
           {!picking ? (
             <>
               <View style={styles.topRow}>
@@ -138,7 +144,7 @@ export function GuestbookManageScreen({ navigation, route }: Props) {
               );
             })
           ) : (
-            <EmptyNote text={posts.length ? '조건에 맞는 글이 없어요' : '아직 남긴 글이 없어요'} />
+            <EmptyNote text={posts.length ? '조건에 맞는 글이 없어요' : status === 'loading' ? '불러오는 중이에요…' : '아직 남긴 글이 없어요'} />
           )}
           {pages > 1 ? (
             <View style={styles.pager}>
@@ -197,10 +203,11 @@ export function GuestbookManageScreen({ navigation, route }: Props) {
         confirmLabel="삭제하기"
         onCancel={() => setConfirm(false)}
         onConfirm={() => {
-          deletePosts(picked);
+          const ids = picked;
           setConfirm(false);
           stopPicking();
-          setToast('삭제했어요');
+          // 서버에서 지워지면 목록에서도 빠져요. 못 지웠으면 글은 그대로 두고 안내해요.
+          void deletePosts(ids).then((res) => setToast(res === 'ok' ? '삭제했어요' : res === 'offline' ? '인터넷이 연결되지 않아 삭제하지 못했어요' : '삭제하지 못했어요. 잠시 뒤에 다시 시도해 주세요'));
         }}
       >
         <Text style={styles.confirmBody}>삭제하면 되돌릴 수 없어요.</Text>

@@ -8,6 +8,8 @@ import { regeneratedLink } from '../share/link';
 import type { Project } from '../types/project';
 import type { Invitation } from '../editor/types';
 import { claimEditRpc, deleteRow, fetchRow, fetchRows, insertRow, releaseEditRpc, updateRow } from './api';
+import { fetchGuestCounts } from './guestApi';
+import { clearGuestCache } from '../state/guestData';
 import { pathFromUrl, removeFiles, removeProjectFolder, uploadMusic, uploadPhoto } from './media';
 import { allPhotos, applyUploads, hasPendingMedia, pendingMedia, referencedUrls, type PendingMedia, type UploadedPhoto } from './mediaRefs';
 import { planBootstrap, type MetaMap } from './plan';
@@ -98,7 +100,7 @@ export function useSync() {
 export function SyncProvider({ children }: { children: ReactNode }) {
   const { auth } = useAuth();
   const userId = auth.user?.id;
-  const { projects, hydrate, setLink } = useProjects();
+  const { projects, hydrate, setLink, setCounts } = useProjects();
   const store = useInvitationsStore();
 
   const [rawState, setState] = useState<SyncState>('idle');
@@ -410,6 +412,24 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  /** 하객이 남긴 참석 응답 · 방명록 글 수를 목록 · 새 소식 표시에 반영해요 (맞춘 뒤 · 앱을 켤 때 · 켜 둔 동안 1분마다). */
+  const countsBusy = useRef(false);
+  const refreshCounts = useCallback(async () => {
+    if (!userRef.current || !serverSynced.current || countsBusy.current) return;
+    countsBusy.current = true;
+    const uid = userRef.current;
+    try {
+      const res = await fetchGuestCounts();
+      if (res.ok && userRef.current === uid) setCounts(res.data);
+    } finally {
+      countsBusy.current = false;
+    }
+  }, [setCounts]);
+  const refreshCountsRef = useRef(refreshCounts);
+  useEffect(() => {
+    refreshCountsRef.current = refreshCounts;
+  }, [refreshCounts]);
+
   /** 서버에 있는 내 초대장과 이 폰의 것을 맞춰요 (로그인 · 앱을 켰을 때). */
   const serverSync = useCallback(
     async (list: Project[], invs: Record<string, Invitation>, run: number) => {
@@ -456,6 +476,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       serverSynced.current = true;
       projectsRef.current = next;
       void drain();
+      void refreshCountsRef.current();
     },
     [adoptRow, drain, hydrate, persistMeta, saveRecovery, scheduleRetry, store],
   );
@@ -478,6 +499,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     cleanupTimers.current = {};
     slugTries.current = {};
     readyRef.current = false;
+    clearGuestCache();
     if (!userId) {
       hydrate([]);
       store.reset();
@@ -539,11 +561,23 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       if (next === 'background' || next === 'inactive') void drain();
       else if (next === 'active') {
         if (!serverSynced.current) void serverSyncRef.current?.(projectsRef.current, invsRef.current, runId.current);
-        else void drain();
+        else {
+          void drain();
+          void refreshCountsRef.current();
+        }
       }
     });
     return () => sub.remove();
   }, [drain]);
+
+  // 앱이 켜져 있는 동안 1분마다 새 응답 · 방명록이 있는지 살펴봐요(숫자 하나만 받아오는 가벼운 요청이에요).
+  useEffect(() => {
+    if (!ready || !userId) return;
+    const t = setInterval(() => {
+      if (AppState.currentState === 'active') void refreshCountsRef.current();
+    }, 60000);
+    return () => clearInterval(t);
+  }, [ready, userId]);
 
   const claimEditImpl = useCallback(async (projectId: string, takeover: boolean): Promise<ClaimResult> => {
     const serverId = metaRef.current[projectId]?.serverId;
