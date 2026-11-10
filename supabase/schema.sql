@@ -220,7 +220,8 @@ create table if not exists public.invitations (
   -- stopped = 공유 중지(링크는 "공유가 끝났어요")
   status text not null default 'draft' check (status in ('draft', 'shared', 'stopped')),
   shared_at timestamptz,
-  -- 수정 번호: 고칠 때마다 1씩 올라가요. 앱은 "내가 본 번호"가 그대로일 때만 저장해서(where rev = …) 다른 폰이 먼저 고친 걸 덮어쓰지 않아요.
+  -- 수정 번호: 고칠 때마다 1씩 올라가요. 사용자에게는 안 보이는 안전장치예요 — 앱은 "내가 본 번호"가 그대로일 때만 저장해서(where rev = …)
+  -- 편집 잠금(9-1b)이 어긋난 드문 경우에도 다른 폰의 내용을 덮어쓰지 않아요.
   rev integer not null default 1,
   -- 마지막으로 고친 기기(앱이 정한 이름 · 번호) — "다른 기기에서 수정했어요" 안내용
   last_device text,
@@ -281,6 +282,63 @@ drop policy if exists "invitations: update own" on public.invitations;
 create policy "invitations: update own" on public.invitations for update using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
 drop policy if exists "invitations: delete own" on public.invitations;
 create policy "invitations: delete own" on public.invitations for delete using (auth.uid() = owner_id);
+
+-- 9-1b) 편집 잠금 — 한 초대장은 한 번에 한 기기에서만 고쳐요(내용이 섞이는 충돌을 아예 없애려고).
+-- 로그인은 여러 폰에서 되고, "편집"만 한 기기가 잡아요. 앱이 30초마다 같은 기기 이름으로 다시 불러서(heartbeat) 이어 가요.
+-- 2분 동안 소식이 없으면(앱이 꺼짐 등) 저절로 풀려서 다른 폰이 바로 가져갈 수 있어요.
+create table if not exists public.invitation_edit_locks (
+  invitation_id uuid primary key references public.invitations (id) on delete cascade,
+  device text not null,
+  until timestamptz not null
+);
+alter table public.invitation_edit_locks enable row level security;
+drop policy if exists "edit locks: select own invitation" on public.invitation_edit_locks;
+create policy "edit locks: select own invitation" on public.invitation_edit_locks for select
+  using (exists (select 1 from public.invitations i where i.id = invitation_id and i.owner_id = auth.uid()));
+
+-- 편집권 잡기 · 유지 · 넘겨받기. 돌려주는 값: {ok: true} 또는 {ok: false, device, until}(다른 기기가 편집 중).
+--  · 비었거나 · 만료됐거나 · 내 기기가 이미 잡고 있으면 → 내가 잡아요(ok: true).
+--  · 다른 기기가 편집 중이면 → ok: false. 사용자가 [여기서 편집하기]를 누르면 p_takeover = true로 다시 불러서 넘겨받아요.
+create or replace function public.claim_edit(p_invitation uuid, p_device text, p_takeover boolean default false)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  lock_row public.invitation_edit_locks;
+  prev_device text;
+begin
+  if not exists (select 1 from public.invitations where id = p_invitation and owner_id = auth.uid()) then
+    raise exception '내 초대장이 아니에요' using errcode = 'P0003';
+  end if;
+  select * into lock_row from public.invitation_edit_locks where invitation_id = p_invitation for update;
+  if found and lock_row.until > now() and lock_row.device <> p_device and not coalesce(p_takeover, false) then
+    return jsonb_build_object('ok', false, 'device', lock_row.device, 'until', lock_row.until);
+  end if;
+  prev_device := case when found and lock_row.until > now() and lock_row.device <> p_device then lock_row.device end;
+  insert into public.invitation_edit_locks (invitation_id, device, until)
+  values (p_invitation, p_device, now() + interval '2 minutes')
+  on conflict (invitation_id) do update set device = excluded.device, until = excluded.until;
+  return jsonb_build_object('ok', true, 'took_over_from', prev_device);
+end;
+$$;
+
+create or replace function public.release_edit(p_invitation uuid, p_device text)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  delete from public.invitation_edit_locks l
+  using public.invitations i
+  where l.invitation_id = p_invitation and l.device = p_device and i.id = l.invitation_id and i.owner_id = auth.uid();
+$$;
+
+revoke all on function public.claim_edit(uuid, text, boolean) from public, anon;
+revoke all on function public.release_edit(uuid, text) from public, anon;
+grant execute on function public.claim_edit(uuid, text, boolean) to authenticated;
+grant execute on function public.release_edit(uuid, text) to authenticated;
 
 -- 9-2) 참석 응답 — 하객이 남기고, 만든 사람만 읽어요.
 create table if not exists public.rsvp_responses (
@@ -503,10 +561,30 @@ end;
 $$;
 revoke all on function public.purge_expired_invitations() from public, anon, authenticated;
 
+-- 오래 손대지 않은 작성 중(draft) 초대장 정리 — 사진 · 음악 공간을 아끼려고, 90일 동안 수정이 없으면 지워요.
+-- (앱이 지우기 2주 전부터 "곧 지워져요" 안내를 보여줘요. 공유한 적 있는 초대장은 여기서 지우지 않아요.)
+create or replace function public.purge_stale_drafts()
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  n integer;
+begin
+  delete from public.invitations where status = 'draft' and updated_at < now() - interval '90 days';
+  get diagnostics n = row_count;
+  return n;
+end;
+$$;
+revoke all on function public.purge_stale_drafts() from public, anon, authenticated;
+
 -- select cron.schedule('purge-expired-invitations', '0 18 * * *', $$select public.purge_expired_invitations()$$);  -- 매일 03:00 (한국 시간)
+-- select cron.schedule('purge-stale-drafts', '10 18 * * *', $$select public.purge_stale_drafts()$$);
 
 -- 9-7) 사진 · 음악 보관함(Storage).
 --  · invitation-media: 만든 사람이 올린 사진 · 내 음악. 하객이 볼 수 있게 공개 주소로 읽고, 올리기 · 지우기는 자기 폴더(<내 user id>/…)만.
+--    파일 경로 규칙: <user id>/<초대장 local_id>/<사진 번호>.jpg — 바꾸거나 지운 사진은 앱이 저장에 성공한 뒤 바로 지우고, 놓친 파일은 나중에 Edge Function이 정리해요.
 --  · bgm: 앱이 제공하는 배경음악(bgm001.mp3 …). 운영자가 Dashboard → Storage에서 직접 올려요(앱은 읽기만).
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values
@@ -515,9 +593,20 @@ values
   ('bgm', 'bgm', true, 15728640, array['audio/mpeg'])
 on conflict (id) do nothing;
 
+-- 자기 폴더의 파일 목록은 볼 수 있어야 해요(앱이 놓친 파일을 정리하고, 아래 개수 한도가 자기 파일 수를 셀 수 있게). 하객은 목록은 못 보고 공개 주소로 파일만 받아요.
+drop policy if exists "invitation-media: list own folder" on storage.objects;
+create policy "invitation-media: list own folder" on storage.objects for select to authenticated
+  using (bucket_id = 'invitation-media' and (storage.foldername(name))[1] = auth.uid()::text);
+
 drop policy if exists "invitation-media: upload own folder" on storage.objects;
 create policy "invitation-media: upload own folder" on storage.objects for insert to authenticated
-  with check (bucket_id = 'invitation-media' and (storage.foldername(name))[1] = auth.uid()::text);
+  with check (
+    bucket_id = 'invitation-media'
+    and (storage.foldername(name))[1] = auth.uid()::text
+    -- 한 사람이 올릴 수 있는 파일 수의 안전 한도(500개). 앱이 정한 사진 개수 제한을 우회해도 서버 공간이 무한히 차지 않게 해요.
+    and (select count(*) from storage.objects o
+         where o.bucket_id = 'invitation-media' and (storage.foldername(o.name))[1] = auth.uid()::text) < 500
+  );
 drop policy if exists "invitation-media: update own folder" on storage.objects;
 create policy "invitation-media: update own folder" on storage.objects for update to authenticated
   using (bucket_id = 'invitation-media' and (storage.foldername(name))[1] = auth.uid()::text);
