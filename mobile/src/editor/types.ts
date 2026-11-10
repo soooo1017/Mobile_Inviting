@@ -191,13 +191,41 @@ export const POPUP_SIZE = { width: 330, height: 500, bar: 56 } as const;
 export const POPUP_BLOCK_TYPES: BlockType[] = ['text', 'image', 'divider', 'spacer', 'button'];
 
 export const LIMITS = {
-  galleryPhotos: 30,
+  /** 갤러리 하나에 넣을 수 있는 사진. */
+  galleryPhotos: 15,
+  /** 초대장에 넣을 수 있는 갤러리 개수 (안내 팝업 · 감사페이지에는 갤러리를 못 넣어요). */
+  galleryBlocks: 3,
+  /** 초대장에 넣을 수 있는 이미지(사진 1장짜리) 개수. */
+  imageBlocks: 5,
+  /** 안내 팝업 · 감사페이지(자유)에 넣을 수 있는 이미지 개수 — 초대장 대표 사진을 쓰거나 다른 사진 1장. */
+  pageImages: 1,
   contacts: 4,
   emails: 4,
   accounts: 4,
   roleLength: 7,
   guestbookLength: 200,
 } as const;
+
+/**
+ * 초대장 하나에 올라가는 사진은 최대 52장이에요: 갤러리 3개 × 15장(45) + 이미지 5개 + 안내 팝업 1 + 감사페이지 1.
+ * (대표 사진은 초대장 사진 중 하나를 고르는 거라 따로 늘지 않아요. 서버 용량을 아끼려는 제한 — docs/SERVER_STORAGE.md §13.)
+ */
+export const MAX_PHOTOS_PER_INVITATION = LIMITS.galleryBlocks * LIMITS.galleryPhotos + LIMITS.imageBlocks + LIMITS.pageImages * 2;
+
+/** 이 페이지에 이 종류를 더 넣을 수 없으면 이유(안내 문구), 넣을 수 있으면 null. */
+export function blockAddLimit(type: BlockType, page: PageKey, blocks: Block[]): string | null {
+  const count = blocks.filter((b) => b.type === type).length;
+  if (type === 'gallery') {
+    if (page !== 'invite') return '갤러리는 초대장에만 넣을 수 있어요';
+    if (count >= LIMITS.galleryBlocks) return `갤러리는 최대 ${LIMITS.galleryBlocks}개까지 넣을 수 있어요`;
+  }
+  if (type === 'image') {
+    if (page === 'invite' && count >= LIMITS.imageBlocks) return `이미지는 최대 ${LIMITS.imageBlocks}개까지 넣을 수 있어요`;
+    if (page === 'popup' && count >= LIMITS.pageImages) return '안내 팝업에는 이미지를 1개만 넣을 수 있어요';
+    if (page === 'thanks' && count >= LIMITS.pageImages) return '감사페이지에는 이미지를 1개만 넣을 수 있어요';
+  }
+  return null;
+}
 
 export const FORMAT_LABEL: Record<TextFormat, string> = {
   h1: '제목1',
@@ -229,6 +257,9 @@ export const BLOCK_LABEL: Record<BlockType, string> = {
   guestbook: '방명록',
   account: '계좌번호',
 };
+
+/** 감사페이지(자유)에 넣을 수 있는 종류 — 갤러리만 빼요. */
+export const THANKS_BLOCK_TYPES: BlockType[] = (Object.keys(BLOCK_LABEL) as BlockType[]).filter((t) => t !== 'gallery');
 
 let idCounter = 0;
 export function newId(prefix = 'b'): string {

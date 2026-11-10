@@ -32,7 +32,7 @@ import { BlockDeleteContext } from '../../editor/EditorSheet';
 import { ModalSafeArea } from '../../components/ModalSafeArea';
 import { EyeIcon, GearIcon, SortIcon } from '../../editor/icons';
 import { blockLabel, blockSummary } from '../../editor/format';
-import { defaultBlock, POPUP_BLOCK_TYPES, type Bgm, type Block, type BlockType, type PageKey } from '../../editor/types';
+import { BLOCK_LABEL, blockAddLimit, defaultBlock, POPUP_BLOCK_TYPES, THANKS_BLOCK_TYPES, type Bgm, type Block, type BlockType, type PageKey } from '../../editor/types';
 import type { Project } from '../../types/project';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Editor'>;
@@ -131,6 +131,13 @@ function Editor({
     setHighlightId(block?.id ?? null);
     setMode('reorder');
   };
+
+  // 더 넣을 수 없는 항목(갤러리 3개 · 이미지 개수 제한)과 이유.
+  const addBlocked: Partial<Record<BlockType, string>> = {};
+  for (const t of Object.keys(BLOCK_LABEL) as BlockType[]) {
+    const why = blockAddLimit(t, page, blocks);
+    if (why) addBlocked[t] = why;
+  }
 
   const addBlock = (type: BlockType) => {
     const index = addAt ?? blocks.length;
@@ -285,7 +292,11 @@ function Editor({
               blocks={blocks}
               highlightId={highlightId}
               onMove={(from, to) => moveBlock(page, from, to)}
-              onDuplicate={(b) => setHighlightId(duplicateBlock(page, b))}
+              onDuplicate={(b) => {
+                const why = blockAddLimit(b.type, page, blocks);
+                if (why) setToast({ message: why });
+                else setHighlightId(duplicateBlock(page, b));
+              }}
               onDelete={deleteBlock}
               onInsertAt={(i) => setAddAt(i)}
             />
@@ -370,6 +381,7 @@ function Editor({
                 setSettingsOpen(true);
               }}
               onProject={(patch) => updateProject(project.id, patch)}
+              coverPhoto={page === 'invite' ? undefined : coverPhoto(invitation)}
             />
           </BlockDeleteContext.Provider>
         ) : null}
@@ -396,7 +408,13 @@ function Editor({
           bottom={mode === 'edit' ? 84 : 28}
         />
 
-        <AddBlockSheet visible={addAt !== null} where={addWhere} onPick={addBlock} onClose={() => setAddAt(null)} types={isPopup ? POPUP_BLOCK_TYPES : undefined}
+        <AddBlockSheet
+          visible={addAt !== null}
+          where={addWhere}
+          onPick={addBlock}
+          onClose={() => setAddAt(null)}
+          types={isPopup ? POPUP_BLOCK_TYPES : page === 'thanks' ? THANKS_BLOCK_TYPES : undefined}
+          blocked={addBlocked}
           onSuggest={() => {
             setAddAt(null);
             // 시트가 다 닫힌 뒤에 화면을 넘겨요 (iOS에서 모달이 닫히는 중에 넘기면 무시될 수 있어요).

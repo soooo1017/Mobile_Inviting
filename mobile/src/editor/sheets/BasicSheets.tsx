@@ -11,7 +11,7 @@ import { CropScreen } from './CropScreen';
 import { PhotoFrame } from '../canvas/PhotoFrame';
 import { isValidUrl } from '../canvas/BasicBlocks';
 import { fontMeta } from '../fonts';
-import { FORMAT_LABEL, newId, type BlockOfType, type BlockType, type DividerShape, type ImageRatio, type TextFormat } from '../types';
+import { FORMAT_LABEL, newId, type BlockOfType, type BlockType, type DividerShape, type ImageRatio, type Photo, type TextFormat } from '../types';
 
 export type BlockSheetProps<T extends BlockType> = SheetBase & {
   block: BlockOfType<T>;
@@ -93,7 +93,7 @@ export async function pickPhotos(limit: number) {
   return result.assets.map((a) => ({ id: newId('p'), uri: a.uri, width: a.width || 1000, height: a.height || 1250 }));
 }
 
-export function ImageSheet({ block, onChange, onDone }: Props<'image'>) {
+export function ImageSheet({ block, onChange, onDone, coverPhoto }: Props<'image'> & { coverPhoto?: Photo }) {
   const [cropping, setCropping] = useState(false);
   const { photo, ratio, crop } = block.props;
 
@@ -106,6 +106,12 @@ export function ImageSheet({ block, onChange, onDone }: Props<'image'>) {
     }
   };
 
+  // 안내 팝업 · 감사페이지는 사진을 새로 올리지 않고 초대장 대표 사진을 그대로 쓸 수 있어요(서버 공간도 안 늘어요).
+  const applyCover = () => {
+    if (coverPhoto) onChange({ ...block, props: { ...block.props, photo: { ...coverPhoto, id: newId('p') }, crop: { x: 0, y: 0, scale: 1 } } });
+  };
+  const isCover = Boolean(photo && coverPhoto && photo.uri === coverPhoto.uri);
+
   return (
     <>
       <EditorSheet title="이미지" onDone={onDone} doneGuard={() => (photo ? null : '이미지를 추가해주세요')}>
@@ -113,12 +119,17 @@ export function ImageSheet({ block, onChange, onDone }: Props<'image'>) {
           <View style={styles.thumb}>{photo ? <PhotoFrame photo={photo} aspect={1} /> : null}</View>
           <View style={styles.pickText}>
             <Text style={styles.pickTitle}>{photo ? '사진 1장' : '사진 없음'}</Text>
-            <Text style={styles.pickSub}>{photo ? '앨범에서 고른 사진' : '앨범에서 사진을 골라주세요'}</Text>
+            <Text style={styles.pickSub}>{photo ? (isCover ? '초대장 대표 사진' : '앨범에서 고른 사진') : '앨범에서 사진을 골라주세요'}</Text>
           </View>
           <Pressable onPress={choose} style={styles.ghostBtn}>
             <Text style={styles.ghostLabel}>{photo ? '사진 바꾸기' : '사진 고르기'}</Text>
           </Pressable>
         </View>
+        {coverPhoto && !isCover ? (
+          <Pressable onPress={applyCover} style={styles.coverBtn}>
+            <Text style={styles.ghostLabel}>초대장 대표 사진 쓰기</Text>
+          </Pressable>
+        ) : null}
         <Section label="비율">
           <Chips options={RATIOS} value={ratio} onChange={(r) => onChange({ ...block, props: { ...block.props, ratio: r } })} />
           <Help>너비는 글과 같은 좌우 여백으로 맞춰요.</Help>
@@ -288,6 +299,15 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   ghostBtn: {
+    borderWidth: 1,
+    borderColor: color.line.chip,
+    borderRadius: radius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: color.bg.surface,
+  },
+  coverBtn: {
+    alignSelf: 'flex-start',
     borderWidth: 1,
     borderColor: color.line.chip,
     borderRadius: radius.pill,

@@ -1,6 +1,6 @@
 import type { Project, Venue } from '../../types/project';
 import { MapSheet } from './MapSheet';
-import type { Block, BlockOfType, BlockType, FontId } from '../types';
+import type { Block, BlockOfType, BlockType, FontId, Photo } from '../types';
 import { ButtonSheet, DividerSheet, ImageSheet, SpacerSheet, TextSheet } from './BasicSheets';
 import { AccountSheet, EmailSheet, PhoneSheet } from './ContactSheets';
 import { DateTimeSheet, GuestbookSheet, RsvpEditor } from './FeatureSheets';
@@ -15,17 +15,19 @@ type Props = {
   onOpenSettings: () => void;
   /** 장소 edits the project's 행사 장소. */
   onProject: (patch: { venue: Venue }) => void;
+  /** 안내 팝업 · 감사페이지의 이미지가 초대장 대표 사진을 그대로 쓸 수 있게 넘겨줘요 (초대장 페이지에서는 없음). */
+  coverPhoto?: Photo;
 };
 
 /** Opens the right editor for a block: a sheet, or full screen for 갤러리 / 참석 응답. */
-export function BlockSheet({ block, project, defaultFont, onChange, onDone, onOpenSettings, onProject }: Props) {
+export function BlockSheet({ block, project, defaultFont, onChange, onDone, onOpenSettings, onProject, coverPhoto }: Props) {
   const base = { project, defaultFont, onDone };
   const props = <T extends BlockType>(b: BlockOfType<T>) => ({ ...base, block: b, onChange: (next: BlockOfType<T>) => onChange(next) });
   switch (block.type) {
     case 'text':
       return <TextSheet {...props(block)} />;
     case 'image':
-      return <ImageSheet {...props(block)} />;
+      return <ImageSheet {...props(block)} coverPhoto={coverPhoto} />;
     case 'gallery':
       return <GalleryEditor {...props(block)} />;
     case 'divider':
