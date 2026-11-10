@@ -2,7 +2,7 @@
 
 export type LocalItem = { id: string; hash: string };
 /** 마지막으로 서버와 맞춘 때의 수정 번호와 내용 지문. */
-export type MetaEntry = { rev: number; hash: string };
+export type MetaEntry = { rev: number; hash: string; /** 서버 표의 초대장 번호(편집 잠금을 잡을 때 써요). */ serverId?: string };
 export type MetaMap = Record<string, MetaEntry>;
 export type RowLite = { local_id: string; rev: number };
 

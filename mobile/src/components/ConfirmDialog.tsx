@@ -15,6 +15,8 @@ type Props = {
   tone?: 'danger' | 'primary';
   /** 알림만 보여줄 때 취소 버튼 없이 확인 하나. */
   hideCancel?: boolean;
+  /** 바깥 어두운 곳을 눌러도 닫히지 않아요(꼭 둘 중 하나를 골라야 하는 안내). 안드로이드 뒤로가기는 취소와 같아요. */
+  blocking?: boolean;
 };
 
 export function ConfirmDialog({
@@ -28,10 +30,11 @@ export function ConfirmDialog({
   confirmDisabled,
   tone = 'danger',
   hideCancel,
+  blocking,
 }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <Pressable style={styles.overlay} onPress={onCancel} />
+      <Pressable style={styles.overlay} onPress={blocking ? undefined : onCancel} />
       <View style={styles.wrap}>
         <View style={styles.card}>
           <Text style={styles.title}>{title}</Text>

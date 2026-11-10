@@ -14,6 +14,7 @@ import { SimpleThanksView } from '../../editor/canvas/SimpleThanks';
 import { ThanksSimpleSheet } from '../../editor/sheets/ThanksSimpleSheet';
 import { blockPhotos, coverPhoto, invitePhotoGroups, otherPagesUsing } from '../../editor/photos';
 import { useSync, type SyncState } from '../../sync/SyncProvider';
+import { EditLockDialog, useEditLock } from '../../sync/useEditLock';
 import { PhotoUsageContext, usePhotoChange, type PhotoUsage, type RemovedBlock } from '../../editor/PhotoUsageContext';
 import { useThanksMode } from '../../editor/thanksMode';
 import { bgmClip, bgmSource, bgmTrackById } from '../../editor/bgm';
@@ -112,6 +113,8 @@ function Editor({
 
   const showToast = useCallback((message: string) => setToast({ message }), []);
   const sync = useSync();
+  // 한 초대장은 한 번에 한 기기에서만 고쳐요 — 다른 기기가 편집 중이면 여기서 이어서 편집할지 물어봐요.
+  const editLock = useEditLock(project.id);
   const canvasValue = useMemo<CanvasContextValue | null>(
     () => (invitation ? { project, theme, defaultFont: invitation.font, mode: 'edit', showToast } : null),
     [invitation, project, theme, showToast],
@@ -519,6 +522,7 @@ function Editor({
 
         {thanksMode.dialog}
         {photoChange.dialog}
+        <EditLockDialog lock={editLock} onExit={exit} />
 
         <PreviewModal
           visible={previewOpen}

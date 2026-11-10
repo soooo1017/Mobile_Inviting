@@ -7,7 +7,7 @@ import { useInvitationsStore } from '../state/InvitationsContext';
 import { regeneratedLink } from '../share/link';
 import type { Project } from '../types/project';
 import type { Invitation } from '../editor/types';
-import { deleteRow, fetchRow, fetchRows, insertRow, updateRow } from './api';
+import { claimEditRpc, deleteRow, fetchRow, fetchRows, insertRow, releaseEditRpc, updateRow } from './api';
 import { pathFromUrl, removeFiles, removeProjectFolder, uploadMusic, uploadPhoto } from './media';
 import { allPhotos, applyUploads, hasPendingMedia, pendingMedia, referencedUrls, type PendingMedia, type UploadedPhoto } from './mediaRefs';
 import { planBootstrap, type MetaMap } from './plan';
@@ -21,7 +21,8 @@ import { fromRow, hashOf, toPayload, type ServerRow } from './serialize';
  *  - 사진 · 내 음악: 폰 안의 파일은 올리기 전에 서버(Storage)에 올려서(사진은 긴 변 1600px로 줄여서) 인터넷 주소로 바꾼 뒤 내용을 저장해요.
  *    바꾸거나 지워서 안 쓰게 된 파일은 저장에 성공하고 1분 뒤에 서버에서 지워요(되돌리기를 누를 시간을 줘요). 초대장을 지우면 폴더째 지워요.
  *    사진을 고르는 중(`hold`)에는 올리지 않아서, 고르다 만 사진은 서버에 저장되지 않아요.
- *  - 아직 안 한 것: 편집 잠금(두 폰 동시 편집 막기).
+ *  - 편집 잠금: 한 초대장은 한 번에 한 기기에서만 고쳐요(`claimEdit` · `useEditLock`). 다른 기기가 편집 중이면 에디터를 열 때 물어보고,
+ *    넘겨받으면 그 기기는 "보기만 가능"이 돼요. 넘겨받은 쪽은 이전 기기가 마지막 수정을 올릴 시간을 주고 서버의 최신 내용을 가져와요(`pullProject`).
  */
 
 export type SyncState = 'idle' | 'saving' | 'saved' | 'offline' | 'error';
@@ -31,6 +32,14 @@ type SyncContextValue = {
   state: SyncState;
   /** 폰에 저장된 초대장을 불러왔는지 (서버와 맞추는 건 이어서 해요 — 인터넷이 없어도 쓸 수 있어요). */
   ready: boolean;
+  /** (편집 잠금) 에디터를 열 때 편집권을 잡아요. takeover = true면 다른 기기가 편집 중이어도 넘겨받아요. */
+  claimEdit: (projectId: string, takeover: boolean) => Promise<ClaimResult>;
+  /** (편집 잠금) 에디터를 나가면 편집권을 풀어요(안 풀어도 2분 뒤에 저절로 풀려요). */
+  releaseEdit: (projectId: string) => void;
+  /** 서버의 최신 내용을 가져와요(폰 내용이 그대로면 조용히 바꾸고, 둘 다 바뀌었으면 이 폰 내용은 복구본으로 남겨요). */
+  pullProject: (projectId: string) => Promise<void>;
+  /** 쌓인 수정을 지금 바로 서버에 올려요. */
+  flush: () => void;
   /** 사진을 고르는 동안 서버 업로드를 잠시 멈춰요(고르다 만 사진이 올라가지 않게). 돌려받은 함수를 부르면 다시 시작해요. */
   hold: () => () => void;
   /** 사용자에게 알려줄 일이 있으면 문구 (예: 다른 기기에서 고친 내용을 불러왔어요). 확인하면 clearNotice. */
@@ -38,7 +47,28 @@ type SyncContextValue = {
   clearNotice: () => void;
 };
 
-const SyncContext = createContext<SyncContextValue>({ state: 'idle', ready: false, notice: null, clearNotice: () => {}, hold: () => () => {} });
+export type ClaimResult =
+  | { kind: 'ok' }
+  /** 다른 기기가 편집 중이에요(기기 이름 예: iPhone). */
+  | { kind: 'busy'; device: string }
+  /** 아직 서버에 올라가기 전이라 잠금을 못 잡아요(새 초대장 — 편집은 그대로 가능). */
+  | { kind: 'unsynced' }
+  | { kind: 'offline' }
+  | { kind: 'error' };
+
+const SyncContext = createContext<SyncContextValue>({
+  state: 'idle',
+  ready: false,
+  notice: null,
+  clearNotice: () => {},
+  hold: () => () => {},
+  claimEdit: async () => ({ kind: 'unsynced' }),
+  releaseEdit: () => {},
+  pullProject: async () => {},
+  flush: () => {},
+});
+
+const deviceLabel = (name: string) => (name.startsWith('ios') ? 'iPhone' : name.startsWith('android') ? 'Android 폰' : '다른 기기');
 
 const PUSH_DELAY_MS = 2000;
 /** 안 쓰게 된 파일을 서버에서 지우기 전에 기다리는 시간 — 지우기 [되돌리기]를 눌러도 사진이 남아 있게. */
@@ -122,7 +152,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     (row: ServerRow, prev: Project | undefined) => {
       const { project, invitation } = fromRow(row, prev);
       store.adopt(invitation);
-      metaRef.current[row.local_id] = { rev: row.rev, hash: hashOf(toPayload(project, invitation)) };
+      metaRef.current[row.local_id] = { rev: row.rev, hash: hashOf(toPayload(project, invitation)), serverId: row.id };
       // 서버 내용이 쓰는 파일은 이 폰에서도 나중에 바꾸거나 지울 때 정리할 수 있게 기억해요.
       const paths = referencedUrls(invitation).map(pathFromUrl).filter((x): x is string => Boolean(x));
       filesRef.current[row.local_id] = [...new Set([...(filesRef.current[row.local_id] ?? []), ...paths])];
@@ -281,7 +311,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
           const res = base ? await updateRow(uid, payload, base.rev, deviceRef.current) : await insertRow(uid, payload, deviceRef.current);
 
           if (res.ok) {
-            metaRef.current[p.id] = { rev: res.rev, hash: hashOf(payload) };
+            metaRef.current[p.id] = { rev: res.rev, hash: hashOf(payload), serverId: res.id };
             pushedUrlsRef.current[p.id] = referencedUrls(inv);
             persistMeta();
             scheduleCleanup(p.id);
@@ -306,7 +336,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
             payload = toPayload(project, inv);
             const retry = base ? await updateRow(uid, payload, base.rev, deviceRef.current) : await insertRow(uid, payload, deviceRef.current);
             if (retry.ok) {
-              metaRef.current[p.id] = { rev: retry.rev, hash: hashOf(payload) };
+              metaRef.current[p.id] = { rev: retry.rev, hash: hashOf(payload), serverId: retry.id };
               pushedUrlsRef.current[p.id] = referencedUrls(inv);
               persistMeta();
               scheduleCleanup(p.id);
@@ -318,7 +348,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
           if (res.kind === 'exists') {
             // 서버에 같은 초대장이 이미 있어요(올리다 끊긴 뒤 다시 시도 등) — 서버의 수정 번호를 알아 둬서 다음 바퀴에 고쳐 올려요.
             const found = await fetchRow(p.id);
-            if (found.ok && found.row) metaRef.current[p.id] = { rev: found.row.rev, hash: '' };
+            if (found.ok && found.row) metaRef.current[p.id] = { rev: found.row.rev, hash: '', serverId: found.row.id };
             else {
               setState(found.ok ? 'error' : found.kind === 'offline' ? 'offline' : 'error');
               scheduleRetry(() => void drain());
@@ -418,7 +448,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       }
       for (const id of plan.inSync) {
         const row = byId.get(id);
-        if (row) metaRef.current[id] = { rev: row.rev, hash: metaRef.current[id]?.hash ?? '' };
+        if (row) metaRef.current[id] = { rev: row.rev, hash: metaRef.current[id]?.hash ?? '', serverId: row.id };
       }
       // 서버에서 지워야 하는 것(이 폰에서 지웠는데 서버엔 남은 것)은 drain이 처리해요.
       hydrate(next);
@@ -515,6 +545,58 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     return () => sub.remove();
   }, [drain]);
 
-  const value = useMemo<SyncContextValue>(() => ({ state, ready, notice, clearNotice: () => setNotice(null), hold }), [state, ready, notice, hold]);
+  const claimEditImpl = useCallback(async (projectId: string, takeover: boolean): Promise<ClaimResult> => {
+    const serverId = metaRef.current[projectId]?.serverId;
+    if (!serverId || !serverSynced.current) return { kind: 'unsynced' };
+    const res = await claimEditRpc(serverId, deviceRef.current, takeover);
+    if (!res.ok) return { kind: res.kind === 'offline' ? 'offline' : 'error' };
+    return res.data.ok ? { kind: 'ok' } : { kind: 'busy', device: deviceLabel(res.data.device ?? '') };
+  }, []);
+
+  const releaseEditImpl = useCallback((projectId: string) => {
+    const serverId = metaRef.current[projectId]?.serverId;
+    if (serverId) void releaseEditRpc(serverId, deviceRef.current);
+  }, []);
+
+  const pullProjectImpl = useCallback(
+    async (projectId: string) => {
+      const found = await fetchRow(projectId);
+      if (!found.ok || !found.row) return;
+      const project = projectsRef.current.find((p) => p.id === projectId);
+      const inv = invsRef.current[projectId];
+      const meta = metaRef.current[projectId];
+      if (!project || !inv) return;
+      if (meta && found.row.rev === meta.rev) return; // 서버도 그대로
+      const unchanged = meta && hashOf(toPayload(project, inv)) === meta.hash;
+      if (!unchanged) {
+        saveRecovery(project, inv);
+        setNotice('다른 기기에서 고친 내용이 있어서 최신 내용으로 불러왔어요.');
+      }
+      const adopted = adoptRow(found.row, project);
+      persistMeta();
+      hydrate(projectsRef.current.map((x) => (x.id === projectId ? adopted : x)));
+    },
+    [adoptRow, hydrate, persistMeta, saveRecovery],
+  );
+
+  // 화면 쪽은 항상 같은 함수를 받도록(주기적으로 불러도 다시 그려지지 않게) 최신 구현을 ref로 가리켜요.
+  const lockImpl = useRef({ claimEdit: claimEditImpl, releaseEdit: releaseEditImpl, pullProject: pullProjectImpl });
+  useEffect(() => {
+    lockImpl.current = { claimEdit: claimEditImpl, releaseEdit: releaseEditImpl, pullProject: pullProjectImpl };
+  }, [claimEditImpl, releaseEditImpl, pullProjectImpl]);
+  const lockApi = useMemo(
+    () => ({
+      claimEdit: (projectId: string, takeover: boolean) => lockImpl.current.claimEdit(projectId, takeover),
+      releaseEdit: (projectId: string) => lockImpl.current.releaseEdit(projectId),
+      pullProject: (projectId: string) => lockImpl.current.pullProject(projectId),
+      flush: () => void drainRef.current?.(),
+    }),
+    [],
+  );
+
+  const value = useMemo<SyncContextValue>(
+    () => ({ state, ready, notice, clearNotice: () => setNotice(null), hold, ...lockApi }),
+    [state, ready, notice, hold, lockApi],
+  );
   return <SyncContext.Provider value={value}>{children}</SyncContext.Provider>;
 }

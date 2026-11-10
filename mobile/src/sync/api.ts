@@ -75,6 +75,34 @@ export async function updateRow(ownerId: string, payload: UpsertPayload, baseRev
   }
 }
 
+export type ClaimResponse = { ok: boolean; device?: string; until?: string; took_over_from?: string | null };
+
+/**
+ * 편집권을 잡아요(편집 잠금 — 한 초대장은 한 번에 한 기기에서만 고쳐요). 같은 기기가 다시 부르면 유지(heartbeat),
+ * 다른 기기가 편집 중이면 ok: false + 그 기기 이름, takeover = true면 넘겨받아요. 서버는 2분 동안 소식이 없으면 저절로 풀어요.
+ */
+export async function claimEditRpc(
+  serverId: string,
+  device: string,
+  takeover: boolean,
+): Promise<{ ok: true; data: ClaimResponse } | { ok: false; kind: 'offline' | 'other' }> {
+  try {
+    const { data, error } = await supabase.rpc('claim_edit', { p_invitation: serverId, p_device: device, p_takeover: takeover });
+    if (error) return { ok: false, kind: isOffline(error) ? 'offline' : 'other' };
+    return { ok: true, data: data as ClaimResponse };
+  } catch {
+    return { ok: false, kind: 'offline' };
+  }
+}
+
+export async function releaseEditRpc(serverId: string, device: string): Promise<void> {
+  try {
+    await supabase.rpc('release_edit', { p_invitation: serverId, p_device: device });
+  } catch {
+    // 못 풀어도 2분 뒤에 저절로 풀려요.
+  }
+}
+
 export async function deleteRow(ownerId: string, localId: string): Promise<'ok' | 'offline' | 'error'> {
   try {
     const { error } = await supabase.from('invitations').delete().eq('owner_id', ownerId).eq('local_id', localId);
