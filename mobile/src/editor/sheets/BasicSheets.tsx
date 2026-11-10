@@ -105,7 +105,8 @@ export function ImageSheet({ block, onChange, onDone, photoChoices }: Props<'ima
   const choices = photoChoices ?? [];
   const pickFromInvite = photoChoices !== undefined;
   const fromInvite = Boolean(photo && choices.some((g) => g.photos.some((p) => p.uri === photo.uri)));
-  // 이 창에서 +로 추가한 사진 — 다른 사진을 골랐다가도 다시 고를 수 있게 창이 열려 있는 동안 기억해요.
+  // 이 창에서 +로 추가한 사진 — 다른 사진을 골랐다가도 다시 고를 수 있게 창이 열려 있는 동안만 기억해요.
+  // 창을 닫을 때 최종으로 고른 사진이 아니면 그대로 버려져요(초대장 내용에도, 서버에도 남지 않아요).
   const [added, setAdded] = useState<Photo | undefined>(() => (photo && !fromInvite ? photo : undefined));
 
   const choose = async () => {
@@ -135,16 +136,10 @@ export function ImageSheet({ block, onChange, onDone, photoChoices }: Props<'ima
     }
   };
 
-  const removeAdded = () => {
-    // 추가한 사진을 빼면 + 칸이 다시 나와요. 그 사진이 고른 사진이었다면 선택도 비워요.
-    if (photo && added && photo.uri === added.uri) onChange({ ...block, props: { ...block.props, photo: undefined, crop: { x: 0, y: 0, scale: 1 } } });
-    setAdded(undefined);
-  };
-
   if (choosing) {
     return (
       <EditorSheet title="사진 선택" onBack={() => setChoosing(false)} onDone={() => setChoosing(false)} doneLabel="닫기" maxHeight={0.75}>
-        <PhotoChoiceGrid groups={choices} selectedUri={photo?.uri} onSelect={useChoice} extra={added} onAdd={addFromAlbum} onRemoveExtra={removeAdded} />
+        <PhotoChoiceGrid groups={choices} selectedUri={photo?.uri} onSelect={useChoice} extra={added} onAdd={addFromAlbum} onReplaceExtra={addFromAlbum} />
       </EditorSheet>
     );
   }

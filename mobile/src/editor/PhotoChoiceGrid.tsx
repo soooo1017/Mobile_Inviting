@@ -15,7 +15,7 @@ export function PhotoChoiceGrid({
   onSelect,
   extra,
   onAdd,
-  onRemoveExtra,
+  onReplaceExtra,
 }: {
   groups: PhotoGroup[];
   selectedUri?: string;
@@ -24,8 +24,8 @@ export function PhotoChoiceGrid({
   extra?: Photo;
   /** 마지막 + 칸을 눌렀을 때 (폰 앨범에서 다른 사진 추가). 없으면 + 칸을 안 그려요. 추가한 사진(extra)이 있으면 + 칸은 사라져요(사진은 한 장만). */
   onAdd?: () => void;
-  /** 추가한 사진의 ✕ — 빼면 + 칸이 다시 나와요. */
-  onRemoveExtra?: () => void;
+  /** 추가한 사진의 [교체] — 폰 앨범에서 다른 사진을 골라 바로 바꿔요(한 번에). */
+  onReplaceExtra?: () => void;
 }) {
   const [width, setWidth] = useState(0);
   // 같은 사진 파일이 초대장에 두 번 쓰였어도 한 칸만 보여줘요(선택 표시도 하나만).
@@ -73,9 +73,9 @@ export function PhotoChoiceGrid({
                   </View>
                 </View>
               ) : null}
-              {onRemoveExtra ? (
-                <Pressable onPress={onRemoveExtra} hitSlop={6} style={styles.removeExtra} accessibilityLabel="추가한 사진 빼기">
-                  <Text style={styles.removeMark}>✕</Text>
+              {onReplaceExtra ? (
+                <Pressable onPress={onReplaceExtra} hitSlop={6} style={styles.replaceExtra} accessibilityLabel="추가한 사진 교체">
+                  <Text style={styles.replaceLabel}>교체</Text>
                 </Pressable>
               ) : null}
             </Pressable>
@@ -98,8 +98,8 @@ const styles = StyleSheet.create({
   cell: { borderRadius: 6, overflow: 'hidden', backgroundColor: color.line.soft },
   img: { width: '100%', height: '100%' },
   addCell: { alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: color.accent.tintBorder, backgroundColor: color.accent.tintSoft },
-  removeExtra: { position: 'absolute', top: 4, left: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(35,33,42,0.6)', alignItems: 'center', justifyContent: 'center' },
-  removeMark: { color: '#ffffff', fontSize: 10, fontWeight: '700' },
+  replaceExtra: { position: 'absolute', bottom: 4, left: 4, right: 4, height: 22, borderRadius: 11, backgroundColor: 'rgba(35,33,42,0.62)', alignItems: 'center', justifyContent: 'center' },
+  replaceLabel: { ...textStyle({ size: 'caption', weight: 'semibold', color: '#ffffff' }) },
   addMark: { ...textStyle({ size: 'title1', weight: 'regular', color: color.accent.base }) },
   onFrame: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderWidth: 2, borderColor: color.accent.base, borderRadius: 6, alignItems: 'flex-end', padding: 4 },
   check: { width: 18, height: 18, borderRadius: 9, backgroundColor: color.accent.base, alignItems: 'center', justifyContent: 'center' },
