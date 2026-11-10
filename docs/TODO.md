@@ -4,8 +4,8 @@
 
 ## 지금 바로 (폰 · 서버)
 - [x] Vercel 환경변수 2개 넣고 Redeploy — 완료(2026-11-10, `https://moiso-ten.vercel.app/api/health`가 configured · publishable · reachable 모두 true)
-- [ ] Supabase에서 `schema.sql` 다시 실행 — 하객 함수 변경(없는 주소도 "준비 중"으로) 반영용
-- [ ] 폰에서 `DEVICE_CHECKLIST.md` 점검 — 특히 §6 노래 편집(구간 반복 · 속도 · 드래그), 가입 위저드, 링크, 배지. Android는 처음부터 한 번 더
+- [ ] Supabase에서 `schema.sql` 다시 실행 — 하객 함수 변경(없는 주소도 "준비 중"으로 · **하객 화면용 색 · 장소 추가**) 반영용
+- [ ] 폰에서 `DEVICE_CHECKLIST.md` 점검 — **§10 하객 페이지(앱에서 공유한 링크를 폰 브라우저로 열기)** 포함, — 특히 §6 노래 편집(구간 반복 · 속도 · 드래그), 가입 위저드, 링크, 배지. Android는 처음부터 한 번 더
 - [ ] Supabase에서 `supabase/schema.sql` 1~8번 실행
 - [ ] 음원 `bgm001` · `bgm002` mp3를 Supabase Storage 공개 폴더 `bgm`에 업로드 → `.env`의 `EXPO_PUBLIC_BGM_BASE_URL` 채우기 (`SERVER_STORAGE.md` §12)
 - [ ] Google Play · Apple 개발자 계정 가입 (승인에 며칠 — `STORE_RELEASE.md`)
@@ -20,7 +20,7 @@
 - [ ] 서버 연결: Supabase 테이블 · Storage, 주소(slug) 중복 방지, 보관기간 삭제 작업 (30일 · 7일 전 알림)
   - ✅ 2026-11-10: Supabase에서 `schema.sql` 실행 완료(사용자 확인). 앱 동기화 **1단계 구현**(만들 때 서버 저장 · 자동 저장 · 저장 상태 · 로그인 시 맞추기 · 충돌 시 복구본, `SERVER_STORAGE.md` §13-1) — 폰 확인 전. 2단계(사진 · 내 음악 올리기)도 구현함 — 폰 확인 전(`SERVER_STORAGE.md` §13-2, `npm install` 필요). 3단계(편집 잠금)도 구현함(`SERVER_STORAGE.md` §13-3, 폰 2대로 확인 필요). 다음: 하객 페이지가 초대장 그리기 · 참석 응답 · 방명록
   - ✅ 2026-11-10: 방식 확정(만들 때부터 내 계정에 저장 · 어느 폰에서든 이어서 편집 · 상태로 하객 공개 구분) + `schema.sql` 9번 작성 · 임시 DB 검증(`SERVER_STORAGE.md` §13). 남은 것: Supabase에서 9번 실행(사용자), 앱의 폰 ↔ 서버 동기화(자동 저장 · 편집 잠금 · 폰 바꾸기), 사진 줄이기 · 사진 줄이기 · 바꾼/지운 사진 즉시 삭제 (사진 개수 제한은 앱에 반영함: 초대장당 최대 52장), 하객 페이지 읽기, 응답 · 방명록, 만료 시 파일 삭제
-- [ ] 하객이 보는 초대장 웹 페이지 (Vercel) (카카오톡 링크 미리보기는 지금은 안 하기로 함) — 🚧 2026-11-10 `web/` 뼈대를 Vercel에 배포함(https://moiso-ten.vercel.app, `docs/WEB_VERCEL.md`). 초대장을 읽어 그리는 건 Supabase 연결 뒤
+- [ ] 하객이 보는 초대장 웹 페이지 (Vercel) (카카오톡 링크 미리보기는 지금은 안 하기로 함) — ✅ 2026-11-10 초대장 그리기 · 참석 응답 · 방명록 · 감사페이지 전환 · 안내 팝업 · 배경음악 구현(`SERVER_STORAGE.md` §13-4, 가짜 서버로만 시험 — 진짜 서버 · 폰 확인 전). 남은 것: 앱 관리 화면(응답 현황 · 방명록 · 통계)이 서버 데이터 읽기, `NEXT_PUBLIC_BGM_BASE_URL` 설정
 - [ ] 내 음악 파일을 Storage에 업로드
 - [ ] 소셜 로그인 실제 OAuth (iOS는 Apple 로그인 필수), 비밀번호 재설정 메일, 푸시 알림 인프라
 

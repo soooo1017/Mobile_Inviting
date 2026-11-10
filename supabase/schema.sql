@@ -434,6 +434,13 @@ begin
     'event_at', inv.event_at,
     'content', inv.content,
     'thanks', inv.thanks,
+    -- 하객 화면을 그리는 데 필요한 것만(색 · 장소 · 주최자 이름). meta의 나머지(링크 방식 · 만든 날 등)는 안 보내요.
+    'public_meta', jsonb_build_object(
+      'colors', inv.meta -> 'colors',
+      'themeId', inv.meta -> 'themeId',
+      'venue', inv.meta -> 'venue',
+      'hosts', inv.meta -> 'hosts'
+    ),
     'updated_at', inv.updated_at
   );
 end;

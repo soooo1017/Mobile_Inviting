@@ -4,8 +4,8 @@
 
 ## 1. 지금 상태
 - ✅ **배포 완료 (2026-11-10)**: https://moiso-ten.vercel.app — `/`(소개)와 `/아무글자`("아직 준비 중인 초대장이에요") 모두 확인. ※ 이후 앱의 링크 모양(`주소/i/<뒷부분>`)에 맞춰 하객 페이지 주소를 `/i/<뒷부분>`으로 옮겼어요(2026-11-10). 이후 브랜치에 푸시하면 Vercel이 자동으로 다시 배포해요.
-- `web/`에 Next.js 앱 뼈대가 있어요: `/`(서비스 소개 한 줄), `/i/<주소>`(서버에서 읽어 — 없는 주소 · 작성 중인 주소는 `/`로 보내고, 공유 중이면 이름 · 일시, 공유가 끝났거나 행사가 끝났으면 안내).
-- 서버(Supabase)에 초대장이 아직 없어서 모든 링크가 "준비 중"으로 보여요. 연결하는 건 다음 단계.
+- `web/`: `/`(서비스 소개 한 줄), `/i/<주소>`(서버에서 읽어 — 없는 주소 · 작성 중인 주소는 `/`로 보내고, 공유가 끝났거나 행사가 끝났으면 안내, **공유 중이면 앱 미리보기와 같은 모양으로 초대장을 그려요**). 코드: `web/components/`(그리기 · 폼) · `web/lib/`(서버 호출 · 색 · 날짜 · 글꼴 · 음악 표기).
+- ✅ 2026-11-10 하객 페이지가 초대장을 그리고 참석 응답 · 방명록을 받아요(`SERVER_STORAGE.md` §13-4). 가짜 서버 + 브라우저로 시험함 — **진짜 Supabase · 폰에서는 아직 확인 전**. 하객 화면이 색 · 장소를 쓰려면 Supabase에서 `schema.sql`을 다시 실행해야 해요.
 - 왜 Next.js: `/<주소>` 하나로 모든 초대장을 보여주는 구조가 쉽고, 나중에 링크마다 서버에서 내용을 만들 수 있어요. **카카오톡 링크 미리보기(제목 · 사진)는 지금 단계에서는 하지 않기로 했어요(2026-11-10)** — 필요해지면 그때 `generateMetadata`로 추가해요.
 
 ## 2. 내가 할 일 (사용자) — 처음부터
@@ -19,11 +19,12 @@
 5. **Deploy** → 주소(`https://프로젝트이름.vercel.app`)가 생겨요. `…/i/아무글자`를 열어 "아직 준비 중인 초대장이에요"가 보이면 성공.
 
 ## 3. 다음 단계 (순서)
-1. Supabase에서 `supabase/schema.sql` **9번(서버 저장)** 실행 — 표는 만들어 뒀어요(`docs/SERVER_STORAGE.md` §13)
-2. 앱이 초대장을 만들 때부터 서버에 저장하고(작성 중 draft), [공유 시작]을 누르면 하객에게 열기
-3. `/i/[slug]`가 Supabase에서 초대장을 읽어 앱 미리보기와 같은 모양으로 그리기 (환경변수: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Vercel Settings → Environment Variables)
-4. 참석 응답 · 방명록 남기기, 방문 통계(익명 숫자), 감사페이지 자동 전환
-5. 공유 전 방문 처리(주인은 미리보기, 다른 사람은 "준비 중") — `SERVER_STORAGE.md` §9
+1. ✅ Supabase `schema.sql` 9번 실행 · 앱이 만들 때부터 서버에 저장 · [공유 시작]하면 하객에게 열기
+2. ✅ `/i/[slug]`가 초대장을 앱 미리보기와 같은 모양으로 그리기 · 참석 응답 · 방명록 · 방문 기록 · 감사페이지 자동 전환 (코드 완료, 진짜 서버 확인 전)
+3. **Supabase에서 `schema.sql` 다시 실행**(하객 함수에 색 · 장소 추가) → 앱에서 초대장을 공유해 `https://<내 주소>/i/<링크>`를 폰으로 열어 확인 (`DEVICE_CHECKLIST.md` §10)
+4. Vercel 환경변수에 `NEXT_PUBLIC_BGM_BASE_URL` 추가(음원을 Storage에 올린 뒤) — 안 넣으면 ♪ 버튼이 안 나와요
+5. 앱 관리 화면(응답 현황 · 방명록 관리 · 통계)이 서버 데이터를 읽기
+6. 공유 전 방문 처리(주인은 미리보기, 다른 사람은 "준비 중") — `SERVER_STORAGE.md` §9
 6. 내 도메인 연결(선택): Vercel → Settings → Domains
 
 ## 4. 로컬에서 돌려보기
@@ -44,5 +45,11 @@ npm run dev     # http://localhost:3000/i/아무글자
 3. `NEXT_PUBLIC_SUPABASE_ANON_KEY` = 앱 `mobile/.env`의 `EXPO_PUBLIC_SUPABASE_ANON_KEY` 값 (anon 키는 공개해도 되는 키예요 — `service_role` 키는 절대 넣지 않아요)
 4. Environments는 Production · Preview 모두 체크 → Save → **Deployments에서 Redeploy** (값을 바꾼 뒤엔 다시 배포해야 반영돼요)
 - 로컬에서는 `web/.env.local`에 같은 두 줄을 넣어요(`web/.env.example` 참고).
-- **동작**: `/i/<주소>`는 서버의 `get_public_invitation`을 불러요 → 없는 주소 · 작성 중 → **`/`(서비스 첫 화면)로 이동**(둘을 똑같이 처리해서 누가 쓰는 주소인지 알 수 없어요) / 공유 중 → 초대장(지금은 이름 · 일시만) / 공유 중지 → "공유가 끝난 초대장이에요" / 행사 끝 → "행사가 끝난 초대장이에요" / 서버 오류 → "잠시 후 다시 열어주세요".
+- **동작**: `/i/<주소>`는 서버의 `get_public_invitation`을 불러요 → 없는 주소 · 작성 중 → **`/`(서비스 첫 화면)로 이동**(둘을 똑같이 처리해서 누가 쓰는 주소인지 알 수 없어요) / 공유 중 → 초대장(행사 다음 날부터는 감사페이지) / 공유 중지 → "공유가 끝난 초대장이에요" / 행사 끝 → "행사가 끝난 초대장이에요" / 서버 오류 → "잠시 후 다시 열어주세요".
 - **연결 확인**: Redeploy가 끝난 뒤 `https://<내 주소>/api/health`를 열어요. `{"configured":true,"keyKind":"publishable","reachable":true}`이면 성공이에요(키 · 주소 값은 안 나와요). configured:false → 환경변수 이름 오타 또는 Redeploy 안 함 / reachable:false → 키나 주소가 틀림 / keyKind가 `SECRET-DO-NOT-USE`이면 비밀 키를 넣은 거라 바로 지우고 공개용(publishable · anon) 키로 바꿔요.
+- **(선택) 배경음악**: 같은 화면에서 `NEXT_PUBLIC_BGM_BASE_URL` = 앱 `mobile/.env`의 `EXPO_PUBLIC_BGM_BASE_URL` 값(끝에 `/` 없이)도 넣어요. 음원을 Storage `bgm` 폴더에 올린 뒤에 넣으면 돼요.
+
+## 7. 앱과 맞춰야 하는 것
+- 항목이 새로 생기거나 모양이 바뀌면 `web/components/blocks.tsx` · `web/lib/model.ts`도 같이 고쳐요(앱 `mobile/src/editor/canvas/*` · `types.ts`와 짝).
+- 배경음악 곡이 늘면 `web/lib/bgm.ts`의 곡 표기도 같이 늘려요(없으면 그 곡은 하객 화면에서 재생 · 표기가 안 돼요).
+- 색 계산(`web/lib/color.ts`)은 앱 `editor/colors.ts` · `invitationTheme.ts`와 같아야 해요.
