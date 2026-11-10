@@ -65,7 +65,11 @@ export function PosterScreen({ navigation, route }: Props) {
     else navigation.goBack();
   };
 
-  const capture = () => captureRef(exportRef, { format: 'png', quality: 1, result: 'tmpfile', width: spec.out.w, height: spec.out.h });
+  const capture = async () => {
+    // 사진이 서버에 올라가 인터넷 주소가 되었으면, 이미지로 만들기 전에 다 받아 두어요(덜 받은 채 찍혀 사진 자리가 빈 채로 저장되지 않게).
+    if (photo && /^https?:\/\//i.test(photo.uri)) await Image.prefetch(photo.uri).catch(() => false);
+    return captureRef(exportRef, { format: 'png', quality: 1, result: 'tmpfile', width: spec.out.w, height: spec.out.h });
+  };
   const save = async () => {
     if (busy) return;
     setBusy(true);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Pressable, Text, View, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { TextField } from '../../components/TextField';
@@ -14,6 +14,7 @@ import { fontMeta } from '../fonts';
 import { PhotoChoiceGrid } from '../PhotoChoiceGrid';
 import type { PhotoGroup } from '../photos';
 import { usePhotoChange } from '../PhotoUsageContext';
+import { useSync } from '../../sync/SyncProvider';
 import { FORMAT_LABEL, newId, type BlockOfType, type BlockType, type DividerShape, type ImageRatio, type Photo, type TextFormat } from '../types';
 
 export type BlockSheetProps<T extends BlockType> = SheetBase & {
@@ -100,6 +101,7 @@ export function ImageSheet({ block, onChange, onDone, photoChoices }: Props<'ima
   const [cropping, setCropping] = useState(false);
   const [choosing, setChoosing] = useState(false);
   const photoChange = usePhotoChange();
+  const { hold } = useSync();
   const { photo, ratio, crop } = block.props;
   // 안내 팝업 · 감사페이지(photoChoices가 있을 때)는 [사진 선택]에서 초대장에 쓴 사진 중 한 장을 고르거나, 마지막 +로 폰 앨범에서 다른 1장을 추가해요.
   const choices = photoChoices ?? [];
@@ -108,6 +110,11 @@ export function ImageSheet({ block, onChange, onDone, photoChoices }: Props<'ima
   // 이 창에서 +로 추가한 사진 — 다른 사진을 골랐다가도 다시 고를 수 있게 창이 열려 있는 동안만 기억해요.
   // 창을 닫을 때 최종으로 고른 사진이 아니면 그대로 버려져요(초대장 내용에도, 서버에도 남지 않아요).
   const [added, setAdded] = useState<Photo | undefined>(() => (photo && !fromInvite ? photo : undefined));
+  // 사진을 고르는 동안은 서버에 올리지 않아요 — 고르다 만(+로 추가했다가 다른 사진을 고른) 사진이 서버에 저장되지 않게. 창을 닫으면 최종으로 남은 사진만 올려요.
+  useEffect(() => {
+    if (!choosing) return;
+    return hold();
+  }, [choosing, hold]);
 
   const choose = async () => {
     try {
