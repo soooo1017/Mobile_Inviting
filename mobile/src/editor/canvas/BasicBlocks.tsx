@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Linking, Modal, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
+import { Linking, Modal, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCanvas } from './CanvasContext';
 import { InvText, InvUiText } from './InvText';
@@ -53,7 +53,7 @@ export function GalleryBlockView({ block }: { block: BlockOfType<'gallery'> }) {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [slide, setSlide] = useState(0);
   const [slideWidth, setSlideWidth] = useState(0);
-  const slideRef = useRef<ScrollView>(null);
+  const slideRef = useRef<ScrollViewInstance>(null);
 
   if (!photos.length) return mode === 'edit' ? <EmptyPhoto label="갤러리에 사진을 추가해주세요" /> : null;
 

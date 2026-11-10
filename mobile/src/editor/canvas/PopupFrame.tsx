@@ -1,6 +1,6 @@
 import type { RefObject } from 'react';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, Text, View, StyleSheet, type ScrollViewInstance } from 'react-native';
 import { textStyle } from '../../theme/typography';
 import { POPUP_SIZE, type Block } from '../types';
 import { Canvas } from './Canvas';
@@ -13,7 +13,7 @@ type FrameProps = {
   onLongPressBlock?: (block: Block) => void;
   onBlockLayout?: (id: string, y: number, height: number) => void;
   /** Lets the editor scroll the tapped block into the part of the popup the sheet leaves visible. */
-  scrollRef?: RefObject<ScrollView | null>;
+  scrollRef?: RefObject<ScrollViewInstance | null>;
   /** 편집: the empty popup asks for the first item. */
   onAdd?: () => void;
   /** 미리보기 · 게스트: the bottom row works. */

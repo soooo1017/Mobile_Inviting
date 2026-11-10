@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
-import {
-  Keyboard,
+import { Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -9,8 +8,7 @@ import {
   View,
   type LayoutChangeEvent,
   type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+  type ViewStyle, type ScrollViewInstance, type HostInstance } from 'react-native';
 
 const FOCUS_TOP_MARGIN = 16;
 
@@ -18,7 +16,7 @@ const FOCUS_TOP_MARGIN = 16;
 // the very top of the form's content (KeyboardAwareForm's children, or a view
 // that is its first, unpadded child) — then their y is their scroll offset.
 export function useKeyboardAwareForm() {
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const positions = useRef<Record<string, number>>({});
   const focusedKey = useRef<string | null>(null);
   const keyboardVisible = useRef(false);
@@ -64,7 +62,7 @@ export function useKeyboardAwareForm() {
 }
 
 type Props = {
-  scrollRef?: RefObject<ScrollView | null>;
+  scrollRef?: RefObject<ScrollViewInstance | null>;
   children: ReactNode;
   contentContainerStyle?: StyleProp<ViewStyle>;
   /** Pinned below the scroll area; rides up with the keyboard instead of hiding behind it. */
@@ -76,7 +74,7 @@ export function KeyboardAwareForm({ scrollRef, children, contentContainerStyle, 
   // which is relative to its parent, not the screen. Measuring where the form
   // actually sits on screen and passing that as the offset keeps the overlap
   // right even when the form starts below a title or tabs.
-  const containerRef = useRef<View>(null);
+  const containerRef = useRef<HostInstance>(null);
   const [windowTop, setWindowTop] = useState(0);
   const measure = useCallback(() => {
     containerRef.current?.measureInWindow((_x, y) => setWindowTop(y));

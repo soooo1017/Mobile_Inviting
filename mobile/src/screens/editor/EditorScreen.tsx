@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions, type ScrollViewInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -88,9 +88,9 @@ function Editor({
   const [toast, setToast] = useState<Toast>(null);
   const [thanksSheetOpen, setThanksSheetOpen] = useState(false);
   const [daysOpen, setDaysOpen] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const blockY = useRef<Record<string, number>>({});
-  const popupScrollRef = useRef<ScrollView>(null);
+  const popupScrollRef = useRef<ScrollViewInstance>(null);
 
   // [안내 팝업] 탭도 설정에서 쓰기로 한 경우에만 보여요 (감사페이지와 같은 방식). 끄면 초대장으로 돌아가요.
   const popupOn = invitation?.popup?.enabled ?? false;

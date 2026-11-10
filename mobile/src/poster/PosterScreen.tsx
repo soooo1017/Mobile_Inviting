@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { BackHandler, Image, Keyboard, Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { BackHandler, Image, Keyboard, Pressable, ScrollView, Text, View, StyleSheet, type HostInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -39,7 +39,7 @@ export function PosterScreen({ navigation, route }: Props) {
   const [denied, setDenied] = useState(false);
   const [photoSheet, setPhotoSheet] = useState(false);
   const [cropping, setCropping] = useState(false);
-  const exportRef = useRef<View>(null);
+  const exportRef = useRef<HostInstance>(null);
 
   // 안드로이드 뒤로가기: 단계를 거꾸로.
   useEffect(() => {

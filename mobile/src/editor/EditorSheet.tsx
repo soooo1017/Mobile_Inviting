@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, StyleSheet, useWindowDimensions } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, StyleSheet, useWindowDimensions, type ScrollViewInstance, type HostInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ModalSafeArea } from '../components/ModalSafeArea';
 import { color, radius, size, space } from '../theme/tokens';
@@ -59,8 +59,8 @@ function SheetFooter({ onDone, doneLabel, guard, bottomInset }: { onDone: () => 
 
 /** When the keyboard opens, scroll the sheet so the field being typed in sits just below the sheet's top. */
 function useScrollToFocusedInput() {
-  const scrollRef = useRef<ScrollView>(null);
-  const contentRef = useRef<View>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
+  const contentRef = useRef<HostInstance>(null);
   useEffect(() => {
     const sub = Keyboard.addListener('keyboardDidShow', () => {
       const input = TextInput.State.currentlyFocusedInput();

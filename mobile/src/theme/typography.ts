@@ -19,7 +19,7 @@ const fontFamilyByWeight: Record<FontWeightKey, string> = {
 // the family for the requested weight instead of relying on bold synthesis.
 export function textStyle({ size, weight = 'regular', lineHeight, letterSpacing, color }: TextStyleOptions): TextStyle {
   const fontSize = font.size[size];
-  const style: TextStyle = {
+  const style: { -readonly [K in keyof TextStyle]: TextStyle[K] } = {
     fontFamily: fontFamilyByWeight[weight],
     fontSize,
   };

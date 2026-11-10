@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, Text, View, StyleSheet, type HostInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import QRCode from 'react-native-qrcode-svg';
@@ -24,7 +24,7 @@ const QR_IMAGE_PX = 1024;
 export function QrScreen({ navigation, route }: Props) {
   const { getProject } = useProjects();
   const project = getProject(route.params.projectId);
-  const imageRef = useRef<View>(null);
+  const imageRef = useRef<HostInstance>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
