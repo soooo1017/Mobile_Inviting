@@ -51,7 +51,6 @@ export function LinkChooser({ value, onChange, onFocus }: Props) {
                 {`${BASE_LABEL}/${value.phrase || 'minseok'}-`}
                 <Text style={styles.rand}>{value.rand}</Text>
               </Text>
-              <Text style={styles.note}>문구 뒤에 보안을 위해 랜덤 글자(6자)가 붙어요. 같은 문구를 다른 사람이 써도 괜찮아요.</Text>
             </View>
           ) : null}
         </View>
@@ -89,7 +88,6 @@ const styles = StyleSheet.create({
   error: { ...textStyle({ size: 'micro', weight: 'regular', color: color.status.error }) },
   example: { ...textStyle({ size: 'small', weight: 'regular', color: color.ink.secondary }) },
   rand: { ...textStyle({ size: 'small', weight: 'semibold', color: color.accent.base }) },
-  note: { ...textStyle({ size: 'micro', weight: 'regular', color: color.ink.muted }) },
   radio: {
     width: 20,
     height: 20,
