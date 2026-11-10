@@ -23,6 +23,21 @@ function randomChars(length: number): string {
   return out;
 }
 
+/**
+ * 서버에서 주소(slug)가 이미 쓰이고 있다고 할 때 새로 뽑은 링크 — 문구 방식은 뒤의 랜덤 4자만, 자동은 8자 전체를 다시 뽑아요.
+ * 이미 공유를 시작해 고정된 링크는 바꿀 수 없어서 null이에요.
+ */
+export function regeneratedLink(project: Project): ProjectLink | null {
+  if (isLinkLocked(project)) return null;
+  const link = project.link;
+  if (!link) return { slug: `${project.id}${randomChars(3)}`, mode: 'auto', phrase: '', rand: '', locked: false };
+  if (link.mode === 'custom') {
+    const rand = randomChars(RAND_LENGTH);
+    return { ...link, rand, slug: `${link.phrase}-${rand}` };
+  }
+  return { ...link, slug: randomChars(AUTO_LENGTH) };
+}
+
 /** 입력창에 쓴 글자에서 쓸 수 없는 글자를 걸러요 (영문 소문자 · 숫자 · -). */
 export function normalizePhrase(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9-]/g, '');

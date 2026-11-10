@@ -9,6 +9,7 @@ import { AuthProvider } from './src/state/AuthContext';
 import { ProjectsProvider } from './src/state/ProjectsContext';
 import { NewProjectDraftProvider } from './src/state/NewProjectDraftContext';
 import { InvitationsProvider } from './src/state/InvitationsContext';
+import { SyncProvider } from './src/sync/SyncProvider';
 import { InvitationFontsProvider } from './src/editor/fonts';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { color } from './src/theme/tokens';
@@ -39,11 +40,13 @@ export default function App() {
           <ProjectsProvider>
             <NewProjectDraftProvider>
               <InvitationsProvider>
-                <InvitationFontsProvider>
-                  <NavigationContainer>
-                    <RootNavigator />
-                  </NavigationContainer>
-                </InvitationFontsProvider>
+                <SyncProvider>
+                  <InvitationFontsProvider>
+                    <NavigationContainer>
+                      <RootNavigator />
+                    </NavigationContainer>
+                  </InvitationFontsProvider>
+                </SyncProvider>
               </InvitationsProvider>
             </NewProjectDraftProvider>
           </ProjectsProvider>

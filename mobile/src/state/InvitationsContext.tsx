@@ -13,12 +13,34 @@ type InvitationsContextValue = {
   invitations: Record<string, Invitation>;
   load: (projectId: string) => Promise<void>;
   mutate: (projectId: string, fn: (inv: Invitation) => Invitation) => void;
+  /** (서버 동기화) 폰에 저장된 초대장들을 한꺼번에 불러와요. */
+  loadAll: (projectIds: string[]) => Promise<Record<string, Invitation>>;
+  /** (서버 동기화) 서버에서 받은 내용으로 바꿔요 — 폰에도 바로 저장해요. */
+  adopt: (inv: Invitation) => void;
+  /** (서버 동기화) 지운 초대장을 메모리와 폰 저장소에서 없애요. */
+  drop: (projectId: string) => void;
+  /** (서버 동기화) 로그아웃 · 계정 바꿈 — 메모리만 비워요(폰 저장소는 그대로). */
+  reset: () => void;
 };
 
 const InvitationsContext = createContext<InvitationsContextValue | null>(null);
 
 function emptyInvitation(projectId: string): Invitation {
   return { projectId, font: 'pretendard', pages: { invite: [], popup: [], thanks: [] } };
+}
+
+/** 폰에 저장된 초대장 (없으면 null). 예전에 저장된 것에는 안내 팝업 페이지가 없을 수 있어서 채워요. */
+export async function readStoredInvitation(projectId: string): Promise<Invitation | null> {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_PREFIX + projectId);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as Invitation;
+    const base = emptyInvitation(projectId);
+    return { ...base, ...saved, pages: { ...base.pages, ...saved.pages } };
+  } catch (e) {
+    console.warn('invitation load failed:', e);
+    return null;
+  }
 }
 
 export function InvitationsProvider({ children }: { children: ReactNode }) {
@@ -69,8 +91,54 @@ export function InvitationsProvider({ children }: { children: ReactNode }) {
     return () => Object.values(pendingTimers).forEach(clearTimeout);
   }, []);
 
-  const value = useMemo(() => ({ invitations, load, mutate }), [invitations, load, mutate]);
+  const loadAll = useCallback(async (projectIds: string[]) => {
+    const found: Record<string, Invitation> = {};
+    await Promise.all(
+      projectIds.map(async (id) => {
+        found[id] = (await readStoredInvitation(id)) ?? emptyInvitation(id);
+      }),
+    );
+    projectIds.forEach((id) => loading.current.add(id));
+    setInvitations((prev) => ({ ...found, ...prev }));
+    return found;
+  }, []);
+
+  const adopt = useCallback((inv: Invitation) => {
+    const id = inv.projectId;
+    if (timers.current[id]) clearTimeout(timers.current[id]);
+    loading.current.add(id);
+    AsyncStorage.setItem(STORAGE_PREFIX + id, JSON.stringify(inv)).catch((e) => console.warn('invitation save failed:', e));
+    setInvitations((prev) => ({ ...prev, [id]: inv }));
+  }, []);
+
+  const drop = useCallback((projectId: string) => {
+    if (timers.current[projectId]) clearTimeout(timers.current[projectId]);
+    loading.current.delete(projectId);
+    AsyncStorage.removeItem(STORAGE_PREFIX + projectId).catch(() => {});
+    setInvitations((prev) => {
+      if (!(projectId in prev)) return prev;
+      const { [projectId]: _gone, ...rest } = prev;
+      void _gone;
+      return rest;
+    });
+  }, []);
+
+  const reset = useCallback(() => {
+    Object.values(timers.current).forEach(clearTimeout);
+    timers.current = {};
+    loading.current = new Set();
+    setInvitations({});
+  }, []);
+
+  const value = useMemo(() => ({ invitations, load, mutate, loadAll, adopt, drop, reset }), [invitations, load, mutate, loadAll, adopt, drop, reset]);
   return <InvitationsContext.Provider value={value}>{children}</InvitationsContext.Provider>;
+}
+
+/** (서버 동기화) 초대장 저장소 전체 — 화면용 훅이 아니라 동기화가 쓰는 거예요. */
+export function useInvitationsStore() {
+  const ctx = useContext(InvitationsContext);
+  if (!ctx) throw new Error('useInvitationsStore must be used within an InvitationsProvider');
+  return ctx;
 }
 
 /** Sets up a brand-new invitation (e.g. the 기본 글꼴 picked on the last new-project step). */

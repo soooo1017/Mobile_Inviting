@@ -15,7 +15,10 @@ function daysAgoUpdated(days: number): string {
   return d.toISOString();
 }
 
-// No backend yet — a representative mock set covering every status
+/** 화면 시연용 예시 초대장 6개. 서버에 저장되는 진짜 초대장과 섞이면 안 되어서 꺼 둬요(켜면 서버에 올라가지는 않지만 목록에만 보여요). */
+const SHOW_MOCK_PROJECTS = false;
+
+// A representative mock set covering every status
 // (draft/shared/thanks/past) and both thanks-banner cases, so the list,
 // filters, and sort all have something real to work on.
 const MOCK_PROJECTS: Project[] = [
@@ -125,6 +128,8 @@ type ProjectsContextValue = {
   markSeen: (id: string, kind: 'rsvp' | 'guestbook') => void;
   /** 링크 바꾸기 — 공유를 시작하기 전까지만 (고정된 링크는 무시). */
   setLink: (id: string, link: ProjectLink) => void;
+  /** (서버 동기화) 목록 전체를 이 내용으로 바꿔요 — 로그인 · 서버에서 가져온 뒤. */
+  hydrate: (list: Project[]) => void;
 };
 
 const ProjectsContext = createContext<ProjectsContextValue | null>(null);
@@ -132,7 +137,7 @@ const ProjectsContext = createContext<ProjectsContextValue | null>(null);
 let nextId = MOCK_PROJECTS.length + 1;
 
 export function ProjectsProvider({ children }: { children: ReactNode }) {
-  const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
+  const [projects, setProjects] = useState<Project[]>(SHOW_MOCK_PROJECTS ? MOCK_PROJECTS : []);
 
   const value = useMemo<ProjectsContextValue>(
     () => ({
@@ -169,6 +174,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
           if (!target || !target.seen || target.seen[kind] >= target.counts[kind]) return prev;
           return prev.map((p) => (p.id === id ? { ...p, seen: { ...target.seen!, [kind]: target.counts[kind] } } : p));
         }),
+      hydrate: (list) => setProjects(list),
       setLink: (id, link) =>
         setProjects((prev) => prev.map((p) => (p.id === id && !isLinkLocked(p) ? { ...p, link: { ...link, locked: false }, updatedAt: new Date().toISOString() } : p))),
     }),

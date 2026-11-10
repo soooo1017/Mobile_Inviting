@@ -13,6 +13,7 @@ import { DarkToast } from '../../editor/ui';
 import { SimpleThanksView } from '../../editor/canvas/SimpleThanks';
 import { ThanksSimpleSheet } from '../../editor/sheets/ThanksSimpleSheet';
 import { blockPhotos, coverPhoto, invitePhotoGroups, otherPagesUsing } from '../../editor/photos';
+import { useSync, type SyncState } from '../../sync/SyncProvider';
 import { PhotoUsageContext, usePhotoChange, type PhotoUsage, type RemovedBlock } from '../../editor/PhotoUsageContext';
 import { useThanksMode } from '../../editor/thanksMode';
 import { bgmClip, bgmSource, bgmTrackById } from '../../editor/bgm';
@@ -37,6 +38,9 @@ import { BLOCK_LABEL, blockAddLimit, defaultBlock, newId, POPUP_BLOCK_TYPES, THA
 import type { Project } from '../../types/project';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Editor'>;
+
+/** 서버 저장 상태 표시 — 고친 내용은 잠시 뒤 자동으로 서버에 저장돼요. */
+const SAVE_LABEL: Record<SyncState, string> = { idle: '', saving: '저장 중…', saved: '저장됨', offline: '오프라인 · 연결되면 저장돼요', error: '저장 실패 · 다시 시도해요' };
 
 type Toast = { message: string; undo?: () => void } | null;
 
@@ -107,6 +111,7 @@ function Editor({
   const thanksPeriod = `${formatMonthDay(thanksStart.toISOString())} ~ ${formatMonthDay(thanksEndDate(thanksStart, thanksDays).toISOString())} (${thanksDays}일)`;
 
   const showToast = useCallback((message: string) => setToast({ message }), []);
+  const sync = useSync();
   const canvasValue = useMemo<CanvasContextValue | null>(
     () => (invitation ? { project, theme, defaultFont: invitation.font, mode: 'edit', showToast } : null),
     [invitation, project, theme, showToast],
@@ -249,6 +254,7 @@ function Editor({
               <Text style={[styles.title, styles.flex]} numberOfLines={1}>
                 {project.title}
               </Text>
+              {SAVE_LABEL[sync.state] ? <Text style={[styles.saveState, sync.state === 'error' && styles.saveStateError]}>{SAVE_LABEL[sync.state]}</Text> : null}
               <Pressable
                 onPress={() => {
                   setSettingsPage(undefined);
@@ -260,6 +266,12 @@ function Editor({
                 <GearIcon color={color.ink.secondary} />
               </Pressable>
             </View>
+            {sync.notice ? (
+              <Pressable onPress={sync.clearNotice} style={styles.noticeBar}>
+                <Text style={styles.noticeText}>{sync.notice}</Text>
+                <Text style={styles.noticeClose}>확인</Text>
+              </Pressable>
+            ) : null}
             {pageTabs.length > 1 ? (
               <View style={styles.tabs}>
                 {pageTabs.map((k) => (
@@ -700,6 +712,33 @@ const styles = StyleSheet.create({
   },
   back: {
     ...textStyle({ size: 'title1', weight: 'regular', color: color.ink.primary }),
+  },
+  saveState: {
+    ...textStyle({ size: 'caption', weight: 'regular', color: color.ink.muted }),
+    marginRight: space[4],
+  },
+  saveStateError: {
+    color: color.status.error,
+  },
+  noticeBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[4],
+    marginHorizontal: space.screenX,
+    marginBottom: space[3],
+    paddingHorizontal: space[5],
+    paddingVertical: space[4],
+    borderRadius: radius.input,
+    backgroundColor: color.accent.tintSoft,
+    borderWidth: 1,
+    borderColor: color.accent.tintBorder,
+  },
+  noticeText: {
+    flex: 1,
+    ...textStyle({ size: 'small', weight: 'regular', color: color.ink.primary }),
+  },
+  noticeClose: {
+    ...textStyle({ size: 'small', weight: 'semibold', color: color.accent.base }),
   },
   title: {
     ...textStyle({ size: 'title3', weight: 'semibold', color: color.ink.primary }),
