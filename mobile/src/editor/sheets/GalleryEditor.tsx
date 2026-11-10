@@ -8,6 +8,7 @@ import { Chips, Help, Section, ToggleList } from '../ui';
 import { PhotoFrame } from '../canvas/PhotoFrame';
 import { PhotoIcon } from '../icons';
 import { pickPhotos, type BlockSheetProps } from './BasicSheets';
+import { usePhotoChange } from '../PhotoUsageContext';
 import { LIMITS, type GalleryLayout, type Photo } from '../types';
 
 const COLS = 3;
@@ -17,6 +18,7 @@ const GAP = 6;
 export function GalleryEditor({ block, onChange, onDone }: BlockSheetProps<'gallery'>) {
   const p = block.props;
   const set = (patch: Partial<typeof p>) => onChange({ ...block, props: { ...p, ...patch } });
+  const photoChange = usePhotoChange();
 
   const add = async () => {
     const remaining = LIMITS.galleryPhotos - p.photos.length;
@@ -43,8 +45,15 @@ export function GalleryEditor({ block, onChange, onDone }: BlockSheetProps<'gall
         />
       </Section>
       <Section label="사진" sub={`꾹 눌러 순서 바꾸기 · 최대 ${LIMITS.galleryPhotos}장`}>
-        <PhotoGrid photos={p.photos} onAdd={add} onChange={(photos) => set({ photos })} />
+        <PhotoGrid
+          photos={p.photos}
+          onAdd={add}
+          onChange={(photos) => set({ photos })}
+          // 안내 팝업 · 감사페이지가 같은 사진을 쓰고 있으면 빼기 전에 어떻게 할지 물어봐요.
+          onRemove={(photo) => photoChange.request('delete', [photo], undefined, () => set({ photos: p.photos.filter((x) => x.id !== photo.id) }))}
+        />
       </Section>
+      {photoChange.dialog}
       <View>
         <ToggleList items={[{ key: 'zoom', label: '탭하면 크게 보기', value: p.zoomOnTap, onChange: (zoomOnTap) => set({ zoomOnTap }) }]} />
         <View style={styles.help}>
@@ -55,7 +64,7 @@ export function GalleryEditor({ block, onChange, onDone }: BlockSheetProps<'gall
   );
 }
 
-function PhotoGrid({ photos, onAdd, onChange }: { photos: Photo[]; onAdd: () => void; onChange: (p: Photo[]) => void }) {
+function PhotoGrid({ photos, onAdd, onChange, onRemove }: { photos: Photo[]; onAdd: () => void; onChange: (p: Photo[]) => void; onRemove: (photo: Photo) => void }) {
   const [width, setWidth] = useState(0);
   const cell = width ? (width - GAP * (COLS - 1)) / COLS : 0;
   const [drag, setDrag] = useState<{ from: number; to: number } | null>(null);
@@ -172,7 +181,7 @@ function PhotoGrid({ photos, onAdd, onChange }: { photos: Photo[]; onAdd: () => 
                   <PhotoFrame photo={photo} aspect={1} radius={6} />
                 </Pressable>
                 <Pressable
-                  onPress={() => onChange(photos.filter((x) => x.id !== photo.id))}
+                  onPress={() => onRemove(photo)}
                   hitSlop={8}
                   style={styles.remove}
                   accessibilityLabel="사진 빼기"

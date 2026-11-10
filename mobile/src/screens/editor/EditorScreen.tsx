@@ -12,7 +12,8 @@ import { SelectChip } from '../../components/SelectChip';
 import { DarkToast } from '../../editor/ui';
 import { SimpleThanksView } from '../../editor/canvas/SimpleThanks';
 import { ThanksSimpleSheet } from '../../editor/sheets/ThanksSimpleSheet';
-import { coverPhoto } from '../../editor/photos';
+import { blockPhotos, coverPhoto, invitePhotoGroups, otherPagesUsing } from '../../editor/photos';
+import { PhotoUsageContext, usePhotoChange, type PhotoUsage, type RemovedBlock } from '../../editor/PhotoUsageContext';
 import { useThanksMode } from '../../editor/thanksMode';
 import { bgmClip, bgmSource, bgmTrackById } from '../../editor/bgm';
 import { BgmCredit } from '../../editor/BgmSources';
@@ -32,7 +33,7 @@ import { BlockDeleteContext } from '../../editor/EditorSheet';
 import { ModalSafeArea } from '../../components/ModalSafeArea';
 import { EyeIcon, GearIcon, SortIcon } from '../../editor/icons';
 import { blockLabel, blockSummary } from '../../editor/format';
-import { BLOCK_LABEL, blockAddLimit, defaultBlock, POPUP_BLOCK_TYPES, THANKS_BLOCK_TYPES, type Bgm, type Block, type BlockType, type PageKey } from '../../editor/types';
+import { BLOCK_LABEL, blockAddLimit, defaultBlock, newId, POPUP_BLOCK_TYPES, THANKS_BLOCK_TYPES, type Bgm, type Block, type BlockType, type PageKey } from '../../editor/types';
 import type { Project } from '../../types/project';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Editor'>;
@@ -159,10 +160,45 @@ function Editor({
     }
   };
 
+  // 초대장에서 사진을 지우거나 바꿀 때 안내 팝업 · 감사페이지가 같은 사진을 쓰고 있으면 어떻게 할지 물어봐요.
+  const photoChange = usePhotoChange();
+  const photoUsage = useMemo<PhotoUsage | null>(() => {
+    if (!invitation || page !== 'invite') return null;
+    return {
+      pagesUsing: (photos) => otherPagesUsing(invitation, photos),
+      apply: (kind, photos, pages, next) => {
+        const uris = new Set(photos.map((p) => p.uri));
+        const removed: RemovedBlock[] = [];
+        for (const p of pages) {
+          invitation.pages[p].forEach((b, index) => {
+            if (b.type !== 'image' || !b.props.photo || !uris.has(b.props.photo.uri)) return;
+            if (kind === 'delete') {
+              removed.push({ page: p, block: b, index });
+              removeBlock(p, b.id);
+            } else if (next) {
+              updateBlock(p, b.id, (cur) => (cur.type === 'image' ? { ...cur, props: { ...cur.props, photo: { ...next, id: newId('p') }, crop: { x: 0, y: 0, scale: 1 } } } : cur));
+            }
+          });
+        }
+        return removed;
+      },
+    };
+  }, [invitation, page, removeBlock, updateBlock]);
+
   const deleteBlock = (block: Block, index: number) => {
-    removeBlock(page, block.id);
-    if (highlightId === block.id) setHighlightId(null);
-    setToast({ message: '삭제했어요', undo: () => insertBlock(page, block, index) });
+    const proceed = (extra: RemovedBlock[]) => {
+      removeBlock(page, block.id);
+      if (highlightId === block.id) setHighlightId(null);
+      setToast({
+        message: '삭제했어요',
+        undo: () => {
+          insertBlock(page, block, index);
+          // 함께 지운 안내 팝업 · 감사페이지의 이미지도 되돌려요 (위쪽 것부터 끼워 넣어 자리가 어긋나지 않게).
+          [...extra].sort((a, b) => a.index - b.index).forEach((e) => insertBlock(e.page, e.block, e.index));
+        },
+      });
+    };
+    photoChange.request('delete', page === 'invite' ? blockPhotos(block) : [], undefined, proceed);
   };
 
   const thanksMode = useThanksMode(project);
@@ -189,6 +225,7 @@ function Editor({
 
   return (
     <CanvasContext.Provider value={canvasValue}>
+      <PhotoUsageContext.Provider value={photoUsage}>
       <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
         {mode === 'reorder' ? (
           <View style={styles.header}>
@@ -381,7 +418,7 @@ function Editor({
                 setSettingsOpen(true);
               }}
               onProject={(patch) => updateProject(project.id, patch)}
-              coverPhoto={page === 'invite' ? undefined : coverPhoto(invitation)}
+              photoChoices={page === 'invite' ? undefined : invitePhotoGroups(invitation)}
             />
           </BlockDeleteContext.Provider>
         ) : null}
@@ -469,6 +506,7 @@ function Editor({
         </BottomSheet>
 
         {thanksMode.dialog}
+        {photoChange.dialog}
 
         <PreviewModal
           visible={previewOpen}
@@ -479,6 +517,7 @@ function Editor({
           bgm={page !== 'thanks' ? invitation.bgm : undefined}
         />
       </SafeAreaView>
+      </PhotoUsageContext.Provider>
     </CanvasContext.Provider>
   );
 }

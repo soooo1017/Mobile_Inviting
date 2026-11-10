@@ -11,6 +11,9 @@ import { CropScreen } from './CropScreen';
 import { PhotoFrame } from '../canvas/PhotoFrame';
 import { isValidUrl } from '../canvas/BasicBlocks';
 import { fontMeta } from '../fonts';
+import { PhotoChoiceGrid } from '../PhotoChoiceGrid';
+import type { PhotoGroup } from '../photos';
+import { usePhotoChange } from '../PhotoUsageContext';
 import { FORMAT_LABEL, newId, type BlockOfType, type BlockType, type DividerShape, type ImageRatio, type Photo, type TextFormat } from '../types';
 
 export type BlockSheetProps<T extends BlockType> = SheetBase & {
@@ -93,24 +96,41 @@ export async function pickPhotos(limit: number) {
   return result.assets.map((a) => ({ id: newId('p'), uri: a.uri, width: a.width || 1000, height: a.height || 1250 }));
 }
 
-export function ImageSheet({ block, onChange, onDone, coverPhoto }: Props<'image'> & { coverPhoto?: Photo }) {
+export function ImageSheet({ block, onChange, onDone, photoChoices }: Props<'image'> & { photoChoices?: PhotoGroup[] }) {
   const [cropping, setCropping] = useState(false);
+  const [choosing, setChoosing] = useState(false);
+  const photoChange = usePhotoChange();
   const { photo, ratio, crop } = block.props;
 
   const choose = async () => {
     try {
       const [picked] = await pickPhotos(1);
-      if (picked) onChange({ ...block, props: { ...block.props, photo: picked, crop: { x: 0, y: 0, scale: 1 } } });
+      if (!picked) return;
+      const apply = () => onChange({ ...block, props: { ...block.props, photo: picked, crop: { x: 0, y: 0, scale: 1 } } });
+      // 초대장의 사진을 바꾸는데 안내 팝업 · 감사페이지가 같은 사진을 쓰고 있으면 어떻게 할지 물어봐요.
+      if (photo) photoChange.request('replace', [photo], picked, apply);
+      else apply();
     } catch {
       Alert.alert('사진을 불러오지 못했어요', '사진 접근 권한을 확인해주세요.');
     }
   };
 
-  // 안내 팝업 · 감사페이지는 사진을 새로 올리지 않고 초대장 대표 사진을 그대로 쓸 수 있어요(서버 공간도 안 늘어요).
-  const applyCover = () => {
-    if (coverPhoto) onChange({ ...block, props: { ...block.props, photo: { ...coverPhoto, id: newId('p') }, crop: { x: 0, y: 0, scale: 1 } } });
+  // 안내 팝업 · 감사페이지는 새 사진을 올리는 대신 초대장에 쓴 사진 중 한 장을 그대로 쓸 수 있어요(같은 파일이라 서버 공간도 안 늘어요).
+  const choices = photoChoices ?? [];
+  const hasChoices = choices.some((g) => g.photos.length > 0);
+  const fromInvite = Boolean(photo && choices.some((g) => g.photos.some((p) => p.uri === photo.uri)));
+  const useChoice = (p: Photo) => {
+    onChange({ ...block, props: { ...block.props, photo: { ...p, id: newId('p') }, crop: { x: 0, y: 0, scale: 1 } } });
+    setChoosing(false);
   };
-  const isCover = Boolean(photo && coverPhoto && photo.uri === coverPhoto.uri);
+
+  if (choosing) {
+    return (
+      <EditorSheet title="초대장 사진에서 고르기" onBack={() => setChoosing(false)} onDone={() => setChoosing(false)} doneLabel="닫기" maxHeight={0.75}>
+        <PhotoChoiceGrid groups={choices} selectedUri={photo?.uri} onSelect={useChoice} />
+      </EditorSheet>
+    );
+  }
 
   return (
     <>
@@ -119,15 +139,15 @@ export function ImageSheet({ block, onChange, onDone, coverPhoto }: Props<'image
           <View style={styles.thumb}>{photo ? <PhotoFrame photo={photo} aspect={1} /> : null}</View>
           <View style={styles.pickText}>
             <Text style={styles.pickTitle}>{photo ? '사진 1장' : '사진 없음'}</Text>
-            <Text style={styles.pickSub}>{photo ? (isCover ? '초대장 대표 사진' : '앨범에서 고른 사진') : '앨범에서 사진을 골라주세요'}</Text>
+            <Text style={styles.pickSub}>{photo ? (fromInvite ? '초대장에 쓴 사진' : '앨범에서 고른 사진') : hasChoices ? '초대장 사진 중에서 고르거나 앨범에서 골라주세요' : '앨범에서 사진을 골라주세요'}</Text>
           </View>
           <Pressable onPress={choose} style={styles.ghostBtn}>
             <Text style={styles.ghostLabel}>{photo ? '사진 바꾸기' : '사진 고르기'}</Text>
           </Pressable>
         </View>
-        {coverPhoto && !isCover ? (
-          <Pressable onPress={applyCover} style={styles.coverBtn}>
-            <Text style={styles.ghostLabel}>초대장 대표 사진 쓰기</Text>
+        {hasChoices ? (
+          <Pressable onPress={() => setChoosing(true)} style={styles.coverBtn}>
+            <Text style={styles.ghostLabel}>초대장 사진에서 고르기</Text>
           </Pressable>
         ) : null}
         <Section label="비율">
@@ -136,6 +156,7 @@ export function ImageSheet({ block, onChange, onDone, coverPhoto }: Props<'image
         </Section>
         <SelectRow label="사진 위치 조정" muted={!photo || ratio === 'original'} onPress={() => photo && ratio !== 'original' && setCropping(true)} />
       </EditorSheet>
+      {photoChange.dialog}
       {cropping && photo ? (
         <CropScreen
           photo={photo}
