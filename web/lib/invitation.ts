@@ -23,9 +23,14 @@ export async function getPublicInvitation(rawSlug: string): Promise<PublicInvita
   if (!url || !key) return { state: 'preparing' };
 
   try {
-    const res = await fetch(`${url.replace(/\/+$/, '')}/rest/v1/rpc/get_public_invitation`, {
+    // 주소는 `https://….supabase.co` 까지만 있으면 돼요 — 대시보드의 API URL(`…/rest/v1/`)을 그대로 붙여 넣어도 되게 뒤쪽을 걷어내요.
+    const base = url.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+    // 예전 방식 anon 키(eyJ…)는 Authorization에도 같이 보내고, 새 방식 publishable 키(sb_publishable_…)는 apikey에만 보내요.
+    const headers: Record<string, string> = { apikey: key, 'Content-Type': 'application/json' };
+    if (key.startsWith('eyJ')) headers.Authorization = `Bearer ${key}`;
+    const res = await fetch(`${base}/rest/v1/rpc/get_public_invitation`, {
       method: 'POST',
-      headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ p_slug: slug }),
       cache: 'no-store',
     });
