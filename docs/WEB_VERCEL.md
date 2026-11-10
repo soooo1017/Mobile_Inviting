@@ -45,3 +45,4 @@ npm run dev     # http://localhost:3000/i/아무글자
 4. Environments는 Production · Preview 모두 체크 → Save → **Deployments에서 Redeploy** (값을 바꾼 뒤엔 다시 배포해야 반영돼요)
 - 로컬에서는 `web/.env.local`에 같은 두 줄을 넣어요(`web/.env.example` 참고).
 - **동작**: `/i/<주소>`는 서버의 `get_public_invitation`을 불러요 → 없는 주소 · 작성 중 → **`/`(서비스 첫 화면)로 이동**(둘을 똑같이 처리해서 누가 쓰는 주소인지 알 수 없어요) / 공유 중 → 초대장(지금은 이름 · 일시만) / 공유 중지 → "공유가 끝난 초대장이에요" / 행사 끝 → "행사가 끝난 초대장이에요" / 서버 오류 → "잠시 후 다시 열어주세요".
+- **연결 확인**: Redeploy가 끝난 뒤 `https://<내 주소>/api/health`를 열어요. `{"configured":true,"keyKind":"publishable","reachable":true}`이면 성공이에요(키 · 주소 값은 안 나와요). configured:false → 환경변수 이름 오타 또는 Redeploy 안 함 / reachable:false → 키나 주소가 틀림 / keyKind가 `SECRET-DO-NOT-USE`이면 비밀 키를 넣은 거라 바로 지우고 공개용(publishable · anon) 키로 바꿔요.
