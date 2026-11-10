@@ -69,6 +69,8 @@ export type InvitationContent = {
   font: FontId;
   pages: { invite: Block[]; popup: Block[]; thanks: Block[] };
   coverPhotoId?: string;
+  /** 공유 미리보기(카카오톡 등)의 설명 — 없으면 일시 · 장소. */
+  shareDescription?: string;
   bgm?: Bgm;
   thanks?: { mode: 'simple' | 'free'; simple: ThanksSimple };
   popup?: { enabled: boolean; startDays?: number | null };

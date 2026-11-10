@@ -177,6 +177,8 @@ export type Invitation = {
   pages: Record<PageKey, Block[]>;
   /** 대표 사진 — a photo id from the invite page; missing = the first photo. */
   coverPhotoId?: string;
+  /** 카카오톡 등으로 링크를 보낼 때 제목 아래에 보이는 설명(공유하기 화면에서 정해요). 없으면 일시 · 장소가 들어가요. */
+  shareDescription?: string;
   bgm?: Bgm;
   thanks?: ThanksPage;
   popup?: PopupSettings;

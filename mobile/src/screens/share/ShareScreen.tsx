@@ -1,11 +1,16 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, Share, Text, View, StyleSheet } from 'react-native';
+import { Image, Pressable, Share, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { useProjects } from '../../state/ProjectsContext';
+import { useInvitation } from '../../state/InvitationsContext';
+import { KeyboardAwareForm } from '../../components/KeyboardAwareForm';
+import { TextField } from '../../components/TextField';
+import { coverPhoto } from '../../editor/photos';
+import { defaultShareDescription } from '../../editor/format';
 import { DarkToast } from '../../editor/ui';
 import { isLinkLocked, shareUrl, shareUrlLabel } from '../../share/link';
 import { useLinkChange } from '../../share/useLinkChange';
@@ -21,7 +26,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Share'>;
 
 /**
  * 공유하기 (C17) — 링크는 초대장을 만들 때 이미 정해져 있어서, 공유 전에도 링크 · QR · 홍보물을 쓸 수 있어요.
- * 공유를 시작해야 다른 사람이 초대장을 볼 수 있어요 (게스트 화면은 서버 연결 뒤에 열려요).
+ * 공유를 시작해야 다른 사람이 초대장을 볼 수 있어요.
  */
 export function ShareScreen({ navigation, route }: Props) {
   const { getProject, setShared, setLink } = useProjects();
@@ -54,7 +59,7 @@ function ShareBody({ project, navigation, setShared, setLink, toast, setToast }:
   return (
     <SafeAreaView style={manageStyles.screen} edges={['top', 'bottom']}>
       <ManageHeader title="공유하기" onBack={() => navigation.goBack()} />
-      <ScrollView contentContainerStyle={manageStyles.body}>
+      <KeyboardAwareForm contentContainerStyle={manageStyles.body}>
         <ShareControl
           project={project}
           hideLink
@@ -64,7 +69,7 @@ function ShareBody({ project, navigation, setShared, setLink, toast, setToast }:
           }}
           onChange={(shared) => {
             setShared(projectId, shared);
-            setToast(shared ? '공유를 시작했어요 · 게스트 화면은 서버 연결 뒤에 열려요' : '공유를 중지했어요');
+            setToast(shared ? '공유를 시작했어요 · 링크가 열려요' : '공유를 중지했어요');
           }}
         />
         <View style={styles.linkBox}>
@@ -87,6 +92,8 @@ function ShareBody({ project, navigation, setShared, setLink, toast, setToast }:
             </Pressable>
           </View>
         </View>
+
+        <SharePreview project={project} />
 
         {started ? null : (
           <View style={styles.band}>
@@ -115,11 +122,52 @@ function ShareBody({ project, navigation, setShared, setLink, toast, setToast }:
             <Text style={styles.chevron}>›</Text>
           </Pressable>
         </View>
-      </ScrollView>
+      </KeyboardAwareForm>
 
       {linkChange.nodes}
       <DarkToast message={toast} onHide={() => setToast(null)} bottom={90} />
     </SafeAreaView>
+  );
+}
+
+/**
+ * 공유 미리보기 — 카카오톡 · 문자로 링크를 보낼 때 보이는 카드. 사진은 대표 사진(에디터 ⚙ 전체 설정), 제목은 초대장 이름(프로젝트 설정),
+ * 설명은 여기서 고쳐요(비우면 일시 · 장소). 이미 보낸 링크는 카카오톡이 미리보기를 저장해 둬서 바로 안 바뀌어요.
+ */
+function SharePreview({ project }: { project: Project }) {
+  const { invitation, setShareDescription } = useInvitation(project.id);
+  const cover = invitation ? coverPhoto(invitation) : undefined;
+  const auto = defaultShareDescription(project.eventAt, project.venue?.name);
+  const saved = invitation?.shareDescription ?? '';
+  // 입력하는 동안은 입력 중인 글을, 아니면 저장된 글을 보여줘요(입력칸을 벗어나면 저장).
+  const [draft, setDraft] = useState<string | null>(null);
+  const value = draft ?? saved;
+  const commit = () => {
+    if (draft === null) return;
+    setShareDescription(draft);
+    setDraft(null);
+  };
+  return (
+    <View style={styles.previewBox}>
+      <Text style={styles.label}>공유 미리보기</Text>
+      <View style={styles.card}>
+        {cover ? <Image source={{ uri: cover.uri }} style={styles.cardImage} resizeMode="cover" /> : <View style={[styles.cardImage, styles.cardNoImage]} />}
+        <View style={styles.cardText}>
+          <Text style={styles.cardTitle} numberOfLines={1}>
+            {project.title}
+          </Text>
+          <Text style={styles.cardDesc} numberOfLines={2}>
+            {value.trim() || auto}
+          </Text>
+          <Text style={styles.cardHost}>{shareUrlLabel(project).split('/')[0]}</Text>
+        </View>
+      </View>
+      <Text style={styles.previewLabel}>설명</Text>
+      <TextField value={value} onChangeText={setDraft} onBlur={commit} onSubmitEditing={commit} placeholder={auto} maxLength={60} returnKeyType="done" />
+      <Text style={styles.lockNote}>
+        {'사진은 초대장의 대표 사진(에디터 ⚙ 전체 설정), 제목은 초대장 이름(프로젝트 설정)이에요. 설명을 비우면 일시 · 장소가 들어가요.\n이미 보낸 링크는 카카오톡이 미리보기를 저장해 두어서 바로 바뀌지 않아요.'}
+      </Text>
+    </View>
   );
 }
 
@@ -134,6 +182,47 @@ function CopyIcon() {
 }
 
 const styles = StyleSheet.create({
+  previewBox: {
+    backgroundColor: color.bg.surface,
+    borderWidth: 1,
+    borderColor: color.line.default,
+    borderRadius: radius.card,
+    padding: space[6],
+    gap: space[4],
+  },
+  card: {
+    borderWidth: 1,
+    borderColor: color.line.default,
+    borderRadius: radius.input,
+    overflow: 'hidden',
+    backgroundColor: '#ffffff',
+  },
+  cardImage: {
+    width: '100%',
+    height: 140,
+    backgroundColor: color.bg.canvas,
+  },
+  cardNoImage: {
+    borderBottomWidth: 1,
+    borderBottomColor: color.line.default,
+  },
+  cardText: {
+    padding: space[5],
+    gap: 3,
+  },
+  cardTitle: {
+    ...textStyle({ size: 'control', weight: 'semibold', color: color.ink.primary }),
+  },
+  cardDesc: {
+    ...textStyle({ size: 'small', weight: 'regular', color: color.ink.secondary }),
+  },
+  cardHost: {
+    ...textStyle({ size: 'micro', weight: 'regular', color: color.ink.muted }),
+    marginTop: 2,
+  },
+  previewLabel: {
+    ...textStyle({ size: 'small', weight: 'medium', color: color.ink.label }),
+  },
   flex: {
     flex: 1,
   },

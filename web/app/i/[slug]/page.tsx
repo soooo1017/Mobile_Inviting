@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation';
 import { cache, type ReactNode } from 'react';
 import InvitationView from '../../../components/InvitationView';
 import { getPublicInvitation } from '../../../lib/invitation';
-import { guestTitle, guestView } from '../../../lib/format';
+import { coverOf } from '../../../lib/cover';
+import { defaultShareDescription, guestView } from '../../../lib/format';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -16,7 +17,17 @@ const load = cache(getPublicInvitation);
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const inv = await load(slug);
-  return { title: inv.state === 'live' ? guestTitle(inv.event_type, inv.public_meta?.hosts) : '모이소 초대장', robots: { index: false, follow: false } };
+  if (inv.state !== 'live') return { title: '모이소 초대장', robots: { index: false, follow: false } };
+  // 카카오톡 · 문자 · 메신저로 링크를 보냈을 때 보이는 미리보기 카드: 제목 = 초대장 이름, 설명 = 공유하기 화면에서 정한 문구(없으면 일시 · 장소), 사진 = 대표 사진.
+  const description = inv.content?.shareDescription?.trim() || defaultShareDescription(inv.event_at, inv.public_meta?.venue?.name);
+  const cover = coverOf(inv.content);
+  return {
+    title: inv.title,
+    description,
+    robots: { index: false, follow: false },
+    openGraph: { type: 'website', siteName: '모이소', title: inv.title, description, ...(cover ? { images: [{ url: cover.uri, width: cover.width, height: cover.height }] } : {}) },
+    twitter: { card: cover ? 'summary_large_image' : 'summary', title: inv.title, description, ...(cover ? { images: [cover.uri] } : {}) },
+  };
 }
 
 function Message({ title, sub }: { title: string; sub?: string }): ReactNode {

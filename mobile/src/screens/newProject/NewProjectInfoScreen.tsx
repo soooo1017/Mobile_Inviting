@@ -80,7 +80,7 @@ export function NewProjectInfoScreen({ navigation }: Props) {
             maxLength={30}
             returnKeyType="done"
           />
-          <HelperText>{'내 초대장 목록에서 구분하는 이름이에요. 하객에게는 보이지 않아요.\n비워 두면 위 이름으로 자동으로 들어가고, 나중에 프로젝트 설정에서 바꿀 수 있어요.'}</HelperText>
+          <HelperText>{'내 초대장 목록에 보이고, 카카오톡 등으로 링크를 보낼 때 미리보기 제목으로도 쓰여요.\n비워 두면 위 이름으로 자동으로 들어가고, 나중에 프로젝트 설정에서 바꿀 수 있어요.'}</HelperText>
         </View>
 
         <View style={styles.section}>

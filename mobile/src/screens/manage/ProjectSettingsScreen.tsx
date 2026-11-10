@@ -82,7 +82,7 @@ function Settings({ project, navigation }: { project: Project; navigation: Props
             }}
           />
         </Section>
-        <Section label="초대장 이름" sub="내 초대장 목록에 보여요">
+        <Section label="초대장 이름" sub="내 목록과 공유 미리보기 제목에 쓰여요">
           <TextField value={title} onChangeText={setTitle} onBlur={commitTitle} onSubmitEditing={commitTitle} maxLength={30} returnKeyType="done" />
         </Section>
 

@@ -8,23 +8,13 @@ import { GuestbookSheet, RsvpSheet } from './forms';
 import { themeFromMeta } from '../lib/color';
 import { PRETENDARD_CSS, googleFontUrls } from '../lib/fonts';
 import { bgmEditNotes, bgmTrackById, bgmUrl } from '../lib/bgm';
-import { guestSides, guestTitle, kstDateKey, popupActive, resolveThanks } from '../lib/format';
+import { coverPhoto } from '../lib/cover';
+import { guestSides, kstDateKey, popupActive, resolveThanks } from '../lib/format';
 import { DEFAULT_POPUP_START_DAYS, FORMAT_SIZE, type Bgm, type Block, type BlockOfType, type FontId, type Photo } from '../lib/model';
 import type { LiveInvitation } from '../lib/invitation';
 import { rpc } from '../lib/supabase';
 
 type Props = { slug: string; inv: LiveInvitation; nowIso: string; view: 'invite' | 'thanks' };
-
-/** 대표 사진 — 초대장 사진 중 골라 둔 것, 없으면 첫 사진 (앱의 coverPhoto와 같아요). 서버에 올라간 https 사진만. */
-function coverPhoto(pages: { invite: Block[] }, coverId: string | undefined): Photo | undefined {
-  const all: Photo[] = [];
-  for (const b of pages.invite) {
-    if (b.type === 'image' && b.props.photo) all.push(b.props.photo);
-    if (b.type === 'gallery') all.push(...b.props.photos);
-  }
-  const ok = all.filter((p) => p && /^https:\/\//i.test(p.uri) && p.width > 0 && p.height > 0);
-  return ok.find((p) => p.id === coverId) ?? ok[0];
-}
 
 export default function InvitationView({ slug, inv, nowIso, view }: Props) {
   const now = useMemo(() => new Date(nowIso), [nowIso]);
@@ -41,7 +31,7 @@ export default function InvitationView({ slug, inv, nowIso, view }: Props) {
 
   const ctx: GuestCtx = {
     slug,
-    title: guestTitle(inv.event_type, meta?.hosts),
+    title: inv.title,
     eventAt: inv.event_at,
     eventType: inv.event_type,
     now,

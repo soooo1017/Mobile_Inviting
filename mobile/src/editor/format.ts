@@ -13,6 +13,12 @@ export function formatWhen(iso: string): string {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${WEEKDAY[d.getDay()]}요일 ${ampm} ${h12}시${min ? ` ${min}분` : ''}`;
 }
 
+/** 공유 미리보기 설명의 기본 문구 — "2027년 5월 22일 토요일 오후 1시 · 더채플 청담" (장소가 없으면 일시만). */
+export function defaultShareDescription(iso: string, venueName?: string): string {
+  const place = venueName?.trim();
+  return place ? `${formatWhen(iso)} · ${place}` : formatWhen(iso);
+}
+
 /** "2027. 5. 22. (토) 오후 1:00" — compact form for edit sheets. */
 export function formatWhenShort(iso: string): string {
   const d = new Date(iso);

@@ -175,6 +175,8 @@ export function useInvitation(projectId: string) {
       setFont: (font: FontId) => edit((inv) => ({ ...inv, font })),
       setCoverPhoto: (coverPhotoId: string | undefined) => edit((inv) => ({ ...inv, coverPhotoId })),
       setBgm: (bgm: Bgm) => edit((inv) => ({ ...inv, bgm })),
+      /** 공유 미리보기 설명 — 비우면 기본 문구(일시 · 장소). */
+      setShareDescription: (text: string) => edit((inv) => ({ ...inv, shareDescription: text.trim() || undefined })),
       setPopupEnabled: (enabled: boolean) => edit((inv) => ({ ...inv, popup: { ...inv.popup, enabled } })),
       /** 안내 팝업이 행사 며칠 전부터 뜰지 (null = 공유하면 바로). */
       setPopupStart: (startDays: number | null) => edit((inv) => ({ ...inv, popup: { enabled: inv.popup?.enabled ?? false, startDays } })),
