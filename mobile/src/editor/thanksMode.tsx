@@ -4,14 +4,12 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { color } from '../theme/tokens';
 import { textStyle } from '../theme/typography';
 import { DEFAULT_THANKS_PAGE, useInvitation } from '../state/InvitationsContext';
-import { coverPhoto } from './photos';
-import { simpleThanksToBlocks } from './thanks';
 import type { Project } from '../types/project';
 
 /**
  * 감사페이지 간단하게 ↔ 자유롭게 — shared by the editor's thanks tab and 프로젝트 설정.
- * 간단하게 → 자유롭게 carries the content over as 텍스트 · 이미지; 자유롭게 → 간단하게 starts
- * over, after a confirm when there is something to lose.
+ * 간단하게 → 자유롭게 starts from an empty page (like a brand-new invitation) — nothing is carried over;
+ * 자유롭게 → 간단하게 starts over, after a confirm when there is something to lose.
  */
 export function useThanksMode(project: Project) {
   const { invitation, updateThanks, setPage } = useInvitation(project.id);
@@ -21,7 +19,7 @@ export function useThanksMode(project: Project) {
   const switchTo = (next: 'simple' | 'free') => {
     if (!invitation || next === thanks.mode) return;
     if (next === 'free') {
-      setPage('thanks', simpleThanksToBlocks(project, thanks.simple, coverPhoto(invitation)));
+      setPage('thanks', []);
       updateThanks((t) => ({ ...t, mode: 'free' }));
     } else if (invitation.pages.thanks.length) {
       setConfirming(true);

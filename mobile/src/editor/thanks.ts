@@ -1,5 +1,5 @@
 import type { EventType, Project } from '../types/project';
-import { newId, type Block, type Photo, type ThanksSimple } from './types';
+import type { ThanksSimple } from './types';
 
 /** 감사페이지 간단 모드 기본 문구 (2026-10-18 확정). */
 const DEFAULTS: Record<EventType, { title: string; message: string }> = {
@@ -97,13 +97,3 @@ export function resolveThanks(project: Project, simple: ThanksSimple) {
   };
 }
 
-/** 간단하게 → 자유롭게: the same content as editable 텍스트 · 이미지, so nothing is lost. */
-export function simpleThanksToBlocks(project: Project, simple: ThanksSimple, photo: Photo | undefined): Block[] {
-  const { title, message, sender } = resolveThanks(project, simple);
-  const blocks: Block[] = [];
-  if (title) blocks.push({ id: newId(), type: 'text', props: { format: 'h1', content: title } });
-  if (photo) blocks.push({ id: newId(), type: 'image', props: { photo, ratio: '4:5', crop: { x: 0, y: 0, scale: 1 } } });
-  if (message) blocks.push({ id: newId(), type: 'text', props: { format: 'b1', content: message } });
-  if (sender) blocks.push({ id: newId(), type: 'text', props: { format: 'b2', content: sender } });
-  return blocks;
-}

@@ -101,6 +101,12 @@ export function ImageSheet({ block, onChange, onDone, photoChoices }: Props<'ima
   const [choosing, setChoosing] = useState(false);
   const photoChange = usePhotoChange();
   const { photo, ratio, crop } = block.props;
+  // 안내 팝업 · 감사페이지(photoChoices가 있을 때)는 [사진 선택]에서 초대장에 쓴 사진 중 한 장을 고르거나, 마지막 +로 폰 앨범에서 다른 1장을 추가해요.
+  const choices = photoChoices ?? [];
+  const pickFromInvite = photoChoices !== undefined;
+  const fromInvite = Boolean(photo && choices.some((g) => g.photos.some((p) => p.uri === photo.uri)));
+  // 이 창에서 +로 추가한 사진 — 다른 사진을 골랐다가도 다시 고를 수 있게 창이 열려 있는 동안 기억해요.
+  const [added, setAdded] = useState<Photo | undefined>(() => (photo && !fromInvite ? photo : undefined));
 
   const choose = async () => {
     try {
@@ -115,19 +121,24 @@ export function ImageSheet({ block, onChange, onDone, photoChoices }: Props<'ima
     }
   };
 
-  // 안내 팝업 · 감사페이지는 새 사진을 올리는 대신 초대장에 쓴 사진 중 한 장을 그대로 쓸 수 있어요(같은 파일이라 서버 공간도 안 늘어요).
-  const choices = photoChoices ?? [];
-  const hasChoices = choices.some((g) => g.photos.length > 0);
-  const fromInvite = Boolean(photo && choices.some((g) => g.photos.some((p) => p.uri === photo.uri)));
   const useChoice = (p: Photo) => {
     onChange({ ...block, props: { ...block.props, photo: { ...p, id: newId('p') }, crop: { x: 0, y: 0, scale: 1 } } });
-    setChoosing(false);
+  };
+  const addFromAlbum = async () => {
+    try {
+      const [picked] = await pickPhotos(1);
+      if (!picked) return;
+      setAdded(picked);
+      onChange({ ...block, props: { ...block.props, photo: picked, crop: { x: 0, y: 0, scale: 1 } } });
+    } catch {
+      Alert.alert('사진을 불러오지 못했어요', '사진 접근 권한을 확인해주세요.');
+    }
   };
 
   if (choosing) {
     return (
-      <EditorSheet title="초대장 사진에서 고르기" onBack={() => setChoosing(false)} onDone={() => setChoosing(false)} doneLabel="닫기" maxHeight={0.75}>
-        <PhotoChoiceGrid groups={choices} selectedUri={photo?.uri} onSelect={useChoice} />
+      <EditorSheet title="사진 선택" onBack={() => setChoosing(false)} onDone={() => setChoosing(false)} doneLabel="닫기" maxHeight={0.75}>
+        <PhotoChoiceGrid groups={choices} selectedUri={photo?.uri} onSelect={useChoice} extra={added} onAdd={addFromAlbum} />
       </EditorSheet>
     );
   }
@@ -139,17 +150,12 @@ export function ImageSheet({ block, onChange, onDone, photoChoices }: Props<'ima
           <View style={styles.thumb}>{photo ? <PhotoFrame photo={photo} aspect={1} /> : null}</View>
           <View style={styles.pickText}>
             <Text style={styles.pickTitle}>{photo ? '사진 1장' : '사진 없음'}</Text>
-            <Text style={styles.pickSub}>{photo ? (fromInvite ? '초대장에 쓴 사진' : '앨범에서 고른 사진') : hasChoices ? '초대장 사진 중에서 고르거나 앨범에서 골라주세요' : '앨범에서 사진을 골라주세요'}</Text>
+            {photo || !pickFromInvite ? <Text style={styles.pickSub}>{photo ? (fromInvite ? '초대장에 쓴 사진' : '앨범에서 고른 사진') : '앨범에서 사진을 골라주세요'}</Text> : null}
           </View>
-          <Pressable onPress={choose} style={styles.ghostBtn}>
-            <Text style={styles.ghostLabel}>{photo ? '사진 바꾸기' : '사진 고르기'}</Text>
+          <Pressable onPress={pickFromInvite ? () => setChoosing(true) : choose} style={styles.ghostBtn}>
+            <Text style={styles.ghostLabel}>{photo ? '사진 바꾸기' : '사진 선택'}</Text>
           </Pressable>
         </View>
-        {hasChoices ? (
-          <Pressable onPress={() => setChoosing(true)} style={styles.coverBtn}>
-            <Text style={styles.ghostLabel}>초대장 사진에서 고르기</Text>
-          </Pressable>
-        ) : null}
         <Section label="비율">
           <Chips options={RATIOS} value={ratio} onChange={(r) => onChange({ ...block, props: { ...block.props, ratio: r } })} />
           <Help>너비는 글과 같은 좌우 여백으로 맞춰요.</Help>
