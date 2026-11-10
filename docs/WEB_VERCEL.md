@@ -20,7 +20,7 @@
 
 ## 3. 다음 단계 (순서)
 1. Supabase에서 `supabase/schema.sql` **9번(서버 저장)** 실행 — 표는 만들어 뒀어요(`docs/SERVER_STORAGE.md` §13)
-2. 앱의 [공유 시작]이 초대장을 올리고, 공유 중에는 고칠 때마다 자동 반영
+2. 앱이 초대장을 만들 때부터 서버에 저장하고(작성 중 draft), [공유 시작]을 누르면 하객에게 열기
 3. `/i/[slug]`가 Supabase에서 초대장을 읽어 앱 미리보기와 같은 모양으로 그리기 (환경변수: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Vercel Settings → Environment Variables)
 4. 참석 응답 · 방명록 남기기, 방문 통계(익명 숫자), 감사페이지 자동 전환
 5. 공유 전 방문 처리(주인은 미리보기, 다른 사람은 "준비 중") — `SERVER_STORAGE.md` §9

@@ -192,19 +192,20 @@ create policy "inquiries: insert own"
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- 9) 하객용 웹 페이지 · 서버 저장 (2026-11-10)  — docs/SERVER_STORAGE.md §13
 --
--- 방식: 공유하기 전에는 초대장이 폰에만 있고, [공유 시작]을 누르면 서버에 올라가요.
--- 공유 중에는 고칠 때마다 서버에도 자동으로 반영돼요(링크에 바로 적용). 공유가 끝나면(중지 · 만료) 다시 폰이 기준이에요.
--- 하객은 로그인 없이 링크만 열어요. 하객이 쓰는 건 아래 함수(RPC)로만 해서 표를 직접 읽거나 쓰지 못하게 막아요.
+-- 방식: 초대장은 만들 때부터 서버에 "내 것"으로 저장돼요(작성 중 = draft, 하객에게는 안 보임). 고칠 때마다 자동으로 반영되고,
+-- 폰을 바꿔도 로그인하면 이어서 고칠 수 있어요. [공유 시작]을 누르면 하객에게 열려요(shared), 중지하면 닫혀요(stopped).
+-- 두 기기가 동시에 고치면 rev(수정 번호)로 알아채요. 하객은 로그인 없이 링크만 열어요. 하객이 쓰는 건 아래 함수(RPC)로만 해서 표를 직접 읽거나 쓰지 못하게 막아요.
 -- 이 부분은 여러 번 실행해도 안전해요(이미 있으면 건너뛰거나 덮어써요).
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- 9-1) 초대장 — 공유를 시작한 초대장만 한 줄씩 있어요(작성 중인 초대장은 폰에만 있어요).
+-- 9-1) 초대장 — 만든 초대장 하나당 한 줄. 작성 중(draft)도 서버에 있어서 폰을 바꿔도 이어서 고칠 수 있어요.
 create table if not exists public.invitations (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users (id) on delete cascade,
-  -- 폰 안에서 쓰는 초대장 번호. 같은 초대장을 다시 올릴 때(첫 공유가 끊겼다 다시 시도 등) 한 줄로 합치려고 둬요.
+  -- 폰 안에서 쓰는 초대장 번호. 같은 초대장을 다시 올릴 때(올리다 끊겨 다시 시도 등) 한 줄로 합치려고 둬요.
   local_id text not null,
   -- 링크 주소(https://도메인/i/<slug>). 서버 전체에서 하나뿐이에요. 앱이 만든 영문 소문자 · 숫자 · - 만 허용.
+  -- 만들 때 바로 자리를 잡아서 QR · 홍보물 링크가 겹치지 않아요. 공유를 시작하기 전(draft)까지만 바꿀 수 있어요.
   slug text not null check (slug ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$' and char_length(slug) between 4 and 40),
   title text not null,
   event_type text not null,
@@ -213,9 +214,16 @@ create table if not exists public.invitations (
   content jsonb not null default '{}'::jsonb,
   -- 감사페이지 설정과 내용
   thanks jsonb not null default '{}'::jsonb,
-  -- shared = 공유 중(링크가 열려요, 고치면 바로 반영) / stopped = 공유 중지(링크는 "공유가 끝났어요")
-  status text not null default 'shared' check (status in ('shared', 'stopped')),
-  shared_at timestamptz not null default now(),
+  -- 다른 폰에서 이어서 고칠 때 필요한 나머지 설정(호스트 · 장소 · 링크 방식 · 공유 옵션 등). 하객에게는 안 보내요.
+  meta jsonb not null default '{}'::jsonb,
+  -- draft = 작성 중(만든 사람만 봐요, 링크는 "준비 중") / shared = 공유 중(링크가 열려요, 고치면 바로 반영)
+  -- stopped = 공유 중지(링크는 "공유가 끝났어요")
+  status text not null default 'draft' check (status in ('draft', 'shared', 'stopped')),
+  shared_at timestamptz,
+  -- 수정 번호: 고칠 때마다 1씩 올라가요. 앱은 "내가 본 번호"가 그대로일 때만 저장해서(where rev = …) 다른 폰이 먼저 고친 걸 덮어쓰지 않아요.
+  rev integer not null default 1,
+  -- 마지막으로 고친 기기(앱이 정한 이름 · 번호) — "다른 기기에서 수정했어요" 안내용
+  last_device text,
   -- 서버에서 지워지는 날 = 행사일 + 1년 (아래 트리거가 계산해요 — 앱이 바꿀 수 없어요)
   expires_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
@@ -234,11 +242,24 @@ as $$
 begin
   new.expires_at := new.event_at + interval '1 year';
   new.updated_at := now();
-  -- 링크 주소는 한 번 올린 뒤로 바꿀 수 없어요(공유를 시작하면 링크는 영구 고정).
   if tg_op = 'UPDATE' then
-    new.slug := old.slug;
+    new.rev := old.rev + 1;
     new.owner_id := old.owner_id;
     new.local_id := old.local_id;
+    -- 링크 주소는 공유를 시작하기 전(draft)까지만 바꿀 수 있어요. 한 번 시작하면 중지해도 영구 고정.
+    if old.status <> 'draft' then
+      new.slug := old.slug;
+    end if;
+    -- 공유를 처음 시작한 시각
+    if old.status = 'draft' and new.status = 'shared' and new.shared_at is null then
+      new.shared_at := now();
+    end if;
+    -- 한 번 공유한 초대장을 다시 작성 중(draft)으로 되돌릴 수는 없어요(링크가 이미 퍼졌어요).
+    if old.status <> 'draft' and new.status = 'draft' then
+      new.status := old.status;
+    end if;
+  elsif new.status = 'shared' and new.shared_at is null then
+    new.shared_at := now();
   end if;
   return new;
 end;
@@ -339,6 +360,9 @@ begin
   end if;
   if inv.expires_at < now() then
     return jsonb_build_object('state', 'ended');
+  end if;
+  if inv.status = 'draft' then
+    return jsonb_build_object('state', 'preparing');
   end if;
   if inv.status <> 'shared' then
     return jsonb_build_object('state', 'stopped');
