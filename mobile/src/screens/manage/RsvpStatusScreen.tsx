@@ -11,8 +11,11 @@ import { SelectChip } from '../../components/SelectChip';
 import { DarkToast } from '../../editor/ui';
 import { CallIcon, SmsIcon } from '../../editor/icons';
 import { formatDeadline, fromDateKey, guestSides } from '../../editor/format';
+import type { RsvpFields } from '../../editor/types';
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
+import { exportGuestData, exportMessage, type DataFormat } from '../../export/guestExport';
+import { ExportSheet } from './ExportSheet';
 import { EmptyNote, Guide, isShared, ManageHeader, manageStyles, NotShared } from './common';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ManageRsvp'>;
@@ -57,6 +60,9 @@ export function RsvpStatusScreen({ navigation, route }: Props) {
   const [toast, setToast] = useState<string | null>(null);
   const [sort, setSort] = useState<RsvpSort>('recent');
   const [sortOpen, setSortOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const projectId = route.params.projectId;
   // 이 화면을 열면 지금까지의 응답을 확인한 것으로 쳐서 "새 응답" 표시가 사라져요.
   // (서버에서 읽은 뒤에 표시해야, 방금 읽은 것이 "새 소식"으로 남지 않아요.)
@@ -66,6 +72,15 @@ export function RsvpStatusScreen({ navigation, route }: Props) {
 
   if (!project) return <SafeAreaView style={manageStyles.screen} />;
   const back = () => navigation.goBack();
+  const runExport = async (format: DataFormat, fields: RsvpFields | undefined) => {
+    setExporting(true);
+    setExportError(null);
+    const result = await exportGuestData({ project, rsvp: true, guestbook: false, format, rsvpFields: fields });
+    setExporting(false);
+    const message = exportMessage(result);
+    if (message) setExportError(message);
+    else setExportOpen(false);
+  };
   const block = invitation?.pages.invite.find((b) => b.type === 'rsvp');
 
   let body;
@@ -193,7 +208,10 @@ export function RsvpStatusScreen({ navigation, route }: Props) {
         <View style={manageStyles.footer}>
           <Pressable
             disabled={!responses.length}
-            onPress={() => setToast('엑셀 내려받기는 준비 중이에요')}
+            onPress={() => {
+              setExportError(null);
+              setExportOpen(true);
+            }}
             style={[manageStyles.outlineBtn, !responses.length && manageStyles.off]}
           >
             <Text style={manageStyles.outlineBtnLabel}>엑셀로 내려받기</Text>
@@ -216,6 +234,14 @@ export function RsvpStatusScreen({ navigation, route }: Props) {
             ))}
           </View>
         </BottomSheet>
+        <ExportSheet
+          visible={exportOpen}
+          title="참석 응답 내려받기"
+          busy={exporting}
+          error={exportError}
+          onPick={(format) => void runExport(format, f)}
+          onClose={() => setExportOpen(false)}
+        />
         <BottomSheet visible={detail !== null} onClose={() => setDetail(null)} title={detail?.name ?? ''}>
           {detail ? <ResponseDetail response={detail} fields={f} sides={sides} /> : null}
         </BottomSheet>

@@ -13,6 +13,8 @@ import { guestSides } from '../../editor/format';
 import type { BlockOfType } from '../../editor/types';
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
+import { exportGuestData, exportMessage, type DataFormat } from '../../export/guestExport';
+import { ExportSheet } from './ExportSheet';
 import { EmptyNote, Guide, HeaderLink, isShared, ManageHeader, manageStyles, NotShared } from './common';
 import { SideTag } from './RsvpStatusScreen';
 
@@ -42,6 +44,9 @@ export function GuestbookManageScreen({ navigation, route }: Props) {
   const [picked, setPicked] = useState<string[]>([]);
   const [confirm, setConfirm] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const projectId = route.params.projectId;
   // 이 화면을 열면 지금까지의 방명록 글을 확인한 것으로 쳐서 "새 방명록" 표시가 사라져요.
@@ -51,6 +56,15 @@ export function GuestbookManageScreen({ navigation, route }: Props) {
   }, [projectId, markSeen, status, posts.length]);
 
   if (!project) return <SafeAreaView style={manageStyles.screen} />;
+  const runExport = async (format: DataFormat) => {
+    setExporting(true);
+    setExportError(null);
+    const result = await exportGuestData({ project, rsvp: false, guestbook: true, format });
+    setExporting(false);
+    const message = exportMessage(result);
+    if (message) setExportError(message);
+    else setExportOpen(false);
+  };
   const blocks = (invitation?.pages.invite ?? []).filter((b): b is BlockOfType<'guestbook'> => b.type === 'guestbook');
   const block = blocks[0];
   const shared = isShared(project);
@@ -170,7 +184,10 @@ export function GuestbookManageScreen({ navigation, route }: Props) {
           ) : (
             <Pressable
               disabled={!posts.length}
-              onPress={() => setToast('엑셀 내려받기는 준비 중이에요')}
+              onPress={() => {
+                setExportError(null);
+                setExportOpen(true);
+              }}
               style={[manageStyles.outlineBtn, !posts.length && manageStyles.off]}
             >
               <Text style={manageStyles.outlineBtnLabel}>엑셀로 내려받기</Text>
@@ -197,6 +214,14 @@ export function GuestbookManageScreen({ navigation, route }: Props) {
         />
       )}
       {body}
+      <ExportSheet
+        visible={exportOpen}
+        title="방명록 내려받기"
+        busy={exporting}
+        error={exportError}
+        onPick={(format) => void runExport(format)}
+        onClose={() => setExportOpen(false)}
+      />
       <ConfirmDialog
         visible={confirm}
         title={`글 ${picked.length}개를 삭제할까요?`}

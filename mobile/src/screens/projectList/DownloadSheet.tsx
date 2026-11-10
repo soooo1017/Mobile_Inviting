@@ -5,7 +5,11 @@ import { Checkbox } from '../../components/Checkbox';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
+import { exportGuestData, exportMessage } from '../../export/guestExport';
 import type { Project } from '../../types/project';
+
+/** 초대장 · 감사 페이지를 이미지(.png) / PDF로 내려받는 기능은 아직 만들지 않았어요 — 만들면 true로. */
+const IMAGE_EXPORT_READY = false;
 
 type ImageFormat = 'image' | 'pdf';
 type DataFormat = 'xlsx' | 'csv';
@@ -17,7 +21,7 @@ type Items = {
   guestbook: boolean;
 };
 
-const DEFAULT_ITEMS: Items = { invitation: true, thanks: false, rsvp: true, guestbook: true };
+const DEFAULT_ITEMS: Items = { invitation: false, thanks: false, rsvp: true, guestbook: true };
 
 type Props = {
   visible: boolean;
@@ -41,6 +45,8 @@ export function DownloadSheet({ visible, project, onClose, onDownloaded }: Props
   const [imageFormat, setImageFormat] = useState<ImageFormat>('image');
   const [dataFormat, setDataFormat] = useState<DataFormat>('xlsx');
   const [wasVisible, setWasVisible] = useState(visible);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (visible !== wasVisible) {
     setWasVisible(visible);
@@ -49,15 +55,17 @@ export function DownloadSheet({ visible, project, onClose, onDownloaded }: Props
       setItems(DEFAULT_ITEMS);
       setImageFormat('image');
       setDataFormat('xlsx');
+      setBusy(false);
+      setError(null);
     }
   }
 
   if (!project) return null;
 
   const thanksAvailable = project.thanks.enabled;
-  const anyChecked = items.invitation || (thanksAvailable && items.thanks) || items.rsvp || items.guestbook;
+  const anyChecked = (IMAGE_EXPORT_READY && (items.invitation || (thanksAvailable && items.thanks))) || items.rsvp || items.guestbook;
 
-  const showGroupA = items.invitation || (thanksAvailable && items.thanks);
+  const showGroupA = IMAGE_EXPORT_READY && (items.invitation || (thanksAvailable && items.thanks));
   const showGroupB = items.rsvp || items.guestbook;
   const groupALabels = [items.invitation && '초대장', thanksAvailable && items.thanks && '감사 페이지'].filter(Boolean) as string[];
   const groupBLabels = [items.rsvp && 'RSVP 응답', items.guestbook && '방명록'].filter(Boolean) as string[];
@@ -74,7 +82,18 @@ export function DownloadSheet({ visible, project, onClose, onDownloaded }: Props
 
   const toggle = (key: keyof Items) => setItems((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const handleDownload = () => {
+  // 응답 · 방명록은 서버에서 최신 내용을 받아 파일로 만들고, 폰의 공유창으로 보내요. 만드는 동안 이 창은 열려 있어요.
+  const handleDownload = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    const result = await exportGuestData({ project, rsvp: items.rsvp, guestbook: items.guestbook, format: dataFormat, zip: true });
+    setBusy(false);
+    const message = exportMessage(result);
+    if (message) {
+      setError(message);
+      return;
+    }
     onDownloaded();
     onClose();
   };
@@ -105,17 +124,19 @@ export function DownloadSheet({ visible, project, onClose, onDownloaded }: Props
             <View style={styles.itemList}>
               <ItemRow
                 label="초대장"
-                desc="공유한 초대장 화면 전체"
+                desc={IMAGE_EXPORT_READY ? '공유한 초대장 화면 전체' : '이미지 · PDF 내려받기는 준비 중이에요'}
                 checked={items.invitation}
                 onPress={() => toggle('invitation')}
+                disabled={!IMAGE_EXPORT_READY}
                 first
               />
               {thanksAvailable ? (
                 <ItemRow
                   label="감사 페이지"
-                  desc="설정한 감사 페이지 화면"
+                  desc={IMAGE_EXPORT_READY ? '설정한 감사 페이지 화면' : '이미지 · PDF 내려받기는 준비 중이에요'}
                   checked={items.thanks}
                   onPress={() => toggle('thanks')}
+                  disabled={!IMAGE_EXPORT_READY}
                 />
               ) : null}
               <ItemRow
@@ -165,7 +186,8 @@ export function DownloadSheet({ visible, project, onClose, onDownloaded }: Props
               <Text style={styles.previewFiles}>{fileParts.join(' · ')}</Text>
             </View>
 
-            <PrimaryButton label="다운로드" onPress={handleDownload} />
+            {error ? <Text style={styles.error}>{error}</Text> : null}
+            <PrimaryButton label={busy ? '파일을 만드는 중…' : '다운로드'} disabled={busy} onPress={() => void handleDownload()} />
           </View>
         )}
       </View>
@@ -179,20 +201,22 @@ function ItemRow({
   checked,
   onPress,
   first,
+  disabled,
 }: {
   label: string;
   desc: string;
   checked: boolean;
   onPress: () => void;
   first?: boolean;
+  disabled?: boolean;
 }) {
   return (
-    <Pressable style={[styles.itemRow, !first && styles.itemRowDivider]} onPress={onPress}>
+    <Pressable style={[styles.itemRow, !first && styles.itemRowDivider, disabled && styles.itemOff]} onPress={disabled ? undefined : onPress} disabled={disabled}>
       <View style={styles.itemText}>
         <Text style={styles.itemLabel}>{label}</Text>
         <Text style={styles.itemDesc}>{desc}</Text>
       </View>
-      <Checkbox checked={checked} onPress={onPress} />
+      <Checkbox checked={checked && !disabled} onPress={disabled ? () => {} : onPress} />
     </Pressable>
   );
 }
@@ -235,6 +259,13 @@ function FormatGroup({
 }
 
 const styles = StyleSheet.create({
+  itemOff: {
+    opacity: 0.45,
+  },
+  error: {
+    ...textStyle({ size: 'small', weight: 'medium', color: color.status.error }),
+    textAlign: 'center',
+  },
   overlay: {
     flex: 1,
     backgroundColor: color.overlay.sheet,
