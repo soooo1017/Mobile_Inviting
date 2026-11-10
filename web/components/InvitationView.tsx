@@ -255,61 +255,114 @@ function BgmCredit({ track, bgm }: { track: NonNullable<ReturnType<typeof bgmTra
 }
 
 /**
- * ♪ 버튼 — 브라우저는 소리가 나는 자동 재생을 막아서, 하객이 누르면 시작해요(앱 미리보기와 같아요).
- * 노래 편집에서 정한 구간만, 정한 속도로 반복해요.
+ * ♪ 버튼 — 소리가 나는 자동 재생은 브라우저(사파리 · 크롬)가 막아서, **하객이 화면을 처음 터치하는 순간** 음악이 시작돼요
+ * (팝업 닫기 · 버튼 누르기 · 스크롤 후 탭 등 어디든 첫 터치). 직접 ♪를 눌러 끈 뒤에는 다시 자동으로 켜지 않아요.
+ * 노래 편집에서 정한 구간만, 정한 속도로 반복해요. 재생 중에는 막대가 움직이는 모양으로 바뀌어서 소리가 나고 있다는 걸 알 수 있어요.
  */
 function MusicButton({ url, bgm }: { url: string; bgm: Bgm | undefined }) {
   const [playing, setPlaying] = useState(false);
   const audio = useRef<HTMLAudioElement | null>(null);
+  const userOff = useRef(false);
   const start = Math.max(0, bgm?.start ?? 0);
   const end = bgm?.end ?? null;
   const speed = bgm?.speed && bgm.speed > 0 ? bgm.speed : 1;
 
-  useEffect(() => () => audio.current?.pause(), []);
-
-  const toggle = async () => {
-    if (playing) {
-      audio.current?.pause();
-      setPlaying(false);
-      return;
-    }
+  const ensure = useCallback((): HTMLAudioElement => {
     let a = audio.current;
-    if (!a) {
-      a = new Audio(url);
-      a.preload = 'auto';
-      const el = a;
-      const rewind = () => {
-        el.currentTime = start;
-      };
-      el.addEventListener('loadedmetadata', () => {
-        el.defaultPlaybackRate = speed;
-        el.playbackRate = speed;
-        if (el.currentTime < start) rewind();
-      });
-      el.addEventListener('timeupdate', () => {
-        if (end !== null && el.currentTime >= end) rewind();
-      });
-      el.addEventListener('ended', () => {
-        rewind();
-        void el.play().catch(() => setPlaying(false));
-      });
-      audio.current = a;
-    }
+    if (a) return a;
+    a = new Audio(url);
+    a.preload = 'auto';
+    const el = a;
+    const rewind = () => {
+      el.currentTime = start;
+    };
+    el.addEventListener('loadedmetadata', () => {
+      el.defaultPlaybackRate = speed;
+      el.playbackRate = speed;
+      if (el.currentTime < start) rewind();
+    });
+    el.addEventListener('timeupdate', () => {
+      if (end !== null && el.currentTime >= end) rewind();
+    });
+    el.addEventListener('ended', () => {
+      rewind();
+      void el.play().catch(() => setPlaying(false));
+    });
+    // 전화가 오는 등으로 브라우저가 멈추면 버튼 모양도 맞춰요.
+    el.addEventListener('pause', () => setPlaying(false));
+    el.addEventListener('playing', () => setPlaying(true));
+    audio.current = el;
+    return el;
+  }, [url, start, end, speed]);
+
+  const play = useCallback(async (): Promise<boolean> => {
+    const a = ensure();
     a.defaultPlaybackRate = speed;
     a.playbackRate = speed;
     if (a.readyState >= 1 && (a.currentTime < start || (end !== null && a.currentTime >= end))) a.currentTime = start;
     try {
       await a.play();
-      setPlaying(true);
+      return true;
     } catch {
-      setPlaying(false);
+      return false;
     }
+  }, [ensure, speed, start, end]);
+
+  // 열자마자 한 번 시도(자동 재생을 허용하는 브라우저 · 컴퓨터에서는 바로 나와요) + 막히면 첫 터치에서 시작.
+  useEffect(() => {
+    let done = false;
+    const cleanup = () => {
+      for (const ev of ['pointerup', 'touchend', 'click', 'keydown']) window.removeEventListener(ev, onGesture, true);
+    };
+    async function onGesture(e: Event) {
+      if (done || userOff.current) return;
+      // ♪ 버튼을 직접 누른 건 버튼이 처리해요(여기서 켜면 곧바로 꺼져 버려요).
+      if (e.target instanceof Element && e.target.closest('.music')) return;
+      if (await play()) {
+        done = true;
+        cleanup();
+      }
+    }
+    for (const ev of ['pointerup', 'touchend', 'click', 'keydown']) window.addEventListener(ev, onGesture, true);
+    void play().then((ok) => {
+      if (ok) {
+        done = true;
+        cleanup();
+      }
+    });
+    return () => {
+      done = true;
+      cleanup();
+      audio.current?.pause();
+    };
+  }, [play]);
+
+  const toggle = async () => {
+    if (playing) {
+      userOff.current = true;
+      audio.current?.pause();
+      setPlaying(false);
+      return;
+    }
+    userOff.current = false;
+    if (await play()) setPlaying(true);
   };
 
   return (
     <div className="music-wrap">
-      <button className={`music ${playing ? 'on' : 'off'}`} onClick={toggle} aria-label={playing ? '배경음악 끄기' : '배경음악 켜기'}>
-        <span>♪</span>
+      <button className={`music ${playing ? 'on' : 'off'}`} onClick={toggle} aria-label={playing ? '배경음악 끄기' : '배경음악 켜기'} aria-pressed={playing}>
+        {playing ? (
+          <span className="eq" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+          </span>
+        ) : (
+          <span className="note" aria-hidden="true">
+            ♪
+          </span>
+        )}
       </button>
     </div>
   );
