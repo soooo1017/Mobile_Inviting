@@ -7,7 +7,7 @@ import { DEFAULT_THANKS_PAGE, useInvitation } from '../state/InvitationsContext'
 import type { Project } from '../types/project';
 
 /**
- * 감사페이지 간단하게 ↔ 자유롭게 — shared by the editor's thanks tab and 프로젝트 설정.
+ * 감사페이지 간단하게 ↔ 자유롭게 — used by the editor's thanks tab.
  * 간단하게 → 자유롭게 starts from an empty page (like a brand-new invitation) — nothing is carried over;
  * 자유롭게 → 간단하게 starts over, after a confirm when there is something to lose.
  */

@@ -213,7 +213,6 @@ export function ProjectListScreen(_props: Props) {
         onPreview={() => { setActionProjectId(null); showToast('미리보기는 다음 핸드오프에서 제공됩니다'); }}
         onCopyLink={() => actionProject && handleCopyLink(actionProject)}
         onDelete={() => { setDeleteProjectId(actionProjectId); setActionProjectId(null); }}
-        onThanksEdit={() => { if (actionProject) navigation.navigate('Editor', { projectId: actionProject.id, tab: 'thanks' }); setActionProjectId(null); }}
       />
       <DeleteDialog
         visible={deleteProjectId != null}

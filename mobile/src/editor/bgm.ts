@@ -112,7 +112,7 @@ export function bgmEditNotes(bgm: Bgm | undefined): string[] {
   return notes;
 }
 
-/** ⚙ 전체 설정 row: [label, value]. */
+/** ⚙ 초대장 설정 row: [label, value]. */
 export function bgmSummary(bgm: Bgm | undefined): [string, string] {
   const edits: string[] = [];
   if (bgm?.start != null || bgm?.end != null) {

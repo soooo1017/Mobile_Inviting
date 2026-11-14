@@ -18,6 +18,8 @@ export type ProjectMeta = {
   themeId: string;
   colors?: ThemeColors;
   link?: Pick<ProjectLink, 'mode' | 'phrase' | 'rand'>;
+  /** 메시지 작성하기의 인사말 — 만든 사람만 쓰는 글이라 content가 아니라 meta에 둬요(하객에게는 안 가요). */
+  shareMessage?: string;
   createdAt: string;
 };
 
@@ -51,7 +53,7 @@ export function statusOf(project: Project): ServerStatus {
 }
 
 export function toPayload(project: Project, invitation: Invitation): UpsertPayload {
-  const { projectId: _projectId, ...content } = invitation;
+  const { projectId: _projectId, shareMessage, ...content } = invitation;
   void _projectId;
   return {
     local_id: project.id,
@@ -69,6 +71,7 @@ export function toPayload(project: Project, invitation: Invitation): UpsertPaylo
       themeId: project.themeId,
       colors: project.colors,
       link: project.link ? { mode: project.link.mode, phrase: project.link.phrase, rand: project.link.rand } : undefined,
+      shareMessage,
       createdAt: project.createdAt,
     },
     status: statusOf(project),
@@ -107,6 +110,7 @@ export function fromRow(row: ServerRow, prev?: Project): { project: Project; inv
   // 예전에 저장된 내용에 없는 칸을 채워요(안내 팝업 · 감사페이지가 비어 있을 수 있어요).
   const saved = (row.content?.pages ?? {}) as Partial<Invitation['pages']>;
   invitation.pages = { invite: saved.invite ?? [], popup: saved.popup ?? [], thanks: saved.thanks ?? [] };
+  if (meta?.shareMessage) invitation.shareMessage = meta.shareMessage;
   return { project, invitation };
 }
 

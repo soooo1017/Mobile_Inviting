@@ -83,7 +83,7 @@ export function NewProjectTypeScreen({ navigation }: Props) {
               placeholder="예: 송년회"
               autoFocus
             />
-            <HelperText>프로젝트 목록에 표시돼요.</HelperText>
+            <HelperText>내 초대장 목록에 표시돼요.</HelperText>
           </View>
         ) : null}
       </KeyboardAwareForm>

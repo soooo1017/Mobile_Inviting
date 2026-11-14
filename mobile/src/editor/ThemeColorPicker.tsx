@@ -18,7 +18,7 @@ const comboIndex = (c: ThemeColors) => COLOR_COMBOS.findIndex(([x, y]) => (same(
 
 /**
  * 배경 · 포인트 색 + 글씨 색. Five 색 조합 (two colors each — which one is 배경 and which 포인트 is up to
- * the user, ⇄ swaps them) and 직접 (pick each). Shared by new-project step 4 and the editor's ⚙ 전체 설정.
+ * the user, ⇄ swaps them) and 직접 (pick each). Shared by new-project step 4 and the editor's ⚙ 초대장 설정.
  */
 export function ThemeColorPicker({ colors, onChange }: { colors: ThemeColors; onChange: (colors: ThemeColors) => void }) {
   const [custom, setCustom] = useState(() => comboIndex(colors) < 0);

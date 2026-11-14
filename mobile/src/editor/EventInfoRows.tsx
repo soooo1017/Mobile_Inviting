@@ -8,7 +8,7 @@ import type { Project } from '../types/project';
 
 /**
  * 행사 정보 rows — 날짜 · 시간 (calendar / time wheel open right below) and 장소.
- * Shared by ⚙ 전체 설정 and 관리 › 프로젝트 설정 so both always look and behave the same.
+ * Used by ⚙ 초대장 설정.
  */
 export function EventInfoRows({
   project,

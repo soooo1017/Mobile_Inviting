@@ -9,6 +9,9 @@ import { DEFAULT_THANKS_PAGE, useInvitation } from '../../state/InvitationsConte
 import type { AudioSource } from 'expo-audio';
 import { BottomSheet } from '../../components/BottomSheet';
 import { SelectChip } from '../../components/SelectChip';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { PopupStartPicker } from '../../editor/PopupStartPicker';
+import { shareStateLabel } from '../../share/link';
 import { DarkToast } from '../../editor/ui';
 import { SimpleThanksView } from '../../editor/canvas/SimpleThanks';
 import { ThanksSimpleSheet } from '../../editor/sheets/ThanksSimpleSheet';
@@ -35,7 +38,7 @@ import { BlockDeleteContext } from '../../editor/EditorSheet';
 import { ModalSafeArea } from '../../components/ModalSafeArea';
 import { EyeIcon, GearIcon, SortIcon } from '../../editor/icons';
 import { blockLabel, blockSummary } from '../../editor/format';
-import { BLOCK_LABEL, blockAddLimit, defaultBlock, newId, POPUP_BLOCK_TYPES, THANKS_BLOCK_TYPES, type Bgm, type Block, type BlockType, type PageKey } from '../../editor/types';
+import { BLOCK_LABEL, blockAddLimit, defaultBlock, newId, popupStartDays, POPUP_BLOCK_TYPES, THANKS_BLOCK_TYPES, type Bgm, type Block, type BlockType, type PageKey } from '../../editor/types';
 import type { Project } from '../../types/project';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Editor'>;
@@ -72,7 +75,7 @@ function Editor({
 }) {
   const { invitation, insertBlock, updateBlock, removeBlock, duplicateBlock, moveBlock, setFont, setCoverPhoto, setBgm, setPopupEnabled, setPopupStart, updateThanks } =
     useInvitation(project.id);
-  const { setThanksSettings, setShared, setLink } = useProjects();
+  const { setThanksSettings } = useProjects();
   const { height: screenH } = useWindowDimensions();
   // [감사페이지] 탭은 감사페이지를 쓰는 경우에만 보여요.
   const hasThanks = project.thanks.enabled;
@@ -88,6 +91,11 @@ function Editor({
   const [toast, setToast] = useState<Toast>(null);
   const [thanksSheetOpen, setThanksSheetOpen] = useState(false);
   const [daysOpen, setDaysOpen] = useState(false);
+  const [addPageOpen, setAddPageOpen] = useState(false);
+  const [pageMenuOpen, setPageMenuOpen] = useState(false);
+  const [startOpen, setStartOpen] = useState(false);
+  /** 안내 팝업 · 감사페이지를 "사용 안 함"으로 끌지 묻는 중인 쪽. */
+  const [offTarget, setOffTarget] = useState<'popup' | 'thanks' | null>(null);
   const scrollRef = useRef<ScrollViewInstance>(null);
   const blockY = useRef<Record<string, number>>({});
   const popupScrollRef = useRef<ScrollViewInstance>(null);
@@ -103,10 +111,14 @@ function Editor({
   // 안내 팝업: 초대장을 열면 먼저 뜨는 작은 페이지.
   const isPopup = page === 'popup';
   const pageTabs: PageKey[] = ['invite', ...(popupOn ? (['popup'] as const) : []), ...(hasThanks ? (['thanks'] as const) : [])];
+  // 안내 팝업 · 감사페이지를 둘 다 켜 두면 더 추가할 페이지가 없어서 [+ 페이지 추가]도 없어져요.
+  const canAddPage = !(popupOn && hasThanks);
+  const startDays = popupStartDays(invitation?.popup);
+  const popupStartLabel = startDays === null ? '공유하면 바로' : startDays === 0 ? '행사 당일부터' : `행사 ${startDays}일 전부터`;
   const PAGE_LABEL: Record<PageKey, string> = { invite: '초대장', popup: '안내 팝업', thanks: '감사페이지' };
   // 감사페이지 간단 모드: a fixed layout instead of the free block list.
   const simpleThanks = page === 'thanks' && thanksPage.mode === 'simple';
-  // 감사페이지는 행사 다음 날 자정부터 공개 기간(1~7일) 동안 보여요 — 새 초대장 3/4와 같은 규칙.
+  // 감사페이지는 행사 다음 날 자정부터 공개 기간(1~7일) 동안 보여요 — 새 초대장 만들 때와 같은 규칙.
   const thanksDays = project.thanks.days ?? 7;
   const thanksStart = thanksStartDate(new Date(project.eventAt));
   const thanksPeriod = `${formatMonthDay(thanksStart.toISOString())} ~ ${formatMonthDay(thanksEndDate(thanksStart, thanksDays).toISOString())} (${thanksDays}일)`;
@@ -209,6 +221,27 @@ function Editor({
     photoChange.request('delete', page === 'invite' ? blockPhotos(block) : [], undefined, proceed);
   };
 
+  const addPage = (key: 'popup' | 'thanks') => {
+    if (key === 'popup') setPopupEnabled(true);
+    else setThanksSettings(project.id, { ...project.thanks, enabled: true, days: project.thanks.days ?? 7 });
+    setAddPageOpen(false);
+    setPage(key);
+    setSelectedId(null);
+    showToast(key === 'popup' ? `안내 팝업을 추가했어요 · ${popupStartLabel} 떠요` : '감사페이지를 추가했어요');
+  };
+  const confirmPageOff = () => {
+    if (offTarget === 'popup') setPopupEnabled(false);
+    else if (offTarget === 'thanks') setThanksSettings(project.id, { ...project.thanks, enabled: false, days: project.thanks.days ?? 7 });
+    setOffTarget(null);
+    setPage('invite');
+    setSelectedId(null);
+    showToast('페이지를 껐어요 · 내용은 보관돼요');
+  };
+  const openPageMenu = () => {
+    setSelectedId(null);
+    setPageMenuOpen(true);
+  };
+
   const thanksMode = useThanksMode(project);
   const switchThanksMode = (next: 'simple' | 'free') => {
     setThanksSheetOpen(false);
@@ -259,12 +292,20 @@ function Editor({
               </Text>
               {SAVE_LABEL[sync.state] ? <Text style={[styles.saveState, sync.state === 'error' && styles.saveStateError]}>{SAVE_LABEL[sync.state]}</Text> : null}
               <Pressable
+                onPress={() => navigation.navigate('Share', { projectId: project.id })}
+                style={[styles.shareChip, project.shared && styles.shareChipOn, !project.shared && shareStateLabel(project) === '공유 중지' && styles.shareChipStopped]}
+                hitSlop={6}
+                accessibilityLabel="공유"
+              >
+                <Text style={[styles.shareChipLabel, project.shared && styles.shareChipLabelOn, !project.shared && shareStateLabel(project) === '공유 중지' && styles.shareChipLabelStopped]}>{shareStateLabel(project)}</Text>
+              </Pressable>
+              <Pressable
                 onPress={() => {
                   setSettingsPage(undefined);
                   setSettingsOpen(true);
                 }}
                 hitSlop={10}
-                accessibilityLabel="전체 설정"
+                accessibilityLabel="초대장 설정"
               >
                 <GearIcon color={color.ink.secondary} />
               </Pressable>
@@ -275,7 +316,7 @@ function Editor({
                 <Text style={styles.noticeClose}>확인</Text>
               </Pressable>
             ) : null}
-            {pageTabs.length > 1 ? (
+            {(
               <View style={styles.tabs}>
                 {pageTabs.map((k) => (
                   <Pressable
@@ -287,16 +328,42 @@ function Editor({
                     }}
                     style={[styles.tab, page === k && styles.tabOn]}
                   >
-                    <Text style={[styles.tabLabel, page === k && styles.tabLabelOn]}>{PAGE_LABEL[k]}</Text>
+                    <Text style={[styles.tabLabel, page === k && styles.tabLabelOn]} numberOfLines={1}>{PAGE_LABEL[k]}</Text>
                   </Pressable>
                 ))}
+                {canAddPage ? (
+                  <Pressable
+                    onPress={() => {
+                      setSelectedId(null);
+                      setAddPageOpen(true);
+                    }}
+                    style={[styles.tab, styles.tabAdd]}
+                  >
+                    <Text style={styles.tabAddLabel} numberOfLines={1}>+ 페이지 추가</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            )}
+            {page === 'popup' ? (
+              <View style={styles.thanksBar}>
+                <View style={styles.barTop}>
+                  <Text style={styles.barHint}>초대장을 열면 먼저 뜨는 안내 창</Text>
+                  <MoreButton onPress={openPageMenu} />
+                </View>
+                <Pressable onPress={() => setStartOpen(true)} style={styles.daysRow} hitSlop={6}>
+                  <Text style={styles.daysText}>{`표시 시작 · ${popupStartLabel}`}</Text>
+                  <Text style={styles.daysAction}>바꾸기 ›</Text>
+                </Pressable>
               </View>
             ) : null}
             {page === 'thanks' ? (
               <View style={styles.thanksBar}>
-                <View style={styles.thanksModes}>
-                  <SelectChip label="간단하게" selected={thanksMode.mode === 'simple'} onPress={() => switchThanksMode('simple')} />
-                  <SelectChip label="자유롭게" selected={thanksMode.mode === 'free'} onPress={() => switchThanksMode('free')} />
+                <View style={styles.barTop}>
+                  <View style={styles.thanksModes}>
+                    <SelectChip label="간단하게" selected={thanksMode.mode === 'simple'} onPress={() => switchThanksMode('simple')} />
+                    <SelectChip label="자유롭게" selected={thanksMode.mode === 'free'} onPress={() => switchThanksMode('free')} />
+                  </View>
+                  <MoreButton onPress={openPageMenu} />
                 </View>
                 <Pressable onPress={() => setDaysOpen(true)} style={styles.daysRow} hitSlop={6}>
                   <Text style={styles.daysText}>{`공개 기간 ${thanksPeriod}`}</Text>
@@ -484,19 +551,6 @@ function Editor({
           invitation={invitation}
           onCover={setCoverPhoto}
           onBgm={setBgm}
-          onPopupEnabled={setPopupEnabled}
-          onPopupStart={setPopupStart}
-          onEditPopup={() => {
-            setPage('popup');
-            setSelectedId(null);
-          }}
-          onThanksEnabled={(enabled) => setThanksSettings(project.id, { ...project.thanks, enabled, days: project.thanks.days ?? 7 })}
-          onEditThanks={() => {
-            setPage('thanks');
-            setSelectedId(null);
-          }}
-          onShared={(shared) => setShared(project.id, shared)}
-          onLinkChange={(link) => setLink(project.id, link)}
           onNotify={showToast}
           initialPage={settingsPage}
         />
@@ -520,6 +574,58 @@ function Editor({
           </View>
         </BottomSheet>
 
+        <BottomSheet visible={addPageOpen} onClose={() => setAddPageOpen(false)} title="페이지 추가">
+          <View style={styles.addPageBody}>
+            <AddPageCard
+              title="안내 팝업"
+              desc="초대장을 열면 먼저 뜨는 작은 창이에요. 주차 · 셔틀 · 식사 · 드레스코드처럼 놓치기 쉬운 안내에 좋아요."
+              added={popupOn}
+              onAdd={() => addPage('popup')}
+            />
+            <AddPageCard
+              title="감사페이지"
+              desc="행사 다음 날 자정부터 같은 링크가 감사페이지로 바뀌어요. 끄면 행사 뒤에도 초대장이 그대로 보여요."
+              added={hasThanks}
+              onAdd={() => addPage('thanks')}
+            />
+            <Text style={styles.daysHelp}>추가하면 탭이 생기고 바로 그 탭으로 이동해요.</Text>
+          </View>
+        </BottomSheet>
+
+        <BottomSheet visible={pageMenuOpen} onClose={() => setPageMenuOpen(false)} title={page === 'popup' ? '안내 팝업' : '감사페이지'}>
+          <Pressable
+            style={styles.menuRow}
+            onPress={() => {
+              const target = page === 'popup' ? 'popup' : 'thanks';
+              setPageMenuOpen(false);
+              // 시트가 다 닫힌 뒤에 확인 창을 띄워요 (iOS에서 모달이 닫히는 중에 띄우면 무시될 수 있어요).
+              setTimeout(() => setOffTarget(target), 350);
+            }}
+          >
+            <Text style={styles.menuRowLabel}>이 페이지 사용 안 함</Text>
+            <Text style={styles.menuRowSub}>내용은 보관돼요</Text>
+          </Pressable>
+        </BottomSheet>
+
+        <BottomSheet visible={startOpen} onClose={() => setStartOpen(false)} title="안내 팝업 표시 시작">
+          <View style={styles.daysSheet}>
+            <PopupStartPicker eventAt={project.eventAt} value={startDays} onChange={setPopupStart} />
+          </View>
+        </BottomSheet>
+
+        <ConfirmDialog
+          visible={offTarget !== null}
+          title={`${offTarget === 'popup' ? '안내 팝업' : '감사페이지'}을 사용하지 않을까요?`}
+          confirmLabel="사용 안 함"
+          tone="primary"
+          onCancel={() => setOffTarget(null)}
+          onConfirm={confirmPageOff}
+        >
+          <Text style={styles.offBody}>
+            {`탭이 사라져요. 만든 내용은 보관돼서\n[+ 페이지 추가]로 다시 켜면 이어서 쓸 수 있어요.${offTarget === 'thanks' ? '\n끄면 행사가 끝나도 같은 링크에서 초대장이 계속 보여요.' : ''}`}
+          </Text>
+        </ConfirmDialog>
+
         {thanksMode.dialog}
         {photoChange.dialog}
         <EditLockDialog lock={editLock} onExit={exit} />
@@ -535,6 +641,34 @@ function Editor({
       </SafeAreaView>
       </PhotoUsageContext.Provider>
     </CanvasContext.Provider>
+  );
+}
+
+function MoreButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={styles.moreBtn} hitSlop={6} accessibilityLabel="더보기">
+      <Text style={styles.moreLabel}>⋯</Text>
+    </Pressable>
+  );
+}
+
+function AddPageCard({ title, desc, added, onAdd }: { title: string; desc: string; added: boolean; onAdd: () => void }) {
+  return (
+    <View style={styles.addPageCard}>
+      <View style={styles.addPageHead}>
+        <Text style={styles.addPageTitle}>{title}</Text>
+        {added ? (
+          <View style={styles.addedChip}>
+            <Text style={styles.addedLabel}>추가됨 ✓</Text>
+          </View>
+        ) : (
+          <Pressable onPress={onAdd} style={styles.addBtn} hitSlop={6}>
+            <Text style={styles.addBtnLabel}>추가</Text>
+          </Pressable>
+        )}
+      </View>
+      <Text style={styles.addPageDesc}>{desc}</Text>
+    </View>
   );
 }
 
@@ -770,6 +904,31 @@ const styles = StyleSheet.create({
   tabLabel: {
     ...textStyle({ size: 'label', weight: 'medium', color: color.ink.muted }),
   },
+  tabAdd: { flex: 0, paddingHorizontal: space[5] },
+  tabAddLabel: { ...textStyle({ size: 'label', weight: 'semibold', color: color.accent.base }) },
+  shareChip: { borderWidth: 1, borderColor: color.line.chip, borderRadius: radius.pill, backgroundColor: color.bg.surface, paddingHorizontal: 11, paddingVertical: 6 },
+  shareChipOn: { backgroundColor: color.accent.base, borderColor: color.accent.base },
+  shareChipStopped: { backgroundColor: color.status.errorTint, borderColor: color.status.errorBorder },
+  shareChipLabel: { ...textStyle({ size: 'caption', weight: 'semibold', color: color.ink.secondary }) },
+  shareChipLabelOn: { color: '#ffffff' },
+  shareChipLabelStopped: { color: color.status.error },
+  barTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[4] },
+  barHint: { flex: 1, ...textStyle({ size: 'small', weight: 'regular', color: color.ink.muted }) },
+  moreBtn: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, borderColor: color.line.chip, backgroundColor: color.bg.surface, alignItems: 'center', justifyContent: 'center' },
+  moreLabel: { ...textStyle({ size: 'control', weight: 'semibold', color: color.ink.secondary }), marginTop: -4 },
+  addPageBody: { paddingHorizontal: space.screenX, paddingBottom: space[6], gap: space[5] },
+  addPageCard: { borderWidth: 1, borderColor: color.line.default, borderRadius: radius.card, backgroundColor: color.bg.surface, padding: space[6], gap: space[3] },
+  addPageHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  addPageTitle: { ...textStyle({ size: 'control', weight: 'semibold', color: color.ink.primary }) },
+  addPageDesc: { ...textStyle({ size: 'label', weight: 'regular', color: color.ink.secondary }), lineHeight: 14 * 1.55 },
+  addBtn: { backgroundColor: color.ink.primary, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 6 },
+  addBtnLabel: { ...textStyle({ size: 'label', weight: 'semibold', color: color.ink.onPrimary }) },
+  addedChip: { borderWidth: 1, borderColor: color.line.chip, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
+  addedLabel: { ...textStyle({ size: 'caption', weight: 'medium', color: color.ink.secondary }) },
+  menuRow: { paddingHorizontal: space.screenX, paddingVertical: 15, gap: space[1] },
+  menuRowLabel: { ...textStyle({ size: 'control', weight: 'medium', color: color.ink.primary }) },
+  menuRowSub: { ...textStyle({ size: 'small', weight: 'regular', color: color.ink.muted }) },
+  offBody: { ...textStyle({ size: 'body', weight: 'regular', color: color.ink.muted }), lineHeight: 12.5 * 1.7 },
   tabLabelOn: {
     color: color.ink.primary,
     fontFamily: 'Pretendard-SemiBold',

@@ -9,17 +9,14 @@ export type RootStackParamList = {
   ResetSent: { email: string };
   NewProjectType: undefined;
   NewProjectInfo: undefined;
-  NewProjectThanks: undefined;
-  NewProjectPopup: undefined;
-  NewProjectLink: undefined;
   ThemeSelect: undefined;
   Editor: { projectId: string; tab?: 'invite' | 'popup' | 'thanks' };
   Manage: { projectId: string };
   ManageRsvp: { projectId: string };
   ManageGuestbook: { projectId: string };
   ManageStats: { projectId: string };
-  ProjectSettings: { projectId: string };
   Share: { projectId: string };
+  ShareMessage: { projectId: string };
   Qr: { projectId: string };
   Poster: { projectId: string };
   NicknameEdit: undefined;

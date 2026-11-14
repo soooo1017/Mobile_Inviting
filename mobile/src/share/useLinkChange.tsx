@@ -11,7 +11,7 @@ import { LinkChooser } from './LinkChooser';
 import { choiceFromProject, choiceReady, linkFromChoice, type LinkChoice } from './link';
 
 /**
- * 링크 변경 — 공유를 시작하기 전까지만. 공유하기 · 프로젝트 설정 · ⚙ 전체 설정에서 같이 써요.
+ * 링크 변경 — 공유를 시작하기 전까지만. 공유 화면에서 써요.
  * `open()`으로 시트를 열고, `nodes`를 화면 맨 아래에 그려 두면 돼요 (시트 + 완료 뒤 QR 안내).
  * 완료하면 QR 코드도 새 링크로 바뀌어서, 홍보물을 만들어 둔 초대장이면 "다시 저장해주세요" 안내를 한 번 더 보여줘요.
  */

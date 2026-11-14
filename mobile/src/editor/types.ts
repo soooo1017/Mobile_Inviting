@@ -179,6 +179,8 @@ export type Invitation = {
   coverPhotoId?: string;
   /** 카카오톡 등으로 링크를 보낼 때 제목 아래에 보이는 설명(공유하기 화면에서 정해요). 없으면 일시 · 장소가 들어가요. */
   shareDescription?: string;
+  /** 메시지 작성하기에서 쓴 인사말({초대장 링크} 같은 표시 포함). 서버에는 meta에 저장해요(하객에게는 안 보내요). */
+  shareMessage?: string;
   bgm?: Bgm;
   thanks?: ThanksPage;
   popup?: PopupSettings;

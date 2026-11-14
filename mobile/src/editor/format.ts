@@ -120,7 +120,7 @@ export function hostNames(eventType: EventType, hosts: { label: string; name: st
   }
 }
 
-/** 새 초대장의 기본 이름. 프로젝트 설정에서 언제든 바꿀 수 있어요. */
+/** 새 초대장의 기본 이름. ⚙ 초대장 설정에서 언제든 바꿀 수 있어요. */
 export function defaultProjectTitle(eventType: EventType, hosts: { label: string; name: string }[], typeName: string): string {
   const names = hostNames(eventType, hosts);
   if (!names) return typeName;

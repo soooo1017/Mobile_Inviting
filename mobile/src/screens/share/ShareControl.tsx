@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, Text, View, StyleSheet } from 'react-native';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useLinkChange } from '../../share/useLinkChange';
-import { isLinkLocked, shareUrlLabel } from '../../share/link';
+import { isLinkLocked, shareStateLabel, shareUrlLabel } from '../../share/link';
 import { color, radius, size, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import type { Project, ProjectLink } from '../../types/project';
@@ -18,7 +18,7 @@ type Props = {
 };
 
 /**
- * 공유 시작 · 중지 — ⚙ 전체 설정과 관리 › 프로젝트 설정 · 공유하기에서 같이 써요.
+ * 공유 시작 · 중지 — 공유 화면에서 써요(편집 화면의 [공유] 버튼도 그 화면으로 가요).
  * 처음 시작할 때는 "이 링크로 시작할까요? 시작하면 링크를 바꿀 수 없어요"를 한 번 확인하고,
  * 공유를 중지했다가 다시 시작할 때는 이미 고정된 링크라서 확인 없이 바로 시작해요.
  * 시작 전(또는 중지한 동안)에는 링크를 열면 "초대장 준비중"으로 안내돼요. 응답 · 방명록은 그대로 보관돼요.
@@ -33,7 +33,7 @@ export function ShareControl({ project, onChange, onLinkChange, hideLink }: Prop
     <View style={styles.box}>
       <View style={styles.head}>
         <View style={[styles.chip, started ? styles.chipOn : styles.chipOff]}>
-          <Text style={[styles.chipLabel, started && styles.chipLabelOn]}>{started ? '공유 중' : '공유 전'}</Text>
+          <Text style={[styles.chipLabel, started && styles.chipLabelOn]}>{shareStateLabel(project)}</Text>
         </View>
       </View>
       <Text style={styles.desc}>

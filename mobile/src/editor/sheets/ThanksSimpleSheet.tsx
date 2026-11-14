@@ -50,7 +50,7 @@ export function ThanksSimpleSheet({ project, invitation, simple, onChange, onCov
           <Text style={styles.photoLabel}>대표 사진</Text>
           <Text style={styles.photoAction}>바꾸기 ›</Text>
         </Pressable>
-        <Help>대표 사진을 바꾸면 ⚙ 전체 설정의 대표 사진도 같이 바뀌어요.</Help>
+        <Help>대표 사진을 바꾸면 ⚙ 초대장 설정의 대표 사진도 같이 바뀌어요.</Help>
       </Section>
       <View style={styles.field}>
         <View style={styles.labelRow}>

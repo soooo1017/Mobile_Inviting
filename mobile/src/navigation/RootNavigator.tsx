@@ -10,19 +10,16 @@ import { ResetSentScreen } from '../screens/ResetSentScreen';
 import { MainTabs } from './MainTabs';
 import { NewProjectTypeScreen } from '../screens/newProject/NewProjectTypeScreen';
 import { NewProjectInfoScreen } from '../screens/newProject/NewProjectInfoScreen';
-import { NewProjectThanksScreen } from '../screens/newProject/NewProjectThanksScreen';
-import { NewProjectPopupScreen } from '../screens/newProject/NewProjectPopupScreen';
-import { NewProjectLinkScreen } from '../screens/newProject/NewProjectLinkScreen';
 import { ThemeSelectScreen } from '../screens/newProject/ThemeSelectScreen';
 import { EditorScreen } from '../screens/editor/EditorScreen';
 import { ManageScreen } from '../screens/manage/ManageScreen';
 import { ShareScreen } from '../screens/share/ShareScreen';
 import { QrScreen } from '../screens/share/QrScreen';
+import { ShareMessageScreen } from '../screens/share/ShareMessageScreen';
 import { PosterScreen } from '../poster/PosterScreen';
 import { RsvpStatusScreen } from '../screens/manage/RsvpStatusScreen';
 import { GuestbookManageScreen } from '../screens/manage/GuestbookManageScreen';
 import { StatsScreen } from '../screens/manage/StatsScreen';
-import { ProjectSettingsScreen } from '../screens/manage/ProjectSettingsScreen';
 import { NicknameEditScreen } from '../screens/myPage/NicknameEditScreen';
 import { PasswordChangeScreen } from '../screens/myPage/PasswordChangeScreen';
 import { NotificationSettingsScreen } from '../screens/myPage/NotificationSettingsScreen';
@@ -48,17 +45,14 @@ export function RootNavigator() {
       <Stack.Screen name="ResetSent" component={ResetSentScreen} />
       <Stack.Screen name="NewProjectType" component={NewProjectTypeScreen} />
       <Stack.Screen name="NewProjectInfo" component={NewProjectInfoScreen} />
-      <Stack.Screen name="NewProjectThanks" component={NewProjectThanksScreen} />
-      <Stack.Screen name="NewProjectPopup" component={NewProjectPopupScreen} />
-      <Stack.Screen name="NewProjectLink" component={NewProjectLinkScreen} />
       <Stack.Screen name="ThemeSelect" component={ThemeSelectScreen} />
       <Stack.Screen name="Editor" component={EditorScreen} options={{ gestureEnabled: false }} />
       <Stack.Screen name="Manage" component={ManageScreen} />
       <Stack.Screen name="ManageRsvp" component={RsvpStatusScreen} />
       <Stack.Screen name="ManageGuestbook" component={GuestbookManageScreen} />
       <Stack.Screen name="ManageStats" component={StatsScreen} />
-      <Stack.Screen name="ProjectSettings" component={ProjectSettingsScreen} />
       <Stack.Screen name="Share" component={ShareScreen} />
+      <Stack.Screen name="ShareMessage" component={ShareMessageScreen} />
       <Stack.Screen name="Qr" component={QrScreen} />
       <Stack.Screen name="Poster" component={PosterScreen} options={{ gestureEnabled: false }} />
       <Stack.Screen name="NicknameEdit" component={NicknameEditScreen} />

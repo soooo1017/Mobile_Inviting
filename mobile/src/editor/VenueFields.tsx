@@ -6,7 +6,7 @@ export function currentVenue(project: Project): Venue {
   return project.venue ?? { name: '', address: '', sido: '', mapLinks: { naver: true, kakao: true } };
 }
 
-/** 장소 이름 · 주소 — the project's 행사 장소, edited from the 장소 sheet, ⚙ 전체 설정 and 프로젝트 설정 alike. */
+/** 장소 이름 · 주소 — the project's 행사 장소, edited from the 장소 sheet and ⚙ 초대장 설정. */
 export function VenueFields({ project, onVenue }: { project: Project; onVenue: (venue: Venue) => void }) {
   const venue = currentVenue(project);
   return (

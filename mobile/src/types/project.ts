@@ -82,7 +82,7 @@ export type Project = {
   link?: ProjectLink;
   /** Legacy fixed theme (이전 테마 6개). New invitations use `colors` instead; this keeps older ones looking the same. */
   themeId: string;
-  /** 배경 · 포인트 · 글씨 색 picked on new-project step 4 / ⚙ 전체 설정. */
+  /** 배경 · 포인트 · 글씨 색 picked on new-project step 4 / ⚙ 초대장 설정. */
   colors?: ThemeColors;
   updatedAt: string; // ISO
   createdAt: string; // ISO

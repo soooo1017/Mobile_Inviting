@@ -9,7 +9,7 @@ import type { Invitation } from './types';
 const COLUMNS = 3;
 const GAP = 4;
 
-/** 대표 사진 고르기 — every photo on the invite page; shared by ⚙ 전체 설정 and the simple 감사페이지 editor. */
+/** 대표 사진 고르기 — every photo on the invite page; shared by ⚙ 초대장 설정 and the simple 감사페이지 editor. */
 export function CoverPicker({ invitation, onSelect }: { invitation: Invitation; onSelect: (photoId: string) => void }) {
   const [width, setWidth] = useState(0);
   const groups = invitePhotoGroups(invitation);

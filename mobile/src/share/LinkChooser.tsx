@@ -14,7 +14,7 @@ const BASE_LABEL = SHARE_BASE_URL.replace(/^https?:\/\//, '');
 
 /**
  * 링크 고르기 — ① 자동으로 만들기(랜덤 8자) ② 원하는 문구로 만들기(영문 소문자 · 숫자 · -, 3~12자 + 랜덤 6자).
- * 새 초대장 6/6과 링크 변경(공유하기 · 프로젝트 설정 · ⚙ 전체 설정)에서 같이 써요.
+ * 링크 변경(공유 화면)에서 써요.
  */
 export function LinkChooser({ value, onChange, onFocus }: Props) {
   const custom = value.mode === 'custom';

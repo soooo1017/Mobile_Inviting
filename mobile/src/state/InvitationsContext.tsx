@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { coverPhoto } from '../editor/photos';
 import { cloneBlock, type Bgm, type Block, type FontId, type Invitation, type PageKey, type ThanksPage } from '../editor/types';
 
 // 저장 방식 (EDITOR_PLAN §10, 확정): mock first — every invitation is saved
@@ -152,6 +153,17 @@ export function useStartInvitation() {
   );
 }
 
+/** 목록 카드용 — 초대장의 대표 사진(없으면 undefined). 폰에 저장된 초대장만 읽어요. */
+export function useCoverPhoto(projectId: string) {
+  const ctx = useContext(InvitationsContext);
+  const load = ctx?.load;
+  useEffect(() => {
+    load?.(projectId);
+  }, [projectId, load]);
+  const inv = ctx?.invitations[projectId];
+  return inv ? coverPhoto(inv) : undefined;
+}
+
 export const DEFAULT_THANKS_PAGE: ThanksPage = { mode: 'simple', simple: { showSender: true } };
 
 function withPage(inv: Invitation, page: PageKey, blocks: Block[]): Invitation {
@@ -176,6 +188,8 @@ export function useInvitation(projectId: string) {
       setCoverPhoto: (coverPhotoId: string | undefined) => edit((inv) => ({ ...inv, coverPhotoId })),
       setBgm: (bgm: Bgm) => edit((inv) => ({ ...inv, bgm })),
       /** 공유 미리보기 설명 — 비우면 기본 문구(일시 · 장소). */
+      /** 메시지 작성하기의 인사말 — 비우면 지워요. */
+      setShareMessage: (text: string) => edit((inv) => ({ ...inv, shareMessage: text || undefined })),
       setShareDescription: (text: string) => edit((inv) => ({ ...inv, shareDescription: text.trim() || undefined })),
       setPopupEnabled: (enabled: boolean) => edit((inv) => ({ ...inv, popup: { ...inv.popup, enabled } })),
       /** 안내 팝업이 행사 며칠 전부터 뜰지 (null = 공유하면 바로). */

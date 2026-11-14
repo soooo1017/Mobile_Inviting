@@ -28,7 +28,7 @@ const MODES: { value: Bgm['mode']; label: string }[] = [
   { value: 'file', label: '내 음악' },
 ];
 
-/** ⚙ 전체 설정 › 배경음악: 끄기 / 곡 고르기(목록) / 내 음악(파일 올리기). 초대장에 한 곡만 들어가요. */
+/** ⚙ 초대장 설정 › 배경음악: 끄기 / 곡 고르기(목록) / 내 음악(파일 올리기). 초대장에 한 곡만 들어가요. */
 export function BgmSettings({
   bgm,
   onChange,

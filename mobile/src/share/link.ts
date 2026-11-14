@@ -53,7 +53,7 @@ export function phraseError(phrase: string): string | null {
   return null;
 }
 
-/** 링크를 고르는 화면(새 초대장 6/6 · 링크 변경)에서 쓰는 선택 상태. */
+/** 링크를 고르는 화면(링크 변경)에서 쓰는 선택 상태. */
 export type LinkChoice = { mode: LinkMode; phrase: string; rand: string; auto: string };
 
 export function freshLinkChoice(): LinkChoice {
@@ -102,6 +102,11 @@ export function lockedLink(project: Project): ProjectLink {
 /** 한 번이라도 공유를 시작했으면 바꿀 수 없어요 (예전 초대장은 공유 중인 것만 고정). */
 export function isLinkLocked(project: Project): boolean {
   return project.link?.locked ?? project.shared;
+}
+
+/** 공유 상태 이름 — 편집 화면의 [공유] 버튼 · 공유 화면이 같이 써요. 작성 중(아직 공유한 적 없음) / 공유 중 / 공유 중지(한 번 공유했다가 멈춤). */
+export function shareStateLabel(project: Project): string {
+  return project.shared ? '공유 중' : isLinkLocked(project) ? '공유 중지' : '작성 중';
 }
 
 export function shareUrl(project: Project): string {

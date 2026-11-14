@@ -58,7 +58,7 @@ function ShareBody({ project, navigation, setShared, setLink, toast, setToast }:
 
   return (
     <SafeAreaView style={manageStyles.screen} edges={['top', 'bottom']}>
-      <ManageHeader title="공유하기" onBack={() => navigation.goBack()} />
+      <ManageHeader title="공유" onBack={() => navigation.goBack()} />
       <KeyboardAwareForm contentContainerStyle={manageStyles.body}>
         <ShareControl
           project={project}
@@ -88,7 +88,7 @@ function ShareBody({ project, navigation, setShared, setLink, toast, setToast }:
               <Text style={manageStyles.outlineBtnLabel}>링크 변경</Text>
             </Pressable>
             <Pressable onPress={share} disabled={!started} style={[styles.shareBtn, styles.flex, !started && manageStyles.off]}>
-              <Text style={styles.shareLabel}>공유하기</Text>
+              <Text style={styles.shareLabel}>링크 보내기</Text>
             </Pressable>
           </View>
         </View>
@@ -101,7 +101,17 @@ function ShareBody({ project, navigation, setShared, setLink, toast, setToast }:
           </View>
         )}
         <View style={manageStyles.card}>
-          <Pressable onPress={() => navigation.navigate('Qr', { projectId })} style={styles.row}>
+          <Pressable onPress={() => navigation.navigate('ShareMessage', { projectId })} style={styles.row}>
+            <View style={styles.thumb}>
+              <Text style={styles.thumbGlyph}>✎</Text>
+            </View>
+            <View style={styles.rowText}>
+              <Text style={styles.rowTitle}>메시지 작성하기</Text>
+              <Text style={styles.rowSub}>인사말에 링크 · 일시 · 장소를 넣어 보내요</Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </Pressable>
+          <Pressable onPress={() => navigation.navigate('Qr', { projectId })} style={[styles.row, manageStyles.divider]}>
             <View style={styles.thumb}>
               <QRCode value={url} size={26} color="#111111" backgroundColor="#ffffff" />
             </View>
@@ -131,7 +141,7 @@ function ShareBody({ project, navigation, setShared, setLink, toast, setToast }:
 }
 
 /**
- * 공유 미리보기 — 카카오톡 · 문자로 링크를 보낼 때 보이는 카드. 사진은 대표 사진(에디터 ⚙ 전체 설정), 제목은 초대장 이름(프로젝트 설정),
+ * 공유 미리보기 — 카카오톡 · 문자로 링크를 보낼 때 보이는 카드. 사진은 대표 사진, 제목은 초대장 이름(⚙ 초대장 설정),
  * 설명은 여기서 고쳐요(비우면 일시 · 장소). 이미 보낸 링크는 카카오톡이 미리보기를 저장해 둬서 바로 안 바뀌어요.
  */
 function SharePreview({ project }: { project: Project }) {
@@ -165,7 +175,7 @@ function SharePreview({ project }: { project: Project }) {
       <Text style={styles.previewLabel}>설명</Text>
       <TextField value={value} onChangeText={setDraft} onBlur={commit} onSubmitEditing={commit} placeholder={auto} maxLength={60} returnKeyType="done" />
       <Text style={styles.lockNote}>
-        {'사진은 초대장의 대표 사진(에디터 ⚙ 전체 설정), 제목은 초대장 이름(프로젝트 설정)이에요. 설명을 비우면 일시 · 장소가 들어가요.\n이미 보낸 링크는 카카오톡이 미리보기를 저장해 두어서 바로 바뀌지 않아요.'}
+        {'사진은 초대장의 대표 사진, 제목은 초대장 이름이에요(둘 다 편집 화면의 ⚙ 초대장 설정에서 바꿔요). 설명을 비우면 일시 · 장소가 들어가요.\n이미 보낸 링크는 카카오톡이 미리보기를 저장해 두어서 바로 바뀌지 않아요.'}
       </Text>
     </View>
   );

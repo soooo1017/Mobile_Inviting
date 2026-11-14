@@ -24,7 +24,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'NewProjectInfo'>;
 export function NewProjectInfoScreen({ navigation }: Props) {
   const { draft, update } = useNewProjectDraft();
   const { scrollRef, fieldLayout, onFieldFocus } = useKeyboardAwareForm();
-  // Same as ⚙ 전체 설정: tapping 일자/시간 opens the calendar / time wheel right away (tap again to close).
+  // Same as ⚙ 초대장 설정: tapping 일자/시간 opens the calendar / time wheel right away (tap again to close).
   const [picker, setPicker] = useState<'date' | 'time' | null>(null);
   const [venueText, setVenueText] = useState(draft.venue?.name ?? '');
 
@@ -63,7 +63,7 @@ export function NewProjectInfoScreen({ navigation }: Props) {
         contentContainerStyle={styles.content}
         footer={
           <View style={styles.footer}>
-            <PrimaryButton label="다음" onPress={() => navigation.navigate('NewProjectThanks')} disabled={!canProceed} />
+            <PrimaryButton label="다음" onPress={() => navigation.navigate('ThemeSelect')} disabled={!canProceed} />
           </View>
         }
       >
@@ -80,7 +80,7 @@ export function NewProjectInfoScreen({ navigation }: Props) {
             maxLength={30}
             returnKeyType="done"
           />
-          <HelperText>{'내 초대장 목록에 보이고, 카카오톡 등으로 링크를 보낼 때 미리보기 제목으로도 쓰여요.\n비워 두면 위 이름으로 자동으로 들어가고, 나중에 프로젝트 설정에서 바꿀 수 있어요.'}</HelperText>
+          <HelperText>{'내 초대장 목록에 보이고, 카카오톡 등으로 링크를 보낼 때 미리보기 제목으로도 쓰여요.\n비워 두면 위 이름으로 자동으로 들어가고, 나중에 편집 화면의 ⚙ 초대장 설정에서 바꿀 수 있어요.'}</HelperText>
         </View>
 
         <View style={styles.section}>

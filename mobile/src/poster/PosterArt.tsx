@@ -50,7 +50,7 @@ export function buildPosterData(project: Project, design: PosterDesign, fontId: 
   const custom = design.bg !== undefined;
   const ink = custom ? autoTextColor(bg) : theme.ink;
   const soft = custom ? mix(ink, bg, 0.3) : theme.inkSoft;
-  // 홍보물 제목 = 초대장 이름(새 초대장 2/6 · 프로젝트 설정에서 정해요).
+  // 홍보물 제목 = 초대장 이름(새 초대장 2/3 · ⚙ 초대장 설정에서 정해요).
   const names = project.title;
   const photoRectOnCard = photoFrame(design);
   const q = qrRect(design);

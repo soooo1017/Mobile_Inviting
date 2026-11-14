@@ -6,7 +6,7 @@ import { textStyle, tnum } from '../../theme/typography';
 import type { Project } from '../../types/project';
 import { eventTypeMeta } from '../../types/project';
 import { ProjectStatusChip } from '../../components/ProjectStatusChip';
-import { formatDday, formatThanksPeriod, getProjectStatus } from '../../utils/projectStatus';
+import { formatDday, getProjectStatus } from '../../utils/projectStatus';
 
 type Props = {
   visible: boolean;
@@ -17,7 +17,6 @@ type Props = {
   onPreview: () => void;
   onCopyLink: () => void;
   onDelete: () => void;
-  onThanksEdit: () => void;
 };
 
 export function ActionSheet({
@@ -29,7 +28,6 @@ export function ActionSheet({
   onPreview,
   onCopyLink,
   onDelete,
-  onThanksEdit,
 }: Props) {
   if (!project) return <BottomSheet visible={visible} onClose={onClose}><View /></BottomSheet>;
 
@@ -58,15 +56,13 @@ export function ActionSheet({
             <Text style={styles.bigButtonLabel}>관리</Text>
             {unread.total > 0 ? <View style={styles.newDot} /> : null}
           </View>
-          <Text style={[styles.bigButtonSub, unread.total > 0 && styles.bigButtonSubNew]}>{unread.total > 0 ? unreadText(unread) : '응답 · 공유 · 설정'}</Text>
+          <Text style={[styles.bigButtonSub, unread.total > 0 && styles.bigButtonSubNew]}>{unread.total > 0 ? unreadText(unread) : '응답 · 공유'}</Text>
         </Pressable>
       </View>
 
-      <ThanksBox project={project} onEdit={onThanksEdit} />
-
       <View style={styles.menu}>
-        <MenuRow label="미리보기" onPress={onPreview} first />
-        <MenuRow label="공유 링크 복사" onPress={onCopyLink} />
+        <MenuRow label="공유 링크 복사" onPress={onCopyLink} first />
+        <MenuRow label="미리보기" onPress={onPreview} />
       </View>
 
       <View style={styles.deleteWrap}>
@@ -75,35 +71,6 @@ export function ActionSheet({
         </Pressable>
       </View>
     </BottomSheet>
-  );
-}
-
-function ThanksBox({ project, onEdit }: { project: Project; onEdit: () => void }) {
-  const enabled = project.thanks.enabled;
-  const period = formatThanksPeriod(project);
-
-  return (
-    <View style={styles.thanksBox}>
-      <View style={styles.thanksHeader}>
-        <Text style={styles.thanksTitle}>감사 페이지 설정</Text>
-        <View style={[styles.thanksBadge, enabled ? styles.thanksBadgeOn : styles.thanksBadgeOff]}>
-          <Text style={[styles.thanksBadgeLabel, { color: enabled ? color.status.success : color.status.error }]}>
-            {enabled ? '설정' : '미설정'}
-          </Text>
-        </View>
-      </View>
-      {enabled && period ? <Text style={styles.thanksPeriod}>기간 : {period} ({project.thanks.days}일)</Text> : null}
-      <Text style={styles.thanksDesc}>
-        {enabled
-          ? '공유한 링크에서 자동으로 감사 페이지로 전환되어 행사에 참석해주신 분들에게 감사 인사를 드려요.'
-          : '행사 종료일 이후에는 초대장 접속이 불가합니다.\n행사에 참석해주신 분들에게 감사 인사를 드리고 싶으시면 감사 페이지를 설정해주세요.'}
-      </Text>
-      <View style={styles.thanksButtons}>
-        <Pressable style={styles.thanksButton} onPress={onEdit}>
-          <Text style={styles.thanksButtonLabel}>감사 페이지 편집</Text>
-        </Pressable>
-      </View>
-    </View>
   );
 }
 
@@ -171,62 +138,6 @@ const styles = StyleSheet.create({
   },
   bigButtonSub: {
     ...textStyle({ size: 'caption', weight: 'regular', color: color.ink.muted }),
-  },
-  thanksBox: {
-    marginHorizontal: space.screenX,
-    marginBottom: space[7],
-    backgroundColor: color.bg.surface,
-    borderWidth: 1,
-    borderColor: color.line.default,
-    borderRadius: radius.card,
-    padding: space[7],
-    gap: space[5],
-  },
-  thanksHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  thanksTitle: {
-    ...textStyle({ size: 'control', weight: 'semibold', color: color.ink.primary }),
-  },
-  thanksBadge: {
-    borderRadius: 6,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderWidth: 1,
-  },
-  thanksBadgeOn: {
-    backgroundColor: color.status.successTint,
-    borderColor: color.status.successBorder,
-  },
-  thanksBadgeOff: {
-    backgroundColor: color.status.errorTint,
-    borderColor: color.status.errorBorder,
-  },
-  thanksBadgeLabel: {
-    ...textStyle({ size: 'small', weight: 'semibold' }),
-  },
-  thanksPeriod: {
-    ...textStyle({ size: 'label', weight: 'medium', color: color.ink.primary }),
-  },
-  thanksDesc: {
-    ...textStyle({ size: 'label', weight: 'regular', color: color.ink.muted }),
-    lineHeight: 11.5 * 1.5,
-  },
-  thanksButtons: {
-    flexDirection: 'row',
-  },
-  thanksButton: {
-    borderWidth: 1,
-    borderColor: color.line.chip,
-    borderRadius: 8,
-    paddingVertical: space[4],
-    paddingHorizontal: space[6],
-    alignItems: 'center',
-  },
-  thanksButtonLabel: {
-    ...textStyle({ size: 'label', weight: 'medium', color: color.ink.primary }),
   },
   menu: {
     marginBottom: space[3],
