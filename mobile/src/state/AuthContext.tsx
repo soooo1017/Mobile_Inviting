@@ -134,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (availError) return { ok: false, error: 'unknown' };
         if (!available) return { ok: false, error: 'username_taken' };
 
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: { data: { username, nickname }, emailRedirectTo: EMAIL_CONFIRMED_REDIRECT_URL },
@@ -151,6 +151,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return { ok: false, error: 'username_taken' };
           }
           return { ok: false, error: 'unknown' };
+        }
+        // 이미 가입(인증까지 끝난)된 이메일이면 Supabase는 오류 대신 "성공"처럼 답하고 메일은 보내지 않아요(메일 주소 노출 방지).
+        // 그때는 identities가 비어 있어서 그걸로 알아봐요 — 안 그러면 "확인 메일을 보냈어요"만 뜨고 메일이 안 오는 것처럼 보여요.
+        if (signUpData.user && (signUpData.user.identities?.length ?? 1) === 0) {
+          return { ok: false, error: 'email_taken' };
         }
         return { ok: true };
       },

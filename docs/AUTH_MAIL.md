@@ -63,3 +63,10 @@ Authentication › Emails › **Templates** 에서 *Confirm sign up* · *Reset p
 - 비밀번호 재설정 페이지를 GitHub Pages(저장소 이름이 바뀌어 안 열렸어요)에서 **Vercel로 옮김**: `web/public/reset-password.html` → `https://moiso-ten.vercel.app/reset-password.html`. 앱 `AuthContext`의 주소도 바꿨어요. 이제 저장소 이름이 바뀌어도 안 깨져요.
 - 가입 확인 메일 링크가 닿는 안내 페이지 `web/public/email-confirmed.html` 추가, 가입할 때 `emailRedirectTo`로 지정.
 - Vercel이 최신으로 배포돼야 두 페이지가 열려요(`web/` 푸시 → 자동 배포).
+
+## 6. 메일이 안 올 때 점검 순서
+1. **이미 가입된 이메일인가?** 인증까지 끝난 주소로 다시 가입하거나 "다시 보내기"를 누르면 Supabase는 오류 없이 성공처럼 답하고 **메일을 보내지 않아요**(가입된 주소를 알아내지 못하게). 새 주소(또는 아직 인증 안 한 주소)로 시험해요. 앱은 이제 이 경우 "이미 가입된 이메일이에요."를 보여줘요. (확인: Supabase › Logs › Auth 에서 `user_repeated_signup`)
+2. 스팸함 · 프로모션함.
+3. Brevo › Transactional › Logs 에 발송 기록이 있는지(없으면 Supabase SMTP 설정 문제, 있으면 받는 쪽 문제).
+4. Supabase › Authentication › Emails › SMTP Settings가 켜져 있고 저장됐는지, Rate Limits.
+

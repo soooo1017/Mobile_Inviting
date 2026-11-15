@@ -17,6 +17,7 @@ const RESEND_COOLDOWN_SECONDS = 60;
 export function SignupSentScreen({ navigation, route }: Props) {
   const { email } = route.params;
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
+  const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -24,10 +25,20 @@ export function SignupSentScreen({ navigation, route }: Props) {
     return () => clearTimeout(timer);
   }, [cooldown]);
 
-  const handleResend = () => {
-    if (cooldown > 0) return;
+  const handleResend = async () => {
+    // 연달아 보내면 메일 서버가 막아서(1분에 한 번) 기다리는 동안은 보내지 않고 안내만 해요.
+    if (cooldown > 0) {
+      setNotice({ text: `${cooldown}초 뒤에 다시 보낼 수 있어요.` });
+      return;
+    }
     setCooldown(RESEND_COOLDOWN_SECONDS);
-    supabase.auth.resend({ type: 'signup', email });
+    setNotice({ text: '메일을 다시 보내는 중이에요…' });
+    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    setNotice(
+      error
+        ? { text: '메일을 보내지 못했어요. 잠시 뒤에 다시 시도해 주세요.', error: true }
+        : { text: '메일을 다시 보냈어요. 스팸함도 확인해 주세요.' },
+    );
   };
 
   const backToLogin = () => {
@@ -56,6 +67,7 @@ export function SignupSentScreen({ navigation, route }: Props) {
         >
           {cooldown > 0 ? `메일이 오지 않았나요? 다시 보내기 (${cooldown}s)` : '메일이 오지 않았나요? 다시 보내기'}
         </TextLink>
+        {notice ? <Text style={[styles.notice, notice.error && styles.noticeError]}>{notice.text}</Text> : null}
       </View>
     </SafeAreaView>
   );
@@ -96,6 +108,13 @@ const styles = StyleSheet.create({
     ...textStyle({ size: 'body', weight: 'regular', color: color.ink.muted }),
     lineHeight: 12.5 * 1.75,
     textAlign: 'center',
+  },
+  notice: {
+    ...textStyle({ size: 'small', weight: 'regular', color: color.ink.muted }),
+    textAlign: 'center',
+  },
+  noticeError: {
+    color: color.status.error,
   },
   bottom: {
     paddingHorizontal: space.screenX,
