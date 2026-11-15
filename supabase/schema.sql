@@ -691,3 +691,39 @@ create policy "invitation-media: update own folder" on storage.objects for updat
 drop policy if exists "invitation-media: delete own folder" on storage.objects;
 create policy "invitation-media: delete own folder" on storage.objects for delete to authenticated
   using (bucket_id = 'invitation-media' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 10) 문의 파일 첨부 (2026-11-15)  — 문의하기에서 사진 · PDF · 텍스트를 최대 3개(파일당 10MB) 붙여요.
+--  · 파일은 비공개 보관함 inquiry-files에 `<내 user id>/<문의 번호>/<순서>-<이름>`으로 올라가요(하객 · 다른 사용자는 못 봐요).
+--  · 운영자는 Supabase 대시보드 → Storage → inquiry-files에서 열어보고, 문의 표의 attachments 칸(JSON)에서 어떤 파일인지 확인해요.
+--  · 회원 탈퇴 때 파일은 자동으로 안 지워져요(표의 문의 행은 지워져요). 필요하면 대시보드에서 그 사용자 폴더를 지워요.
+-- 여러 번 실행해도 안전해요.
+-- ═══════════════════════════════════════════════════════════════════════════════
+alter table public.inquiries add column if not exists attachments jsonb not null default '[]'::jsonb;
+alter table public.inquiries drop constraint if exists inquiries_attachments_len;
+alter table public.inquiries add constraint inquiries_attachments_len
+  check (jsonb_typeof(attachments) = 'array' and jsonb_array_length(attachments) <= 3);
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('inquiry-files', 'inquiry-files', false, 10485760,
+        array['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'text/plain'])
+on conflict (id) do nothing;
+
+drop policy if exists "inquiry-files: upload own folder" on storage.objects;
+create policy "inquiry-files: upload own folder" on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'inquiry-files'
+    and (storage.foldername(name))[1] = auth.uid()::text
+    -- 한 사람이 올릴 수 있는 문의 파일 수에 상한을 둬요(악용 방지).
+    and (select count(*) from storage.objects o
+         where o.bucket_id = 'inquiry-files' and (storage.foldername(o.name))[1] = auth.uid()::text) < 200
+  );
+
+-- 올린 파일을 확인 · (문의 저장에 실패했을 때) 정리하려면 자기 폴더의 읽기 · 지우기가 필요해요.
+drop policy if exists "inquiry-files: read own folder" on storage.objects;
+create policy "inquiry-files: read own folder" on storage.objects for select to authenticated
+  using (bucket_id = 'inquiry-files' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "inquiry-files: delete own folder" on storage.objects;
+create policy "inquiry-files: delete own folder" on storage.objects for delete to authenticated
+  using (bucket_id = 'inquiry-files' and (storage.foldername(name))[1] = auth.uid()::text);

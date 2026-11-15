@@ -30,6 +30,8 @@ type Options = {
   zip?: boolean;
   /** 참석 응답에서 켜 둔 칸(없으면 실제로 값이 있는 칸만 넣어요). */
   rsvpFields?: RsvpFields;
+  /** 함께 묶을 다른 파일(초대장 · 감사 페이지 이미지 · PDF). 있으면 항상 .zip으로 묶어요. */
+  extra?: OutFile[];
 };
 
 /**
@@ -52,10 +54,11 @@ export async function exportGuestData(o: Options): Promise<ExportResult> {
     if (!res.ok) return res.kind === 'offline' ? 'offline' : 'error';
     files.push({ name: `방명록.${ext}`, data: encode(guestbookTable(res.data, sides)) });
   }
+  if (o.extra?.length) files.push(...o.extra);
   if (!files.length) return 'error';
 
   const base = safeFileName(o.project.title);
-  const asZip = files.length > 1 || o.zip;
+  const asZip = files.length > 1 || o.zip || !!o.extra?.length;
   const name = asZip ? `${base}_${today()}.zip` : `${base}_${files[0].name.replace(/\.(xlsx|csv)$/, '')}_${today()}.${ext}`;
   const data = asZip ? zipFiles(files) : files[0].data;
   const kind = MIME[asZip ? 'zip' : ext];

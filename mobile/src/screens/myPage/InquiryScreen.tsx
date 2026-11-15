@@ -15,6 +15,7 @@ import { textStyle } from '../../theme/typography';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../state/AuthContext';
 import { Toast } from '../../components/Toast';
+import { checkFile, formatSize, MAX_FILES, newUuid, pickDocument, pickPhoto, removeAttachments, uploadAttachments, type Attachment, type PickedFile } from '../../sync/inquiryFiles';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Inquiry'>;
 
@@ -24,7 +25,7 @@ const SUGGEST_TOPIC = '아이디어 · 기능 제안';
 const TOPICS = ['이용 방법 문의', '오류·버그 신고', '디자인·테마 문의', '계정·로그인 문제', SUGGEST_TOPIC, '기타'];
 
 /** 보낸 문의 한 건 (supabase `inquiries` 표). 답변은 관리자가 대시보드에서 달아요. */
-type Inquiry = { id: string; topic: string; title: string; content: string; status: 'pending' | 'answered'; reply: string | null; replied_at: string | null; created_at: string };
+type Inquiry = { id: string; topic: string; title: string; content: string; status: 'pending' | 'answered'; reply: string | null; replied_at: string | null; created_at: string; attachments: Attachment[] | null };
 
 const fmtDay = (iso: string) => {
   const d = new Date(iso);
@@ -38,6 +39,8 @@ export function InquiryScreen({ route, navigation }: Props) {
   const [topicSheetOpen, setTopicSheetOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [files, setFiles] = useState<PickedFile[]>([]);
+  const [attachOpen, setAttachOpen] = useState(false);
 
   const suggesting = topic === SUGGEST_TOPIC;
   const canSubmit = Boolean(topic) && title.trim().length > 0 && content.trim().length > 0;
@@ -56,7 +59,7 @@ export function InquiryScreen({ route, navigation }: Props) {
     (async () => {
       const { data, error } = await supabase
         .from('inquiries')
-        .select('id, topic, title, content, status, reply, replied_at, created_at')
+        .select('*') // attachments 칸은 서버 설정(schema.sql 10번)을 마친 뒤에만 있어서, 칸을 이름으로 고르지 않아요
         .order('created_at', { ascending: false });
       if (!active) return;
       setLoadFailed(Boolean(error));
@@ -67,22 +70,49 @@ export function InquiryScreen({ route, navigation }: Props) {
     };
   }, [tab, auth.user]);
 
-  const handleAttach = () => {
-    Alert.alert('파일 첨부', '준비 중이에요. 곧 지원할 예정이에요.');
+  // 파일 붙이기 — 사진 보관함 또는 파일 앱에서 한 개씩 골라요(최대 3개 · 파일당 10MB).
+  const attach = async (source: 'photo' | 'file') => {
+    setAttachOpen(false);
+    try {
+      const picked = source === 'photo' ? await pickPhoto() : await pickDocument();
+      if (!picked) return;
+      const why = checkFile(picked, files.length);
+      if (why) {
+        Alert.alert('파일을 붙일 수 없어요', why);
+        return;
+      }
+      setFiles((prev) => [...prev, picked]);
+    } catch {
+      Alert.alert('파일을 불러오지 못했어요', '다른 파일로 다시 시도해 주세요.');
+    }
   };
 
   const handleSubmit = async () => {
     if (!canSubmit || sending || !auth.user || !topic) return;
     setSending(true);
-    const { error } = await supabase.from('inquiries').insert({ user_id: auth.user.id, topic, title: title.trim(), content: content.trim() });
+    // 파일을 먼저 올리고(문의 번호 폴더), 같은 번호로 문의를 저장해요. 어느 쪽이든 실패하면 입력한 글과 파일은 그대로 남겨요.
+    const id = newUuid();
+    let attachments: Attachment[] = [];
+    if (files.length) {
+      const up = await uploadAttachments(auth.user.id, id, files);
+      if (!up.ok) {
+        setSending(false);
+        Alert.alert('파일을 올리지 못했어요', up.kind === 'offline' ? '인터넷 연결을 확인하고 다시 시도해주세요.' : '잠시 뒤에 다시 시도하거나, 파일을 빼고 보내 보세요.');
+        return;
+      }
+      attachments = up.attachments;
+    }
+    const { error } = await supabase.from('inquiries').insert({ id, user_id: auth.user.id, topic, title: title.trim(), content: content.trim(), ...(attachments.length ? { attachments } : {}) });
     setSending(false);
     if (error) {
+      void removeAttachments(attachments);
       Alert.alert('문의를 보내지 못했어요', '인터넷 연결을 확인하고 다시 시도해주세요.');
       return;
     }
     setTopic(null);
     setTitle('');
     setContent('');
+    setFiles([]);
     setItems(null);
     setTab('history');
     setToast(suggesting ? '제안을 보냈어요. 소중한 의견 고마워요!' : '문의를 보냈어요. 답변은 문의내역에서 확인할 수 있어요.');
@@ -133,8 +163,23 @@ export function InquiryScreen({ route, navigation }: Props) {
               />
             </View>
 
-            <Pressable onPress={handleAttach} style={styles.attachButton}>
-              <Text style={styles.attachLabel}>+ 파일 첨부</Text>
+            {files.length ? (
+              <View style={styles.fileList}>
+                {files.map((f, i) => (
+                  <View key={`${f.uri}-${i}`} style={styles.fileChip}>
+                    <View style={styles.fileText}>
+                      <Text style={styles.fileName} numberOfLines={1}>{f.name}</Text>
+                      <Text style={styles.fileSize}>{formatSize(f.size)}</Text>
+                    </View>
+                    <Pressable onPress={() => setFiles((prev) => prev.filter((_, k) => k !== i))} hitSlop={10} accessibilityLabel="파일 빼기">
+                      <Text style={styles.fileRemove}>✕</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            <Pressable onPress={() => setAttachOpen(true)} disabled={sending || files.length >= MAX_FILES} style={[styles.attachButton, files.length >= MAX_FILES && styles.attachOff]}>
+              <Text style={styles.attachLabel}>{files.length >= MAX_FILES ? `파일은 ${MAX_FILES}개까지 붙일 수 있어요` : `+ 파일 첨부${files.length ? ` (${files.length}/${MAX_FILES})` : ''}`}</Text>
             </Pressable>
 
             <View style={styles.buttonWrap}>
@@ -171,6 +216,7 @@ export function InquiryScreen({ route, navigation }: Props) {
                   {open ? (
                     <>
                       <Text style={styles.cardBody}>{it.content}</Text>
+                      {it.attachments?.length ? <Text style={styles.cardFiles}>{`첨부 ${it.attachments.length}개 · ${it.attachments.map((a) => a.name).join(', ')}`}</Text> : null}
                       {answered && it.reply ? (
                         <View style={styles.replyBox}>
                           <Text style={styles.replyHead}>{`답변${it.replied_at ? ` · ${fmtDay(it.replied_at)}` : ''}`}</Text>
@@ -189,6 +235,15 @@ export function InquiryScreen({ route, navigation }: Props) {
       </View>
 
       <Toast visible={toast !== null} message={toast ?? ''} tone="success" onHide={() => setToast(null)} />
+      <BottomSheet visible={attachOpen} onClose={() => setAttachOpen(false)} title="파일 첨부">
+        <Pressable onPress={() => void attach('photo')} style={styles.topicRow}>
+          <Text style={styles.topicRowLabel}>사진 보관함에서 고르기</Text>
+        </Pressable>
+        <Pressable onPress={() => void attach('file')} style={[styles.topicRow, styles.topicRowDivider]}>
+          <Text style={styles.topicRowLabel}>파일 고르기 (PDF · 사진 · 텍스트)</Text>
+        </Pressable>
+        <Text style={styles.attachHelp}>{`최대 ${MAX_FILES}개, 파일 하나는 10MB까지예요. 사진은 올리기 전에 자동으로 줄여요.`}</Text>
+      </BottomSheet>
       <BottomSheet visible={topicSheetOpen} onClose={() => setTopicSheetOpen(false)} title="주제 선택">
         {TOPICS.map((t, i) => {
           const selected = t === topic;
@@ -292,6 +347,15 @@ const styles = StyleSheet.create({
   attachLabel: {
     ...textStyle({ size: 'label', weight: 'medium', color: color.accent.base }),
   },
+  attachOff: { opacity: 0.45 },
+  attachHelp: { ...textStyle({ size: 'small', weight: 'regular', color: color.ink.muted }), paddingHorizontal: space.screenX, paddingTop: space[4], paddingBottom: space[4] },
+  fileList: { gap: space[3] },
+  fileChip: { flexDirection: 'row', alignItems: 'center', gap: space[4], backgroundColor: color.bg.surface, borderWidth: 1, borderColor: color.line.default, borderRadius: radius.input, paddingHorizontal: space[5], paddingVertical: space[4] },
+  fileText: { flex: 1, gap: 2 },
+  fileName: { ...textStyle({ size: 'label', weight: 'medium', color: color.ink.primary }) },
+  fileSize: { ...textStyle({ size: 'caption', weight: 'regular', color: color.ink.muted }) },
+  fileRemove: { ...textStyle({ size: 'control', weight: 'regular', color: color.ink.secondary }) },
+  cardFiles: { ...textStyle({ size: 'small', weight: 'regular', color: color.ink.muted }), marginTop: space[3] },
   buttonWrap: {
     marginTop: space[4],
   },

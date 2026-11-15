@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Modal, Pressable, Text, View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Checkbox } from '../../components/Checkbox';
@@ -6,10 +6,13 @@ import { PrimaryButton } from '../../components/PrimaryButton';
 import { color, radius, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
 import { exportGuestData, exportMessage } from '../../export/guestExport';
+import type { OutFile } from '../../export/guestFiles';
+import { jpegToPdf } from '../../export/pdf';
+import { PageCapture, type CaptureHandle } from '../../export/PageCapture';
 import type { Project } from '../../types/project';
 
-/** 초대장 · 감사 페이지를 이미지(.png) / PDF로 내려받는 기능은 아직 만들지 않았어요 — 만들면 true로. */
-const IMAGE_EXPORT_READY = false;
+/** 초대장 · 감사 페이지를 이미지(.png) / PDF로 내려받기 — 2026-11-15 구현(손님이 보는 모습 그대로 긴 한 장). */
+const IMAGE_EXPORT_READY = true;
 
 type ImageFormat = 'image' | 'pdf';
 type DataFormat = 'xlsx' | 'csv';
@@ -47,6 +50,7 @@ export function DownloadSheet({ visible, project, onClose, onDownloaded }: Props
   const [wasVisible, setWasVisible] = useState(visible);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const capture = useRef<CaptureHandle>(null);
 
   if (visible !== wasVisible) {
     setWasVisible(visible);
@@ -87,7 +91,24 @@ export function DownloadSheet({ visible, project, onClose, onDownloaded }: Props
     if (busy) return;
     setBusy(true);
     setError(null);
-    const result = await exportGuestData({ project, rsvp: items.rsvp, guestbook: items.guestbook, format: dataFormat, zip: true });
+    // 초대장 · 감사 페이지는 손님이 보는 모습 그대로 사진으로 찍어요(PDF는 그 사진을 긴 한 쪽으로 감싸요).
+    const extra: OutFile[] = [];
+    const kinds = [items.invitation && 'invitation', thanksAvailable && items.thanks && 'thanks'].filter(Boolean) as ('invitation' | 'thanks')[];
+    for (const kind of kinds) {
+      const shot = await capture.current?.capture(kind, imageFormat === 'pdf' ? 'jpg' : 'png');
+      if (!shot) {
+        setBusy(false);
+        setError('화면을 이미지로 만들지 못했어요. 잠시 뒤에 다시 시도해 주세요');
+        return;
+      }
+      const label = kind === 'invitation' ? '초대장' : '감사 페이지';
+      extra.push(
+        imageFormat === 'pdf'
+          ? { name: `${label}.pdf`, data: jpegToPdf(shot.bytes, shot.width, shot.height) }
+          : { name: `${label}.png`, data: shot.bytes },
+      );
+    }
+    const result = await exportGuestData({ project, rsvp: items.rsvp, guestbook: items.guestbook, format: dataFormat, zip: true, extra });
     setBusy(false);
     const message = exportMessage(result);
     if (message) {
@@ -101,6 +122,8 @@ export function DownloadSheet({ visible, project, onClose, onDownloaded }: Props
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose} />
+      {/* 눈에 안 보이는 곳에 초대장을 그려 두고 사진으로 찍어요 */}
+      <PageCapture ref={capture} project={project} />
       <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space[9]) }]}>
         <View style={styles.grabber} />
         <View style={styles.header}>
@@ -124,7 +147,7 @@ export function DownloadSheet({ visible, project, onClose, onDownloaded }: Props
             <View style={styles.itemList}>
               <ItemRow
                 label="초대장"
-                desc={IMAGE_EXPORT_READY ? '공유한 초대장 화면 전체' : '이미지 · PDF 내려받기는 준비 중이에요'}
+                desc={IMAGE_EXPORT_READY ? '손님이 보는 초대장 화면 전체' : '이미지 · PDF 내려받기는 준비 중이에요'}
                 checked={items.invitation}
                 onPress={() => toggle('invitation')}
                 disabled={!IMAGE_EXPORT_READY}
@@ -133,7 +156,7 @@ export function DownloadSheet({ visible, project, onClose, onDownloaded }: Props
               {thanksAvailable ? (
                 <ItemRow
                   label="감사 페이지"
-                  desc={IMAGE_EXPORT_READY ? '설정한 감사 페이지 화면' : '이미지 · PDF 내려받기는 준비 중이에요'}
+                  desc={IMAGE_EXPORT_READY ? '손님이 보는 감사 페이지 화면' : '이미지 · PDF 내려받기는 준비 중이에요'}
                   checked={items.thanks}
                   onPress={() => toggle('thanks')}
                   disabled={!IMAGE_EXPORT_READY}
