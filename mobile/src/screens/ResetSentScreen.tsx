@@ -14,6 +14,8 @@ import { textStyle } from '../theme/typography';
 type Props = NativeStackScreenProps<RootStackParamList, 'ResetSent'>;
 
 const RESEND_COOLDOWN_SECONDS = 60;
+// 기다리는 동안은 "다시 보내기"를 권하지 않고 메일부터 확인하게 해요. 0초가 되면 다시 보내기로 바뀌어요.
+const WAIT_LABEL = '메일을 확인해 주세요';
 
 export function ResetSentScreen({ navigation, route }: Props) {
   const { email } = route.params;
@@ -52,7 +54,7 @@ export function ResetSentScreen({ navigation, route }: Props) {
         </View>
         <Text style={styles.title}>메일을 보냈어요</Text>
         <Text style={styles.body}>
-          {email} 으로 보낸{'\n'}링크를 열어 새 비밀번호를 설정해 주세요.{'\n'}링크는 1시간 동안 유효합니다.
+          {email} 으로 보낸{'\n'}링크를 열어 새 비밀번호를 설정해 주세요.{'\n'}링크는 1시간 동안 유효합니다.{'\n'}메일이 안 보이면 스팸함도 확인해 주세요.
         </Text>
       </View>
 
@@ -64,7 +66,7 @@ export function ResetSentScreen({ navigation, route }: Props) {
           color={cooldown > 0 ? color.ink.placeholder : color.accent.base}
           onPress={handleResend}
         >
-          {cooldown > 0 ? `메일이 오지 않았나요? 다시 보내기 (${cooldown}s)` : '메일이 오지 않았나요? 다시 보내기'}
+          {cooldown > 0 ? `${WAIT_LABEL} (${cooldown}s)` : '메일이 오지 않았나요? 다시 보내기'}
         </TextLink>
         {notice ? <Text style={styles.notice}>{notice}</Text> : null}
       </View>

@@ -13,6 +13,8 @@ import { textStyle } from '../theme/typography';
 type Props = NativeStackScreenProps<RootStackParamList, 'SignupSent'>;
 
 const RESEND_COOLDOWN_SECONDS = 60;
+// 기다리는 동안은 "다시 보내기"를 권하지 않고 메일부터 확인하게 해요. 0초가 되면 다시 보내기로 바뀌어요.
+const WAIT_LABEL = '인증 메일을 확인해 주세요';
 
 export function SignupSentScreen({ navigation, route }: Props) {
   const { email } = route.params;
@@ -53,7 +55,7 @@ export function SignupSentScreen({ navigation, route }: Props) {
         </View>
         <Text style={styles.title}>확인 메일을 보냈어요</Text>
         <Text style={styles.body}>
-          {email} 으로 보낸{'\n'}링크를 눌러 이메일을 인증해주세요.{'\n'}인증 후에 로그인할 수 있어요.
+          {email} 으로 보낸{'\n'}링크를 눌러 이메일을 인증해주세요.{'\n'}인증 후에 로그인할 수 있어요.{'\n'}메일이 안 보이면 스팸함도 확인해 주세요.
         </Text>
       </View>
 
@@ -65,7 +67,7 @@ export function SignupSentScreen({ navigation, route }: Props) {
           color={cooldown > 0 ? color.ink.placeholder : color.accent.base}
           onPress={handleResend}
         >
-          {cooldown > 0 ? `메일이 오지 않았나요? 다시 보내기 (${cooldown}s)` : '메일이 오지 않았나요? 다시 보내기'}
+          {cooldown > 0 ? `${WAIT_LABEL} (${cooldown}s)` : '메일이 오지 않았나요? 다시 보내기'}
         </TextLink>
         {notice ? <Text style={[styles.notice, notice.error && styles.noticeError]}>{notice.text}</Text> : null}
       </View>
