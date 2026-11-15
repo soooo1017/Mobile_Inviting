@@ -284,7 +284,7 @@ function Editor({
         ) : (
           <>
             <View style={styles.header}>
-              <Pressable onPress={exit} hitSlop={10} accessibilityLabel="나가기">
+              <Pressable onPress={exit} hitSlop={{ top: 14, bottom: 14, left: 14, right: 18 }} accessibilityLabel="나가기">
                 <Text style={styles.back}>←</Text>
               </Pressable>
               <Text style={[styles.title, styles.flex]} numberOfLines={1}>

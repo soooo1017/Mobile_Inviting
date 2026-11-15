@@ -14,7 +14,7 @@ export function ManageHeader({ title, onBack, right }: { title: string; onBack: 
   return (
     <View style={styles.header}>
       {/* Same ← as the editor header (BackButton carries the wizard's top margin). */}
-      <Pressable onPress={onBack} hitSlop={12} accessibilityLabel="뒤로">
+      <Pressable onPress={onBack} hitSlop={{ top: 14, bottom: 14, left: 14, right: 18 }} accessibilityLabel="뒤로">
         <Text style={styles.back}>←</Text>
       </Pressable>
       <Text style={styles.title} numberOfLines={1}>

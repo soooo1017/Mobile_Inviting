@@ -32,8 +32,9 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space[5],
-    paddingHorizontal: space.screenX,
+    gap: space[3],
+    // 왼쪽 여백은 BackButton이 스스로 가져요.
+    paddingRight: space.screenX,
   },
   headerTitle: {
     ...textStyle({ size: 'title2', weight: 'semibold', color: color.ink.primary }),

@@ -106,7 +106,7 @@ export const font = {
 // Scaled ~1.3x from the original handoff spec, growing faster at the
 // larger steps (used for vertical rhythm between sections) than at the
 // smaller ones (icon/text micro-gaps), which were already tight enough.
-// screenX (horizontal screen margin) is left as-is — that wasn't the ask.
+// screenX (horizontal screen margin): 18 → 22 (2026-11-15) — on a real phone 18 felt too tight to the screen edge.
 export const space = {
   1: 3,
   2: 5,
@@ -118,7 +118,7 @@ export const space = {
   8: 24,
   9: 28,
   10: 34,
-  screenX: 18,
+  screenX: 22,
 } as const;
 
 export const radius = {

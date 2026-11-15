@@ -10,6 +10,7 @@
 - [x] 배경음악 음원 업로드 · 앱 연결 — 완료(2026-11-10): `bgm001.mp3` · `bgm002.mp3`를 Storage `bgm` 버킷에 올리고 `mobile/.env`의 `EXPO_PUBLIC_BGM_BASE_URL`을 채워 앱에서 미리 듣기 확인(사용자)
 - [ ] 배경음악 하객 페이지 연결 — Vercel 환경변수 `NEXT_PUBLIC_BGM_BASE_URL`(앱과 같은 폴더 주소, 끝 `/` 없이, Production · Preview)을 추가하고 Redeploy → 공유한 링크를 폰 브라우저로 열어 ♪ 버튼 · 재생 · 맨 아래 출처 표기 확인. 곡을 더 올릴 때(bgm003~)는 파일 업로드 + 앱 `bgm.ts` · 웹 `web/lib/bgm.ts`에 곡 정보 추가만 하면 돼요(주소 입력은 끝)
 - [ ] 폰에서 `DEVICE_CHECKLIST.md` **§15 메뉴 구조 개편** 점검(새 초대장 3단계 · [공유] 버튼 · 페이지 추가 · 메시지 작성하기 등) — 서버 변경 없음
+- [ ] **친구 테스트 앱 보내기** — `docs/TESTER_BUILD.md`: 친구 가입용 메일 정리(SMTP 또는 테스트 기간만 이메일 인증 끄기) → `eas init` · 환경변수 → Android APK 빌드, iOS는 TestFlight(Apple 개발자 계정 필요)
 - [ ] Google Play · Apple 개발자 계정 가입 (승인에 며칠 — `STORE_RELEASE.md`)
 
 ## 내용 채우기
