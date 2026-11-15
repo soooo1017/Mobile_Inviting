@@ -16,6 +16,7 @@ import {
   safeHttpUrl,
   shortBank,
   venueAddressLine,
+  venueDetail,
   venueQuery,
   weekdayLabels,
 } from '../lib/format';
@@ -546,6 +547,7 @@ function MapBlock({ block }: { block: BlockOfType<'map'> }) {
   const name = venue?.name?.trim() ?? '';
   if (!name) return null;
   const address = venueAddressLine(venue);
+  const detail = venueDetail(venue);
   const query = venueQuery(venue);
   const tone = p.shape === 'fill' ? 'fill' : 'outline';
   return (
@@ -558,10 +560,16 @@ function MapBlock({ block }: { block: BlockOfType<'map'> }) {
           {address ? (
             <Txt font={block.style?.font} size={13.5} soft leading={1.6} className="t-center">
               {address}
+              {detail ? (
+                <>
+                  <br />
+                  {detail}
+                </>
+              ) : null}
             </Txt>
           ) : null}
           {p.showCopy ? (
-            <button onClick={() => copy(address || name, '주소를 복사했어요')} aria-label="주소 복사" style={{ padding: 6 }}>
+            <button onClick={() => copy([address, detail].filter(Boolean).join(' ') || name, '주소를 복사했어요')} aria-label="주소 복사" style={{ padding: 6 }}>
               <CopyIcon size={13} color={theme.inkSoft} />
             </button>
           ) : null}

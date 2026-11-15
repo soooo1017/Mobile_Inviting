@@ -44,7 +44,8 @@ export function ThemeSelectScreen({ navigation }: Props) {
       customTypeName: draft.eventType === 'other' ? draft.customTypeName : undefined,
       hosts: draft.hosts,
       eventAt: draft.eventAt,
-      venue: draft.venue,
+      // 이름도 주소도 안 적었으면 장소 없음(지도 연결 토글만 만져 본 경우 포함).
+      venue: draft.venue && (draft.venue.name.trim() || draft.venue.address.trim()) ? draft.venue : undefined,
       thanks: { enabled: true, days: 7, hasContent: false },
       themeId: 'custom',
       colors,

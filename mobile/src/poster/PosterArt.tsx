@@ -59,7 +59,7 @@ export function buildPosterData(project: Project, design: PosterDesign, fontId: 
     names,
     dateText: posterDateText(project.eventAt),
     place: project.venue?.name ?? '',
-    address: project.venue?.address ?? '',
+    address: [project.venue?.address, project.venue?.detail].map((x) => x?.trim()).filter(Boolean).join(' '),
     photo,
     fontId,
     qrUrl: shareUrl(project),

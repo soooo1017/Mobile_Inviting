@@ -85,7 +85,7 @@ export type ThemeColors = { bg: string; accent: string; text: TextColorChoice };
 export type PublicMeta = {
   colors?: ThemeColors | null;
   themeId?: string | null;
-  venue?: { name: string; address: string; sido?: string; mapLinks?: { naver: boolean; kakao: boolean } } | null;
+  venue?: { name: string; address: string; detail?: string; zip?: string; sido?: string; mapLinks?: { naver: boolean; kakao: boolean } } | null;
   hosts?: { label: string; name: string }[] | null;
 };
 

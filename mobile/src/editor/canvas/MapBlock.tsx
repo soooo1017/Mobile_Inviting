@@ -4,7 +4,7 @@ import { useCanvas } from './CanvasContext';
 import { InvText, InvUiText } from './InvText';
 import { InvButton } from './BasicBlocks';
 import { CopyIcon, KakaoMapIcon, NaverMapIcon } from '../icons';
-import { openMap, venueAddressLine, venueQuery, type MapApp } from '../maps';
+import { openMap, venueAddressLine, venueDetail, venueQuery, type MapApp } from '../maps';
 import type { BlockOfType } from '../types';
 
 /** 장소: name + address as text, then buttons that open 네이버 지도 / 카카오맵 (no map drawing). */
@@ -15,6 +15,7 @@ export function MapBlockView({ block }: { block: BlockOfType<'map'> }) {
   const live = mode === 'preview';
   const name = venue?.name.trim() ?? '';
   const address = venueAddressLine(venue);
+  const detail = venueDetail(venue);
   const query = venueQuery(venue);
 
   if (!name) {
@@ -28,7 +29,7 @@ export function MapBlockView({ block }: { block: BlockOfType<'map'> }) {
   }
 
   const copy = async () => {
-    await Clipboard.setStringAsync(address || name);
+    await Clipboard.setStringAsync([address, detail].filter(Boolean).join(' ') || name);
     showToast('주소를 복사했어요');
   };
   const open = (app: MapApp) => () =>
@@ -44,7 +45,7 @@ export function MapBlockView({ block }: { block: BlockOfType<'map'> }) {
         <View style={styles.addressRow}>
           {address ? (
             <InvText font={block.style?.font} size={13.5} soft leading={1.6} style={[styles.center, styles.shrink]}>
-              {address}
+              {detail ? `${address}\n${detail}` : address}
             </InvText>
           ) : null}
           {p.showCopy ? (

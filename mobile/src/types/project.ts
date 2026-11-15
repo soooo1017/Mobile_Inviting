@@ -54,7 +54,12 @@ export type MapLink = 'naver' | 'kakao';
 
 export type Venue = {
   name: string;
+  /** 기본 주소 — 주소 검색으로 고른 도로명(층 · 홀 없이). 지도 앱은 이 주소로 찾아요. */
   address: string;
+  /** 상세 주소(층 · 홀) — 초대장에 글로만 보여요. */
+  detail?: string;
+  /** 우편번호(주소 검색으로 골랐을 때). 없으면 직접 적은 예전 주소예요. */
+  zip?: string;
   sido: string;
   mapLinks: { naver: boolean; kakao: boolean };
 };

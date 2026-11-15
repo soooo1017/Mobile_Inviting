@@ -108,12 +108,18 @@ export function guestSides(eventType: string): [string, string] | [] {
 
 // ── 장소 ─────────────────────────────────────────────────────────────────────
 
-export type Venue = { name: string; address: string } | null | undefined;
+export type Venue = { name: string; address: string; detail?: string } | null | undefined;
 
 export function venueQuery(venue: Venue): string {
   if (!venue) return '';
   const address = venue.address.trim();
   return address && address !== venue.name.trim() ? address : venue.name.trim();
+}
+
+/** 상세 주소(층 · 홀) — 기본 주소가 있을 때만. 지도 검색에는 안 쓰고 글로만 보여요. */
+export function venueDetail(venue: Venue): string {
+  if (!venue || !venueAddressLine(venue)) return '';
+  return (venue.detail ?? '').trim();
 }
 
 export function venueAddressLine(venue: Venue): string {

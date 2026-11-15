@@ -10,12 +10,14 @@ import { HostFields, hostsComplete } from './HostFields';
 import { FieldLabel } from '../../components/FieldLabel';
 import { TextField } from '../../components/TextField';
 import { HelperText } from '../../components/HelperText';
-import { SelectChip } from '../../components/SelectChip';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { KeyboardAwareForm, useKeyboardAwareForm } from '../../components/KeyboardAwareForm';
 import { color, space } from '../../theme/tokens';
 import { textStyle } from '../../theme/typography';
-import { eventTypeMeta, SIDO_LIST, type MapLink } from '../../types/project';
+import { eventTypeMeta, type MapLink, type Venue } from '../../types/project';
+import { AddressSearch } from '../../editor/AddressSearch';
+import { applyAddressPick } from '../../editor/VenueFields';
+import { venueAddressLine } from '../../editor/maps';
 import { defaultProjectTitle } from '../../editor/format';
 import { formatEventDateTime } from '../../utils/projectStatus';
 
@@ -26,29 +28,19 @@ export function NewProjectInfoScreen({ navigation }: Props) {
   const { scrollRef, fieldLayout, onFieldFocus } = useKeyboardAwareForm();
   // Same as ⚙ 초대장 설정: tapping 일자/시간 opens the calendar / time wheel right away (tap again to close).
   const [picker, setPicker] = useState<'date' | 'time' | null>(null);
-  const [venueText, setVenueText] = useState(draft.venue?.name ?? '');
+  const [searching, setSearching] = useState(false);
 
   const eventDate = new Date(draft.eventAt);
   const typeLabel = draft.eventType === 'other' ? draft.customTypeName || '기타' : eventTypeMeta(draft.eventType).label;
 
 
-  const setVenueField = (text: string) => {
-    setVenueText(text);
-    update({
-      venue: text
-        ? { name: text, address: text, sido: draft.venue?.sido ?? '', mapLinks: draft.venue?.mapLinks ?? { naver: false, kakao: false } }
-        : undefined,
-    });
-  };
-
-  const setSido = (sido: string) => {
-    if (!venueText) return;
-    update({ venue: { name: venueText, address: venueText, sido, mapLinks: draft.venue?.mapLinks ?? { naver: false, kakao: false } } });
-  };
+  // 장소는 이름(직접) · 주소(검색) · 상세 주소(직접). 아직 아무것도 안 적어도 지도 연결 토글은 쓸 수 있게 빈 장소를 바탕으로 해요(비어 있으면 만들 때 장소 없음으로 바꿔요).
+  const venue: Venue = draft.venue ?? { name: '', address: '', sido: '', mapLinks: { naver: false, kakao: false } };
+  const address = venueAddressLine(venue);
+  const setVenue = (next: Venue) => update({ venue: next });
 
   const toggleMapLink = (link: MapLink) => {
-    if (!draft.venue) return;
-    update({ venue: { ...draft.venue, mapLinks: { ...draft.venue.mapLinks, [link]: !draft.venue.mapLinks[link] } } });
+    setVenue({ ...venue, mapLinks: { ...venue.mapLinks, [link]: !venue.mapLinks[link] } });
   };
 
   const canProceed = hostsComplete(draft.eventType, draft.hosts);
@@ -123,18 +115,34 @@ export function NewProjectInfoScreen({ navigation }: Props) {
         <View style={styles.section} onLayout={fieldLayout('venue')}>
           <FieldLabel>행사 장소</FieldLabel>
           <TextField
-            value={venueText}
-            onChangeText={setVenueField}
+            value={venue.name}
+            onChangeText={(name) => setVenue({ ...venue, name })}
             onFocus={() => onFieldFocus('venue')}
-            placeholder="장소명 또는 주소 검색"
+            placeholder="장소 이름 (예: 더채플앳청담)"
+            maxLength={40}
           />
-          {venueText ? (
-            <View style={styles.sidoRow}>
-              {SIDO_LIST.map((s) => (
-                <SelectChip key={s} label={s} selected={draft.venue?.sido === s} onPress={() => setSido(s)} />
-              ))}
-            </View>
-          ) : null}
+          <Pressable style={styles.addressRow} onPress={() => setSearching(true)} accessibilityRole="button">
+            <Text style={[styles.addressText, !address && styles.addressPlaceholder]} numberOfLines={2}>
+              {address || '주소 검색'}
+            </Text>
+            <Text style={styles.addressAction}>{address ? '다시 검색' : '검색'}</Text>
+          </Pressable>
+          <TextField
+            value={venue.detail ?? ''}
+            onChangeText={(detail) => setVenue({ ...venue, detail })}
+            onFocus={() => onFieldFocus('venue')}
+            editable={Boolean(address)}
+            placeholder={address ? '상세 주소 (선택 · 예: 3층 그랜드홀)' : '주소를 먼저 검색하면 상세 주소를 적을 수 있어요'}
+            maxLength={40}
+          />
+          <AddressSearch
+            visible={searching}
+            onClose={() => setSearching(false)}
+            onPick={(pick) => {
+              setSearching(false);
+              setVenue(applyAddressPick(venue, pick));
+            }}
+          />
         </View>
 
         <View style={styles.section}>
@@ -199,11 +207,27 @@ const styles = StyleSheet.create({
   dateTimeText: {
     ...textStyle({ size: 'control', weight: 'regular', color: color.ink.primary }),
   },
-  sidoRow: {
+  addressRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[3],
-    marginTop: space[5],
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space[4],
+    marginVertical: space[3],
+    minHeight: 52,
+    paddingHorizontal: space[5],
+    borderWidth: 1,
+    borderColor: color.line.default,
+    borderRadius: 10,
+  },
+  addressText: {
+    flex: 1,
+    ...textStyle({ size: 'control', weight: 'regular', color: color.ink.primary }),
+  },
+  addressPlaceholder: {
+    color: color.ink.placeholder,
+  },
+  addressAction: {
+    ...textStyle({ size: 'label', weight: 'semibold', color: color.accent.base }),
   },
   mapHeaderRow: {
     flexDirection: 'row',

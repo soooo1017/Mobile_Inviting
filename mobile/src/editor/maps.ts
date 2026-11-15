@@ -17,6 +17,12 @@ export function venueAddressLine(venue: Venue | undefined): string {
   return address === venue.name.trim() ? '' : address;
 }
 
+/** 상세 주소(층 · 홀) — 기본 주소가 있을 때만 보여요. */
+export function venueDetail(venue: Venue | undefined): string {
+  if (!venue || !venueAddressLine(venue)) return '';
+  return (venue.detail ?? '').trim();
+}
+
 function withScheme(url: string): string {
   const u = url.trim();
   return /^https?:\/\//i.test(u) ? u : `https://${u}`;
