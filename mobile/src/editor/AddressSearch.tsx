@@ -12,7 +12,8 @@ import { parsePostcode, type AddressPick } from './address';
  * 골라서 돌아오는 값은 address.ts의 parsePostcode가 다듬어요.
  */
 
-const POSTCODE_SCRIPT = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
+// 카카오가 옛 주소(t1.daumcdn.net)를 2026-12-01부터 막는다고 알려서 새 주소(t1.kakaocdn.net)를 써요. 경로 · 사용법은 같아요.
+const POSTCODE_SCRIPT = 'https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
 const HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <style>html,body,#w{margin:0;padding:0;width:100%;height:100%;background:#fff}</style></head><body><div id="w"></div>
 <script src="${POSTCODE_SCRIPT}"></script>
@@ -20,7 +21,8 @@ const HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewp
   var post = function (o) { window.ReactNativeWebView.postMessage(JSON.stringify(o)); };
   setTimeout(function () { if (!window.__ready) post({ __error: 'load' }); }, 8000);
   try {
-    new daum.Postcode({ oncomplete: function (d) { post(d); }, width: '100%', height: '100%' }).embed(document.getElementById('w'));
+    var NS = window.kakao && window.kakao.Postcode ? window.kakao : window.daum;
+    new NS.Postcode({ oncomplete: function (d) { post(d); }, width: '100%', height: '100%' }).embed(document.getElementById('w'));
     window.__ready = true;
   } catch (e) { post({ __error: 'load' }); }
 </script></body></html>`;
@@ -85,7 +87,7 @@ export function AddressSearch({ visible, onClose, onPick }: Props) {
               key={attempt}
               style={styles.flex}
               originWhitelist={['*']}
-              source={{ html: HTML, baseUrl: 'https://postcode.map.daum.net' }}
+              source={{ html: HTML, baseUrl: 'https://postcode.map.kakao.com' }}
               javaScriptEnabled
               onMessage={onMessage}
               onLoadEnd={() => setLoading(false)}

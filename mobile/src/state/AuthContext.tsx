@@ -22,12 +22,17 @@ export type SignupError = 'username_taken' | 'email_taken' | 'unknown';
 export type PasswordChangeError = 'invalid_current_password' | 'unknown';
 export type DeleteAccountError = 'invalid_password' | 'unknown';
 
-// The recovery email's link opens this page (hosted on the project's GitHub
-// Pages site, not in the app itself — Expo Go's own address changes every
+// The recovery email's link opens this page (hosted on the guest website's
+// Vercel project — web/public/reset-password.html — not in the app itself;
+// the old GitHub Pages address broke when the repository was renamed — Expo Go's own address changes every
 // dev session, so a deep link back into the app can't reliably round-trip).
 // The page completes the whole "set a new password" step in the browser
 // using the same Supabase project, then tells the user to log back in here.
-const PASSWORD_RESET_REDIRECT_URL = 'https://soooo1017.github.io/Wedding_Mobile_Inviting/reset-password.html';
+const PASSWORD_RESET_REDIRECT_URL = 'https://moiso-ten.vercel.app/reset-password.html';
+
+// 가입 확인 메일의 링크를 누르면 도착하는 안내 페이지(web/public/email-confirmed.html).
+// Supabase › Authentication › URL Configuration › Redirect URLs에 이 주소가 들어 있어야 해요.
+const EMAIL_CONFIRMED_REDIRECT_URL = 'https://moiso-ten.vercel.app/email-confirmed.html';
 
 type AuthContextValue = {
   auth: AuthState;
@@ -51,6 +56,8 @@ type AuthContextValue = {
     currentPassword: string,
     newPassword: string,
   ) => Promise<{ ok: true } | { ok: false; error: PasswordChangeError }>;
+  /** 현재 비밀번호가 맞는지만 확인해요(비밀번호 변경 화면에서 칸을 벗어날 때 바로 알려 주려고). 로그인 상태가 아니면 false. */
+  verifyPassword: (password: string) => Promise<boolean>;
   /** Re-verifies password, logs the reason (survives the deleted account), then deletes the account. */
   deleteAccount: (
     password: string,
@@ -130,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { username, nickname } },
+          options: { data: { username, nickname }, emailRedirectTo: EMAIL_CONFIRMED_REDIRECT_URL },
         });
         if (error) {
           const message = error.message.toLowerCase();
@@ -159,6 +166,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // any future admin view) would look at.
         await supabase.from('profiles').update({ nickname }).eq('id', data.user.id);
         return { ok: true };
+      },
+      async verifyPassword(password) {
+        if (!auth.user) return false;
+        const { error } = await supabase.auth.signInWithPassword({ email: auth.user.email, password });
+        return !error;
       },
       async changePassword(currentPassword, newPassword) {
         if (!auth.user) return { ok: false, error: 'unknown' };

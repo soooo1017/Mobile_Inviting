@@ -13,7 +13,7 @@
 친구가 가입하면 **인증 메일**이 가야 해요. Supabase 기본 메일 서버는 보내는 양이 아주 적고 받는 주소가 제한될 수 있어서, 둘 중 하나를 먼저 해요.
 1. **(추천) 자체 메일 서비스(SMTP) 연결** — Supabase › Authentication › Emails › SMTP Settings. 출시 때도 필요해요.
 2. **(테스트 기간만) 이메일 인증 끄기** — Supabase › Authentication › Providers › Email › *Confirm email* 끄기. 메일 없이 바로 로그인돼요. 대신 인증 메일 흐름은 이 기간 동안 시험할 수 없고, 끝나면 다시 켜야 해요.
-그리고 Authentication › URL Configuration의 **Site URL**이 `localhost`가 아닌지 확인해요(가입 · 문의 점검표 아티팩트에도 있어요).
+그리고 Authentication › URL Configuration의 **Site URL**(`https://moiso-ten.vercel.app`)과 Redirect URLs를 `AUTH_MAIL.md` 대로 맞춰요. 한국어 메일 문구도 거기 있어요.
 
 ## 처음 한 번: 준비
 ```
