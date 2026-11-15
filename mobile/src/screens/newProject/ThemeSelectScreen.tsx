@@ -52,7 +52,8 @@ export function ThemeSelectScreen({ navigation }: Props) {
       link: linkFromChoice(draft.link),
     });
     startInvitation(project.id, { font, popup: { enabled: false, startDays: draft.popup.startDays } });
-    navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Editor', params: { projectId: project.id } }] }));
+    // 만들기 단계 화면들은 비우되 내 초대장 목록은 아래에 남겨요 — 안드로이드 뒤로가기를 누르면 앱이 꺼지지 않고 목록으로 가요.
+    navigation.dispatch(CommonActions.reset({ index: 1, routes: [{ name: 'MainTabs' }, { name: 'Editor', params: { projectId: project.id } }] }));
   };
 
   return (

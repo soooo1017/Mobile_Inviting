@@ -12,12 +12,19 @@ export const ScrollLockContext = createContext<(locked: boolean) => void>(() => 
 export const BlockDeleteContext = createContext<(() => void) | null>(null);
 
 /**
+ * 새로 추가하는 중인 항목의 편집 창이면 값이 들어 있어요 — 맨 아래가 [취소] [추가]가 되고, 취소(또는 안드로이드 뒤로가기)하면 아무것도 추가되지 않아요.
+ * 이미 있는 항목을 고치는 창에서는 null이에요(그땐 [삭제하기] [완료]).
+ */
+export const BlockDraftContext = createContext<{ onCancel: () => void } | null>(null);
+
+/**
  * 블록 편집 창 맨 아래 — [삭제하기] [완료]를 나란히. 완료를 누르려다 삭제를 누르는 일이 없게
  * 삭제하기는 테두리 버튼, 완료는 진한 버튼이에요. 삭제 기능이 없는 창은 완료 하나만 넓게.
  * `guard`가 문구를 돌려주면(예: 사진을 안 넣음) 닫지 않고 그 안내를 보여줘요.
  */
 function SheetFooter({ onDone, doneLabel, guard, bottomInset }: { onDone: () => void; doneLabel: string; guard?: () => string | null; bottomInset: number }) {
   const onDelete = useContext(BlockDeleteContext);
+  const draft = useContext(BlockDraftContext);
   const [notice, setNotice] = useState<string | null>(null);
   useEffect(() => {
     if (!notice) return undefined;
@@ -28,7 +35,18 @@ function SheetFooter({ onDone, doneLabel, guard, bottomInset }: { onDone: () => 
     <View style={[styles.footer, { paddingBottom: Math.max(bottomInset, space[6]) }]}>
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
       <View style={styles.footerRow}>
-        {onDelete ? (
+        {draft ? (
+          <Pressable
+            onPress={() => {
+              Keyboard.dismiss();
+              draft.onCancel();
+            }}
+            style={({ pressed }) => [styles.footerBtn, styles.deleteBtn, styles.cancelBtn, pressed && styles.pressed]}
+            accessibilityRole="button"
+          >
+            <Text style={styles.cancelLabel}>취소</Text>
+          </Pressable>
+        ) : onDelete ? (
           <Pressable
             onPress={() => {
               Keyboard.dismiss();
@@ -50,7 +68,7 @@ function SheetFooter({ onDone, doneLabel, guard, bottomInset }: { onDone: () => 
           style={({ pressed }) => [styles.footerBtn, styles.doneBtn, pressed && styles.pressed]}
           accessibilityRole="button"
         >
-          <Text style={styles.doneBtnLabel}>{doneLabel}</Text>
+          <Text style={styles.doneBtnLabel}>{draft ? '추가' : doneLabel}</Text>
         </Pressable>
       </View>
     </View>
@@ -162,11 +180,14 @@ export function FullScreenEditor({ visible, title, onClose, onDone, doneLabel = 
   const insets = useSafeAreaInsets();
   const [locked, setLocked] = useState(false);
   const { scrollRef, contentRef } = useScrollToFocusedInput();
+  // 새로 추가하는 중이면 ✕ · 안드로이드 뒤로가기는 "취소"(추가 안 함)예요.
+  const draft = useContext(BlockDraftContext);
+  const close = draft ? draft.onCancel : onClose;
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={close}>
       <ModalSafeArea style={styles.full}>
         <View style={styles.fullHead}>
-          <Pressable onPress={onClose} hitSlop={10}>
+          <Pressable onPress={close} hitSlop={10}>
             <Text style={styles.fullClose}>{closeLabel}</Text>
           </Pressable>
           <Text style={styles.fullTitle} numberOfLines={1}>
@@ -221,6 +242,12 @@ const styles = StyleSheet.create({
   },
   deleteLabel: {
     ...textStyle({ size: 'button2', weight: 'semibold', color: color.status.error }),
+  },
+  cancelBtn: {
+    borderColor: color.line.default,
+  },
+  cancelLabel: {
+    ...textStyle({ size: 'button2', weight: 'semibold', color: color.ink.primary }),
   },
   doneBtn: {
     backgroundColor: color.ink.primary,

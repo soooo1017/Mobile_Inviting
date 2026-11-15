@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions, type ScrollViewInstance } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, BackHandler, Modal, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions, type ScrollViewInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -34,7 +34,7 @@ import { ReorderView } from '../../editor/ReorderView';
 import { AddBlockSheet } from '../../editor/AddBlockSheet';
 import { SettingsSheet, type Page as SettingsPage } from '../../editor/SettingsSheet';
 import { BlockSheet, isFullScreenEditor } from '../../editor/sheets/BlockSheet';
-import { BlockDeleteContext } from '../../editor/EditorSheet';
+import { BlockDeleteContext, BlockDraftContext } from '../../editor/EditorSheet';
 import { ModalSafeArea } from '../../components/ModalSafeArea';
 import { EyeIcon, GearIcon, SortIcon } from '../../editor/icons';
 import { blockLabel, blockSummary } from '../../editor/format';
@@ -79,11 +79,13 @@ function Editor({
   const { height: screenH } = useWindowDimensions();
   // [감사페이지] 탭은 감사페이지를 쓰는 경우에만 보여요.
   const hasThanks = project.thanks.enabled;
-  const [pageState, setPage] = useState<PageKey>(initialTab === 'popup' ? 'popup' : hasThanks && initialTab === 'thanks' ? 'thanks' : 'invite');
+  const [pageState, setPageState] = useState<PageKey>(initialTab === 'popup' ? 'popup' : hasThanks && initialTab === 'thanks' ? 'thanks' : 'invite');
   const [mode, setMode] = useState<'edit' | 'reorder'>('edit');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [addAt, setAddAt] = useState<number | null>(null);
+  /** 추가하는 중인 새 항목 — [추가]를 누르기 전에는 초대장에 들어가지 않고(화면에만 임시로 보여요), [취소] · 뒤로가기면 사라져요. */
+  const [draft, setDraft] = useState<{ block: Block; index: number; page: PageKey } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   /** 설정 창을 열 때 바로 보여줄 하위 화면 — 메뉴 줄의 [배경음악]은 'bgm'으로 열어요. */
   const [settingsPage, setSettingsPage] = useState<SettingsPage | undefined>(undefined);
@@ -102,11 +104,19 @@ function Editor({
 
   // [안내 팝업] 탭도 설정에서 쓰기로 한 경우에만 보여요 (감사페이지와 같은 방식). 끄면 초대장으로 돌아가요.
   const popupOn = invitation?.popup?.enabled ?? false;
+  // 다른 탭으로 옮기면 추가하던 항목은 취소돼요.
+  const setPage = (k: PageKey) => {
+    setDraft(null);
+    setPageState(k);
+  };
   const page: PageKey = (pageState === 'popup' && !popupOn) || (pageState === 'thanks' && !hasThanks) ? 'invite' : pageState;
 
   const theme = invitationTheme(project);
   const blocks = invitation?.pages[page] ?? [];
-  const selected = blocks.find((b) => b.id === selectedId) ?? null;
+  // 추가하는 중인 항목은 화면에만 끼워 보여줘요(저장 · 서버 동기화에는 [추가]를 누를 때 들어가요).
+  const shown = draft && draft.page === page ? [...blocks.slice(0, draft.index), draft.block, ...blocks.slice(draft.index)] : blocks;
+  const selected = shown.find((b) => b.id === selectedId) ?? null;
+  const draftSelected = Boolean(draft && selected && selected.id === draft.block.id);
   const thanksPage = invitation?.thanks ?? DEFAULT_THANKS_PAGE;
   // 안내 팝업: 초대장을 열면 먼저 뜨는 작은 페이지.
   const isPopup = page === 'popup';
@@ -148,6 +158,7 @@ function Editor({
   };
 
   const openReorder = (block?: Block) => {
+    setDraft(null);
     setSelectedId(null);
     setHighlightId(block?.id ?? null);
     setMode('reorder');
@@ -170,15 +181,52 @@ function Editor({
     }
     // 방명록 어느 쪽 손님 받기: on by default for weddings (신랑측 / 신부측).
     if (block.type === 'guestbook') block.props = { ...block.props, askSide: project.eventType === 'wedding' };
-    insertBlock(page, block, index);
     setAddAt(null);
     if (mode === 'reorder') {
+      // 순서 편집 중에는 자리를 잡는 게 목적이라 바로 넣고 표시만 해요.
+      insertBlock(page, block, index);
       setHighlightId(block.id);
     } else {
-      // A new block opens straight into its editor so it can be filled in.
+      // 고른 종류의 내용 입력창이 먼저 열려요. [추가]를 눌러야 초대장에 들어가고 [취소]면 추가되지 않아요.
+      setDraft({ block, index, page });
       setTimeout(() => select(block), 250);
     }
   };
+
+  const cancelDraft = () => {
+    setDraft(null);
+    setSelectedId(null);
+  };
+  const commitDraft = () => {
+    if (!draft) return;
+    insertBlock(draft.page, draft.block, draft.index);
+    setHighlightId(null);
+    setDraft(null);
+    setSelectedId(null);
+  };
+  // 안드로이드 뒤로가기: 앱이 꺼지지 않고, 열려 있는 편집 창을 먼저 닫아요(추가하던 중이면 취소). 창이 없으면 이전 화면으로 가요.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (draft) {
+        cancelDraft();
+        return true;
+      }
+      if (selectedId) {
+        setSelectedId(null);
+        return true;
+      }
+      if (thanksSheetOpen) {
+        setThanksSheetOpen(false);
+        return true;
+      }
+      if (mode === 'reorder') {
+        setMode('edit');
+        return true;
+      }
+      return false;
+    });
+    return () => sub.remove();
+  }, [draft, selectedId, thanksSheetOpen, mode]);
 
   // 초대장에서 사진을 지우거나 바꿀 때 안내 팝업 · 감사페이지가 같은 사진을 쓰고 있으면 어떻게 할지 물어봐요.
   const photoChange = usePhotoChange();
@@ -434,7 +482,7 @@ function Editor({
         ) : isPopup ? (
           <View style={[styles.flex, styles.popupStage]}>
             <PopupFrame
-              blocks={blocks}
+              blocks={shown}
               selectedId={selectedId}
               scrollRef={popupScrollRef}
               onPressBlock={select}
@@ -445,7 +493,7 @@ function Editor({
               }}
             />
           </View>
-        ) : blocks.length === 0 ? (
+        ) : shown.length === 0 ? (
           <View style={[styles.flex, styles.empty, { backgroundColor: theme.paper }]}>
             <Text style={[styles.emptyTitle, { color: theme.ink }]}>아직 아무것도 없어요</Text>
             <Text style={[styles.emptyDesc, { color: theme.inkSoft }]}>
@@ -463,7 +511,7 @@ function Editor({
             keyboardShouldPersistTaps="handled"
           >
             <Canvas
-              blocks={blocks}
+              blocks={shown}
               selectedId={selectedId}
               onPressBlock={select}
               onLongPressBlock={openReorder}
@@ -481,21 +529,27 @@ function Editor({
         ) : null}
 
         {mode === 'edit' && selected ? (
+          <BlockDraftContext.Provider value={draftSelected ? { onCancel: cancelDraft } : null}>
           <BlockDeleteContext.Provider
-            value={() => {
-              setSelectedId(null);
-              deleteBlock(selected, blocks.indexOf(selected));
-            }}
+            value={
+              draftSelected
+                ? null
+                : () => {
+                    setSelectedId(null);
+                    deleteBlock(selected, blocks.indexOf(selected));
+                  }
+            }
           >
             <BlockSheet
               key={selected.id}
               block={selected}
               project={project}
               defaultFont={invitation.font}
-              onChange={(next) => updateBlock(page, next.id, () => next)}
-              onDone={() => setSelectedId(null)}
+              onChange={(next) => (draftSelected ? setDraft((d) => (d ? { ...d, block: next } : d)) : updateBlock(page, next.id, () => next))}
+              onDone={() => (draftSelected ? commitDraft() : setSelectedId(null))}
               onOpenSettings={() => {
-                setSelectedId(null);
+                // 추가하는 중이면 편집 창을 그대로 두고 설정을 위에 열어요(닫으면 이어서 입력해요).
+                if (!draftSelected) setSelectedId(null);
                 setSettingsPage(undefined);
                 setSettingsOpen(true);
               }}
@@ -503,6 +557,7 @@ function Editor({
               photoChoices={page === 'invite' ? undefined : invitePhotoGroups(invitation)}
             />
           </BlockDeleteContext.Provider>
+          </BlockDraftContext.Provider>
         ) : null}
 
         {mode === 'edit' && simpleThanks && thanksSheetOpen ? (
