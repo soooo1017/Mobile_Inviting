@@ -727,3 +727,21 @@ create policy "inquiry-files: read own folder" on storage.objects for select to 
 drop policy if exists "inquiry-files: delete own folder" on storage.objects;
 create policy "inquiry-files: delete own folder" on storage.objects for delete to authenticated
   using (bucket_id = 'inquiry-files' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- 11) 회원가입 화면에서 이메일을 칠 때 바로 "이미 가입된 이메일이에요 / 사용할 수 있어요"를 보여주기 위한 함수 (2026-11-15)
+-- 인증까지 끝난 계정만 "사용 중"으로 봐요(인증 전 계정은 다시 가입하면 확인 메일을 다시 보내 줘요).
+-- 참고: 아이디 확인(is_username_available)과 같은 방식이라, 가입 여부를 알 수 있게 돼요(주소 하나씩 물어보는 것만 가능).
+create or replace function public.is_email_available(p_email text)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select not exists (
+    select 1 from auth.users
+    where lower(email) = lower(trim(p_email)) and email_confirmed_at is not null
+  );
+$$;
+
+grant execute on function public.is_email_available(text) to anon, authenticated;
+

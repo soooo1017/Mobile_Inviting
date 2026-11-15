@@ -18,7 +18,7 @@ type AuthState = {
 };
 
 export type LoginError = 'invalid_credentials' | 'email_not_confirmed' | 'unknown';
-export type SignupError = 'username_taken' | 'email_taken' | 'unknown';
+export type SignupError = 'username_taken' | 'email_taken' | 'mail_failed' | 'unknown';
 export type PasswordChangeError = 'invalid_current_password' | 'unknown';
 export type DeleteAccountError = 'invalid_password' | 'unknown';
 
@@ -48,6 +48,8 @@ type AuthContextValue = {
   /** For live "이미 사용 중인 아이디예요" validation while typing, before submitting. */
   /** `null` means the check itself failed (network, paused project, missing function) — not that the name is taken. */
   isUsernameAvailable: (username: string) => Promise<boolean | null>;
+  /** 인증까지 끝난 계정이 없으면 true. 확인 못 하면(서버 함수가 아직 없거나 연결 문제) null — 그땐 안내 없이 가입을 막지 않아요. */
+  isEmailAvailable: (email: string) => Promise<boolean | null>;
   /** Emails a reset link to a page that completes the reset in-browser. Always resolves ok (never reveals whether the email exists). */
   requestPasswordReset: (email: string) => Promise<{ ok: true }>;
   updateNickname: (nickname: string) => Promise<{ ok: true } | { ok: false; error: 'unknown' }>;
@@ -127,6 +129,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         return Boolean(data);
       },
+      async isEmailAvailable(email) {
+        const { data, error } = await supabase.rpc('is_email_available', { p_email: email.trim() });
+        if (error) return null;
+        return Boolean(data);
+      },
       async signup(username, nickname, email, password) {
         const { data: available, error: availError } = await supabase.rpc('is_username_available', {
           p_username: username,
@@ -149,6 +156,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // and its violation surfaces here as this generic insert error.
           if (message.includes('duplicate key') || message.includes('profiles_username_lower_idx')) {
             return { ok: false, error: 'username_taken' };
+          }
+          // 확인 메일을 보내는 단계에서 실패(메일 서버가 느리거나 보내기 한도 초과) — 가입 자체가 틀린 게 아니라서 따로 알려요.
+          const status = (error as { status?: number }).status;
+          const code = (error as { code?: string }).code;
+          if (
+            (status !== undefined && status >= 500) ||
+            code === 'over_email_send_rate_limit' ||
+            code === 'unexpected_failure' ||
+            message.includes('sending') ||
+            message.includes('timeout')
+          ) {
+            return { ok: false, error: 'mail_failed' };
           }
           return { ok: false, error: 'unknown' };
         }

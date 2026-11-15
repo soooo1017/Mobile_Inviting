@@ -69,4 +69,10 @@ Authentication › Emails › **Templates** 에서 *Confirm sign up* · *Reset p
 2. 스팸함 · 프로모션함.
 3. Brevo › Transactional › Logs 에 발송 기록이 있는지(없으면 Supabase SMTP 설정 문제, 있으면 받는 쪽 문제).
 4. Supabase › Authentication › Emails › SMTP Settings가 켜져 있고 저장됐는지, Rate Limits.
+5. **가입이 10초 넘게 걸리다 "가입 중 문제가 발생했어요"** (2026-11-15 실제 증상): Supabase Auth 로그에 `context deadline exceeded` · `request_timeout`(504)이 10초 간격으로 찍히면 **Supabase가 메일 서버(SMTP)에 연결하다 시간 초과**된 거예요(가입 요청이 메일 발송까지 기다려요). 점검 순서: ① SMTP Settings의 **Port를 587 → 465**(안 되면 2525)로 바꿔 저장 ② Host `smtp-relay.brevo.com` 오타 · Username(SMTP 로그인) · Password(**SMTP 키**, API 키 아님) 확인 ③ Sender email이 Brevo에서 인증됐는지 ④ Brevo › Transactional › Logs에 기록이 생기는지. 앱은 이제 이 경우 "확인 메일을 보내는 데 시간이 걸리고 있어요. 잠시 뒤에 다시 시도해주세요."를 보여줘요.
+
+## 7. 가입 화면 이메일 중복 확인 (2026-11-15, 먼저 Supabase에서 `schema.sql` 11번 실행)
+- 이메일을 끝까지 치면 아이디처럼 "사용할 수 있는 이메일이에요 / 이미 가입된 이메일이에요"가 바로 떠요. 서버 함수 `is_email_available`(인증까지 끝난 계정만 "사용 중"으로 봐요)을 써요.
+- **SQL을 실행하기 전에는** 이 안내가 안 뜨고 가입은 평소처럼 돼요(이미 가입된 주소는 가입 버튼을 눌렀을 때 "이미 가입된 이메일이에요"). 
+- 알아둘 점: 아이디 확인과 같은 방식이라 가입된 이메일인지 알아낼 수 있어요(주소를 하나씩 물어보는 것만 가능). 편의를 위해 받아들인 부분이에요.
 

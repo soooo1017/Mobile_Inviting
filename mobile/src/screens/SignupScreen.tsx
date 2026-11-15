@@ -27,14 +27,16 @@ const PASSWORD_RE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 const USERNAME_CHECK_DEBOUNCE_MS = 400;
 
 export function SignupScreen({ navigation }: Props) {
-  const { signup, isUsernameAvailable } = useAuth();
+  const { signup, isUsernameAvailable, isEmailAvailable } = useAuth();
   const { scrollRef, fieldLayout, onFieldFocus } = useKeyboardAwareForm();
   const [username, setUsername] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [usernameCheckFailed, setUsernameCheckFailed] = useState(false);
   const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
+  const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
   const [password, setPassword] = useState('');
+  const [passwordTouched, setPasswordTouched] = useState(false);
   const [confirm, setConfirm] = useState('');
   const [confirmTouched, setConfirmTouched] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
@@ -68,6 +70,20 @@ export function SignupScreen({ navigation }: Props) {
     };
   }, [username, usernameFormatValid, isUsernameAvailable]);
 
+  // 이메일도 아이디처럼 칠 때 바로 확인해요(끝까지 쓴 주소만).
+  useEffect(() => {
+    if (!emailValid) return;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const available = await isEmailAvailable(email);
+      if (!cancelled) setEmailAvailable(available);
+    }, USERNAME_CHECK_DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [email, emailValid, isEmailAvailable]);
+
   const agreeAll = agreeTerms && agreePrivacy && agreeMarketing;
   const toggleAll = () => {
     const next = !agreeAll;
@@ -81,6 +97,7 @@ export function SignupScreen({ navigation }: Props) {
     usernameAvailable === true &&
     nicknameValid &&
     emailValid &&
+    emailAvailable !== false &&
     passwordValid &&
     confirmValid &&
     agreeTerms &&
@@ -96,7 +113,9 @@ export function SignupScreen({ navigation }: Props) {
       if (result.error === 'username_taken') {
         setUsernameAvailable(false);
       } else if (result.error === 'email_taken') {
-        setSubmitError('이미 가입된 이메일이에요.');
+        setEmailAvailable(false);
+      } else if (result.error === 'mail_failed') {
+        setSubmitError('확인 메일을 보내는 데 시간이 걸리고 있어요. 잠시 뒤에 다시 시도해주세요.');
       } else {
         setSubmitError('가입 중 문제가 발생했어요. 다시 시도해주세요.');
       }
@@ -155,14 +174,30 @@ export function SignupScreen({ navigation }: Props) {
             <TextField
               placeholder="jiwon@example.com"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(v) => {
+                setEmail(v);
+                setEmailAvailable(null);
+              }}
               onFocus={() => onFieldFocus('email')}
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="email-address"
+              error={emailValid && emailAvailable === false}
             />
-            <EmailDomainChips email={email} onSelect={setEmail} />
-            <HelperText>가입 확인 메일을 받을 주소예요</HelperText>
+            <EmailDomainChips
+              email={email}
+              onSelect={(v) => {
+                setEmail(v);
+                setEmailAvailable(null);
+              }}
+            />
+            {emailValid && emailAvailable === false ? (
+              <HelperText error>이미 가입된 이메일이에요</HelperText>
+            ) : emailValid && emailAvailable === true ? (
+              <HelperText>사용할 수 있는 이메일이에요</HelperText>
+            ) : (
+              <HelperText>가입 확인 메일을 받을 주소예요</HelperText>
+            )}
           </View>
 
           <View style={styles.field} onLayout={fieldLayout('password')}>
@@ -172,11 +207,17 @@ export function SignupScreen({ navigation }: Props) {
               value={password}
               onChangeText={setPassword}
               onFocus={() => onFieldFocus('password')}
+              onBlur={() => setPasswordTouched(true)}
               secureTextEntry
               autoCapitalize="none"
               autoCorrect={false}
+              error={passwordTouched && password.length > 0 && !passwordValid}
             />
-            <HelperText>영문·숫자 포함 8자 이상</HelperText>
+            {passwordTouched && password.length > 0 && !passwordValid ? (
+              <HelperText error>영문, 숫자를 포함해 8자 이상으로 입력해주세요</HelperText>
+            ) : (
+              <HelperText>영문·숫자 포함 8자 이상</HelperText>
+            )}
           </View>
 
           <View style={styles.field} onLayout={fieldLayout('confirm')}>
