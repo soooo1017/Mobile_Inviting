@@ -41,6 +41,7 @@ export function InquiryScreen({ route, navigation }: Props) {
   const [content, setContent] = useState('');
   const [files, setFiles] = useState<PickedFile[]>([]);
   const [attachOpen, setAttachOpen] = useState(false);
+  const [picking, setPicking] = useState(false);
 
   const suggesting = topic === SUGGEST_TOPIC;
   const canSubmit = Boolean(topic) && title.trim().length > 0 && content.trim().length > 0;
@@ -72,8 +73,12 @@ export function InquiryScreen({ route, navigation }: Props) {
 
   // 파일 붙이기 — 사진 보관함 또는 파일 앱에서 한 개씩 골라요(최대 3개 · 파일당 10MB).
   const attach = async (source: 'photo' | 'file') => {
+    if (picking) return;
+    setPicking(true);
     setAttachOpen(false);
     try {
+      // 아이폰은 시트(창)가 완전히 닫힌 뒤에야 사진 보관함 · 파일 앱을 열 수 있어요. 바로 열면 아무 일도 안 일어나요.
+      await new Promise<void>((resolve) => setTimeout(resolve, 500));
       const picked = source === 'photo' ? await pickPhoto() : await pickDocument();
       if (!picked) return;
       const why = checkFile(picked, files.length);
@@ -82,8 +87,12 @@ export function InquiryScreen({ route, navigation }: Props) {
         return;
       }
       setFiles((prev) => [...prev, picked]);
-    } catch {
-      Alert.alert('파일을 불러오지 못했어요', '다른 파일로 다시 시도해 주세요.');
+    } catch (e) {
+      // 원인을 알 수 있게 실제 오류 문구를 함께 보여줘요(문제가 생겼을 때 캡처해 보내기 쉽게).
+      const detail = e instanceof Error && e.message ? `\n\n(${e.message.slice(0, 160)})` : '';
+      Alert.alert('파일을 불러오지 못했어요', `다른 파일로 다시 시도해 주세요.${detail}`);
+    } finally {
+      setPicking(false);
     }
   };
 
