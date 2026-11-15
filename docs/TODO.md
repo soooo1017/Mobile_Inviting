@@ -9,6 +9,7 @@
 - [ ] 폰에서 `DEVICE_CHECKLIST.md` 점검 — **§10 하객 페이지(앱에서 공유한 링크를 폰 브라우저로 열기)** 포함, 특히 §6 노래 편집(구간 반복 · 속도 · 드래그), 가입 위저드, 링크, 배지. Android는 처음부터 한 번 더
 - [x] 배경음악 음원 업로드 · 앱 연결 — 완료(2026-11-10): `bgm001.mp3` · `bgm002.mp3`를 Storage `bgm` 버킷에 올리고 `mobile/.env`의 `EXPO_PUBLIC_BGM_BASE_URL`을 채워 앱에서 미리 듣기 확인(사용자)
 - [ ] 배경음악 하객 페이지 연결 — Vercel 환경변수 `NEXT_PUBLIC_BGM_BASE_URL`(앱과 같은 폴더 주소, 끝 `/` 없이, Production · Preview)을 추가하고 Redeploy → 공유한 링크를 폰 브라우저로 열어 ♪ 버튼 · 재생 · 맨 아래 출처 표기 확인. 곡을 더 올릴 때(bgm003~)는 파일 업로드 + 앱 `bgm.ts` · 웹 `web/lib/bgm.ts`에 곡 정보 추가만 하면 돼요(주소 입력은 끝)
+- [ ] **Supabase `schema.sql` 12번 실행**(보안 손보기: 트리거 · 탈퇴 함수 권한, 함수 경로 고정) — `SECURITY_REVIEW.md`
 - [ ] **Supabase 메일 설정** — `AUTH_MAIL.md` 따라: ① Site URL = `https://moiso-ten.vercel.app` + Redirect URLs 2개 추가 ② 친구가 가입하려면 무료 SMTP(Brevo · Resend) 연결(권장) 또는 테스트 기간만 Confirm email 끄기 ③ 한국어 메일 문구 붙여 넣기(SMTP 연결 후)
 - [ ] **12월 1일 이후 확인** — 카카오 우편번호 스크립트 옛 주소(`t1.daumcdn.net`)가 2026-12-01부터 막혀요. 이미 새 주소(`t1.kakaocdn.net`)로 바꿔 뒀으니 그날 이후 주소 검색이 열리는지 한 번 확인(`DEVICE_CHECKLIST.md` §19). 카카오 공지: github.com/kakao-postcode/kakao-postcode-QnA/issues/1562
 - [ ] **`cd mobile && npm install`**(새 부품 `react-native-webview`) 후 폰에서 `DEVICE_CHECKLIST.md` **§18 주소 검색 · 상세 주소** 점검 — 카카오 검색 창이 폰에서 열리는지가 핵심(개발 환경에서는 못 열어 봤어요)
@@ -23,6 +24,8 @@
 - [ ] 앱 아이콘 · 스플래시 · 로고 · 안드로이드 적응형 아이콘
 
 ## 서버 · 연동
+- [ ] (공개 전) **로그인을 서버 함수로**: 지금은 아이디만 알면 그 사람의 이메일이 보이는 함수(`email_for_username`)로 로그인해요 → Edge Function에서 아이디 + 비밀번호로 로그인하고 이메일은 돌려주지 않게 — `SECURITY_REVIEW.md` #1
+- [ ] (공개 전) 하객 응답 · 방명록 · 방문 기록 **스팸 방지**(접속 주소 기준 제한 · 로봇 방지) — `SECURITY_REVIEW.md` #2
 - [ ] 서버 연결: Supabase 테이블 · Storage, 주소(slug) 중복 방지, 보관기간 삭제 작업 (30일 · 7일 전 알림)
   - ✅ 2026-11-10: Supabase에서 `schema.sql` 실행 완료(사용자 확인). 앱 동기화 **1단계 구현**(만들 때 서버 저장 · 자동 저장 · 저장 상태 · 로그인 시 맞추기 · 충돌 시 복구본, `SERVER_STORAGE.md` §13-1) — 폰 확인 전. 2단계(사진 · 내 음악 올리기)도 구현함 — 폰 확인 전(`SERVER_STORAGE.md` §13-2, `npm install` 필요). 3단계(편집 잠금)도 구현함(`SERVER_STORAGE.md` §13-3, 폰 2대로 확인 필요). 다음: 하객 페이지가 초대장 그리기 · 참석 응답 · 방명록 → ✅ 구현함. 앱 관리 화면(응답 현황 · 방명록 관리 · 통계 · 목록 숫자)도 서버 데이터를 읽도록 연결함(`SERVER_STORAGE.md` §13-5) — 폰 확인 전
   - ✅ 2026-11-10: 방식 확정(만들 때부터 내 계정에 저장 · 어느 폰에서든 이어서 편집 · 상태로 하객 공개 구분) + `schema.sql` 9번 작성 · 임시 DB 검증(`SERVER_STORAGE.md` §13). 남은 것: Supabase에서 9번 실행(사용자), 앱의 폰 ↔ 서버 동기화(자동 저장 · 편집 잠금 · 폰 바꾸기), 사진 줄이기 · 바꾼/지운 사진 즉시 삭제 (사진 개수 제한은 앱에 반영함: 초대장당 최대 52장), 하객 페이지 읽기, 응답 · 방명록, 만료 시 파일 삭제

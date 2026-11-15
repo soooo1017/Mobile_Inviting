@@ -745,3 +745,11 @@ $$;
 
 grant execute on function public.is_email_available(text) to anon, authenticated;
 
+-- 12) 보안 점검 뒤 손보기 (2026-11-15) — Supabase 보안 경고 중 바로 고쳐도 안전한 것만. 다시 실행해도 괜찮아요.
+-- 트리거용 함수는 직접 부를 이유가 없어서 실행 권한을 거둬요(트리거는 권한 없이도 정상 동작해요).
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+-- 회원 탈퇴 함수는 로그인한 사람만 써요(앱은 로그인 상태에서만 불러요).
+revoke execute on function public.delete_own_account() from public, anon;
+-- 함수가 쓰는 스키마를 고정해요(보안 경고 function_search_path_mutable).
+alter function public.invitations_before_write() set search_path = public;
+
