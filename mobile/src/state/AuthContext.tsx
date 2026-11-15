@@ -44,6 +44,8 @@ type AuthContextValue = {
     nickname: string,
     email: string,
     password: string,
+    /** 가입 화면에서 고른 선택 동의. 필수 동의(이용약관 · 개인정보)는 가입 버튼이 눌린 시점에 이미 받은 거예요. */
+    agreements: { marketing: boolean },
   ) => Promise<{ ok: true } | { ok: false; error: SignupError }>;
   /** For live "이미 사용 중인 아이디예요" validation while typing, before submitting. */
   /** `null` means the check itself failed (network, paused project, missing function) — not that the name is taken. */
@@ -134,17 +136,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) return null;
         return Boolean(data);
       },
-      async signup(username, nickname, email, password) {
+      async signup(username, nickname, email, password, agreements) {
         const { data: available, error: availError } = await supabase.rpc('is_username_available', {
           p_username: username,
         });
         if (availError) return { ok: false, error: 'unknown' };
         if (!available) return { ok: false, error: 'username_taken' };
 
+        const agreedAt = new Date().toISOString();
         const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { username, nickname }, emailRedirectTo: EMAIL_CONFIRMED_REDIRECT_URL },
+          options: {
+            // 동의한 일시를 계정에 남겨요(필수 2가지는 가입하려면 반드시 동의, 마케팅은 선택).
+            data: {
+              username,
+              nickname,
+              agreed_terms_at: agreedAt,
+              agreed_privacy_at: agreedAt,
+              agreed_marketing: agreements.marketing,
+              ...(agreements.marketing ? { agreed_marketing_at: agreedAt } : {}),
+            },
+            emailRedirectTo: EMAIL_CONFIRMED_REDIRECT_URL,
+          },
         });
         if (error) {
           const message = error.message.toLowerCase();

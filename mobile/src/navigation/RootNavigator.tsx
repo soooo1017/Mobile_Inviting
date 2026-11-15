@@ -28,6 +28,7 @@ import { AccountDeletionScreen } from '../screens/myPage/AccountDeletionScreen';
 import { InquiryScreen } from '../screens/myPage/InquiryScreen';
 import { TermsScreen } from '../screens/myPage/TermsScreen';
 import { PrivacyPolicyScreen } from '../screens/myPage/PrivacyPolicyScreen';
+import { MarketingConsentScreen } from '../screens/myPage/MarketingConsentScreen';
 import { BgmSourceDetailScreen, BgmSourcesScreen } from '../screens/myPage/BgmSourcesScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -63,6 +64,7 @@ export function RootNavigator() {
       <Stack.Screen name="Inquiry" component={InquiryScreen} />
       <Stack.Screen name="Terms" component={TermsScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+      <Stack.Screen name="MarketingConsent" component={MarketingConsentScreen} />
       <Stack.Screen name="BgmSources" component={BgmSourcesScreen} />
       <Stack.Screen name="BgmSource" component={BgmSourceDetailScreen} />
     </Stack.Navigator>

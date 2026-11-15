@@ -52,6 +52,16 @@ export function NotificationSettingsScreen({ navigation }: Props) {
         .eq('user_id', auth.user.id)
         .maybeSingle();
       if (!active) return;
+      if (!data) {
+        // 아직 알림 설정을 저장한 적이 없으면, 가입할 때 고른 마케팅 수신 동의를 이어받아요(동의했으면 켜진 채로 시작).
+        const { data: u } = await supabase.auth.getUser();
+        const agreed = u.user?.user_metadata?.agreed_marketing === true;
+        if (agreed && active) {
+          const next = { ...DEFAULT_PREFS, marketing_alerts: true };
+          setPrefs(next);
+          await supabase.from('notification_preferences').upsert({ user_id: auth.user.id, ...next });
+        }
+      }
       if (data) {
         setPrefs({
           rsvp_alerts: data.rsvp_alerts,

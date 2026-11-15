@@ -107,7 +107,7 @@ export function SignupScreen({ navigation }: Props) {
     if (!canSubmit || loading) return;
     setLoading(true);
     setSubmitError(null);
-    const result = await signup(username, nicknameTrimmed, email, password);
+    const result = await signup(username, nicknameTrimmed, email, password, { marketing: agreeMarketing });
     setLoading(false);
     if (!result.ok) {
       if (result.error === 'username_taken') {
@@ -243,16 +243,23 @@ export function SignupScreen({ navigation }: Props) {
             </View>
             <View style={styles.agreeDivider} />
 
-            <AgreementRow label="(필수) 이용약관" checked={agreeTerms} onToggle={() => setAgreeTerms((v) => !v)} />
+            <AgreementRow
+              label="(필수) 이용약관"
+              checked={agreeTerms}
+              onToggle={() => setAgreeTerms((v) => !v)}
+              onView={() => navigation.navigate('Terms')}
+            />
             <AgreementRow
               label="(필수) 개인정보 수집·이용"
               checked={agreePrivacy}
               onToggle={() => setAgreePrivacy((v) => !v)}
+              onView={() => navigation.navigate('PrivacyPolicy')}
             />
             <AgreementRow
               label="(선택) 마케팅 정보 수신"
               checked={agreeMarketing}
               onToggle={() => setAgreeMarketing((v) => !v)}
+              onView={() => navigation.navigate('MarketingConsent')}
             />
           </View>
         </View>
@@ -266,12 +273,12 @@ export function SignupScreen({ navigation }: Props) {
   );
 }
 
-function AgreementRow({ label, checked, onToggle }: { label: string; checked: boolean; onToggle: () => void }) {
+function AgreementRow({ label, checked, onToggle, onView }: { label: string; checked: boolean; onToggle: () => void; onView: () => void }) {
   return (
     <View style={styles.agreeRow}>
       <Checkbox checked={checked} onPress={onToggle} />
       <Text style={styles.agreeLabel}>{label}</Text>
-      <TextLink size="small" color={color.ink.placeholder} onPress={() => {}}>
+      <TextLink size="small" color={color.ink.placeholder} onPress={onView}>
         보기
       </TextLink>
     </View>
