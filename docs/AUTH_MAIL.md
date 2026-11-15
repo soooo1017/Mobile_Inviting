@@ -8,11 +8,22 @@ Supabase 기본 메일 서버는 **프로젝트 팀(조직 멤버)의 메일 주
 
 ## 2. 해결 방법
 
-### A. 무료 메일 서비스(SMTP)를 연결 — 권장 · 출시 때도 필요
-Supabase › Authentication › Emails › **SMTP Settings** 에 메일 서비스의 SMTP 정보를 넣어요. 무료 구간이 있는 서비스: **Brevo**(하루 300통 무료, 도메인 없이 "보내는 사람 메일 주소 하나"만 인증해도 시작 가능), **Resend**(무료, 내 도메인이 있어야 아무에게나 보낼 수 있어요). 둘 다 가입 → SMTP 키 발급 → Supabase에 입력 순서예요.
-- 도메인 없이 개인 메일(예: Gmail)을 보내는 사람으로 쓰면 스팸함으로 갈 수 있어요. 테스트 기간엔 괜찮고, 출시 전에 내 도메인으로 바꾸는 걸 권해요.
-- 연결하면 처음엔 시간당 30통으로 제한돼요 → Authentication › Rate Limits에서 올려요.
-- 연결하면 **메일 제목 · 내용도 한국어로 바꿀 수 있어요**(아래 §3). 이게 한국어 메일의 현실적인 무료 경로예요.
+### A. Brevo(무료 SMTP)를 연결 — 정함(2026-11-15) · 출시 때도 필요
+Brevo는 이메일을 대신 보내 주는 서비스예요. **무료는 하루 300통**(광고 · 인증 메일 합계)이라 지금은 충분해요.
+
+1. [brevo.com](https://www.brevo.com) 가입.
+2. **보내는 사람(Sender) 등록** — Brevo는 2024년부터 도메인 인증(SPF · DKIM · DMARC)을 요구해요. 내 도메인이 있으면 Brevo › Senders, domains & dedicated IPs 에서 도메인을 추가하고 안내하는 DNS 레코드를 도메인 관리 화면에 넣은 뒤, `no-reply@내도메인` 같은 주소를 보내는 사람으로 써요(가장 안정적). 도메인이 없으면 개인 메일 주소 하나를 보내는 사람으로 등록해 볼 수 있는데, **스팸함으로 가거나 막힐 수 있어요**(테스트용으로만, 안 되면 도메인을 사요).
+3. **SMTP 키 만들기** — Brevo › SMTP & API › SMTP 탭에서 키를 만들어요. **API 키가 아니라 SMTP 키**예요. 키는 한 번만 보이니 바로 복사해 둬요(채팅 · 저장소에 붙이지 마세요).
+4. Supabase › Authentication › Emails › **SMTP Settings** → Enable custom SMTP:
+   - Host `smtp-relay.brevo.com` · Port `587`(안 되면 465 · 2525)
+   - Username: Brevo SMTP 탭에 보이는 **SMTP 로그인** 값
+   - Password: 3번의 SMTP 키
+   - Sender email: 2번에서 인증한 주소 · Sender name: `모이소`
+5. Authentication › **Rate Limits**에서 시간당 메일 수를 올려요(연결 직후 30통/시간).
+6. 아래 §3의 한국어 문구를 붙여 넣어요.
+7. 시험: 새 계정으로 가입 → 인증 메일(한국어)이 오는지(스팸함도 확인) → 링크 → "이메일 인증이 끝났어요" 페이지.
+
+참고: Edge Function에서는 587 포트가 막혀 Brevo SMTP를 못 쓰지만(HTTP API를 써야 해요), 앱은 Supabase Auth가 보내서 상관없어요. 다른 후보: Resend(내 도메인 필요).
 
 ### B. 이메일 인증 끄기 — 테스트 기간만 (가장 빠름)
 Authentication › Sign In / Providers › Email › **Confirm email** 끄기. 가입하면 메일 없이 바로 로그인돼요. 단점: 아무 메일 주소로나 가입돼요, 이 기간에는 인증 메일 흐름(그리고 비밀번호 재설정 메일 — 이건 SMTP가 필요해요)을 시험할 수 없어요. **끝나면 다시 켜요.**
