@@ -19,19 +19,38 @@ function sendError(code: string): string {
 type Post = { id: string; name: string; side: number | null; body: string; created_at: string };
 
 export function GuestbookList({ recent }: { recent: number }) {
-  const { slug, sides, guestbookVersion } = useGuest();
+  const { slug, sides, guestbookVersion, toast } = useGuest();
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [all, setAll] = useState(false);
+  // 내가 쓴 글(같은 브라우저) — 이 글에만 [삭제]가 보여요. 서버에 이 기능(schema.sql 13번)이 아직 없으면 조용히 비어 있어요.
+  const [mine, setMine] = useState<Set<string>>(() => new Set());
+  const [reload, setReload] = useState(0);
+  const [asking, setAsking] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let live = true;
     rpc<Post[]>('list_guestbook', { p_slug: slug, p_limit: 50 }).then((res) => {
       if (live) setPosts(res.ok && Array.isArray(res.data) ? res.data : []);
     });
+    rpc<{ id: string }[]>('my_guestbook_posts', { p_slug: slug, p_visitor: visitorId() }).then((res) => {
+      if (live) setMine(new Set(res.ok && Array.isArray(res.data) ? res.data.map((r) => r.id) : []));
+    });
     return () => {
       live = false;
     };
-  }, [slug, guestbookVersion]);
+  }, [slug, guestbookVersion, reload]);
+
+  const remove = async (id: string) => {
+    if (deleting) return;
+    setDeleting(true);
+    const res = await rpc<boolean>('delete_guestbook_post', { p_slug: slug, p_visitor: visitorId(), p_post: id });
+    setDeleting(false);
+    setAsking(null);
+    if (!res.ok) return toast('지우지 못했어요. 잠시 뒤에 다시 시도해 주세요.');
+    toast(res.data ? '글을 삭제했어요' : '이미 삭제된 글이에요');
+    setReload((v) => v + 1);
+  };
 
   if (posts === null) return null;
   if (!posts.length) {
@@ -50,8 +69,24 @@ export function GuestbookList({ recent }: { recent: number }) {
             <b>{p.name}</b>
             {p.side !== null && sides[p.side] ? <span className="gb-side">{sides[p.side]}</span> : null}
             <span className="gb-date">{formatMonthDay(p.created_at)}</span>
+            {mine.has(p.id) ? (
+              <button type="button" className="gb-del" onClick={() => setAsking(asking === p.id ? null : p.id)}>
+                삭제
+              </button>
+            ) : null}
           </div>
           <p className="gb-body pre">{p.body}</p>
+          {asking === p.id ? (
+            <div className="gb-confirm" role="group" aria-label="글 삭제 확인">
+              <span>내가 남긴 글을 삭제할까요? 되돌릴 수 없어요.</span>
+              <button type="button" onClick={() => setAsking(null)} disabled={deleting}>
+                취소
+              </button>
+              <button type="button" className="danger" onClick={() => remove(p.id)} disabled={deleting}>
+                {deleting ? '삭제 중…' : '삭제'}
+              </button>
+            </div>
+          ) : null}
         </div>
       ))}
       {!all && posts.length > recent ? (

@@ -753,3 +753,42 @@ revoke execute on function public.delete_own_account() from public, anon;
 -- 함수가 쓰는 스키마를 고정해요(보안 경고 function_search_path_mutable).
 alter function public.invitations_before_write() set search_path = public;
 
+-- 13) 방명록: 하객이 자기 글을 지울 수 있게 (2026-11-19) — 지울 수 있는 사람은 "글을 쓴 본인"(같은 기기 · 브라우저)과 "초대장 주인"(관리 화면, 기존 규칙 그대로)이에요.
+-- 본인 확인은 글을 남길 때 쓴 기기 번호(visitor_id)로 해요. 이 번호는 목록(list_guestbook)에도 나가지 않고 하객 본인 브라우저에만 있어서 다른 사람이 알 수 없어요.
+-- (비밀번호는 쓰지 않아요 — 다른 기기에서는 지울 수 없고, 글 고치기는 없어요.) 다시 실행해도 괜찮아요.
+-- 내가 쓴 글 번호 목록(하객 화면이 "삭제" 버튼을 붙일 글을 알아내는 데 써요). 공유 중 · 만료 전인 초대장의 내 글 번호만 돌려줘요(글이 하객에게 보이는지는 list_guestbook이 정해요).
+create or replace function public.my_guestbook_posts(p_slug text, p_visitor uuid)
+returns table (id uuid)
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select g.id
+  from public.guestbook_posts g
+  join public.invitations i on i.id = g.invitation_id
+  where i.slug = lower(p_slug) and g.visitor_id = p_visitor and i.status = 'shared' and i.expires_at >= now() and not g.secret;
+$$;
+
+-- 내 글 한 개 지우기. 지웠으면 true, 내 글이 아니거나 이미 없으면 false. 공유가 끝난 뒤에도 본인 글은 지울 수 있어요.
+create or replace function public.delete_guestbook_post(p_slug text, p_visitor uuid, p_post uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  n integer;
+begin
+  delete from public.guestbook_posts g
+    using public.invitations i
+    where g.id = p_post and g.invitation_id = i.id and i.slug = lower(p_slug) and g.visitor_id = p_visitor;
+  get diagnostics n = row_count;
+  return n > 0;
+end;
+$$;
+
+revoke all on function public.my_guestbook_posts(text, uuid) from public;
+revoke all on function public.delete_guestbook_post(text, uuid, uuid) from public;
+grant execute on function public.my_guestbook_posts(text, uuid) to anon, authenticated;
+grant execute on function public.delete_guestbook_post(text, uuid, uuid) to anon, authenticated;
