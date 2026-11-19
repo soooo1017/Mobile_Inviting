@@ -1,5 +1,8 @@
 # 친구들에게 테스트 앱 보내기 (Expo Go 없이)
 
+> **역할**: 친구 폰에 테스트 앱을 직접 설치하게 하는 방법(Android APK · iOS TestFlight) 설명서.
+> **최종 확인일**: 2026-11-19 — `eas.json`(preview APK · production)과 `app.json`의 앱 ID(`kr.moiso.app`)가 문서와 맞는 것을 코드로 확인했어요. Android APK 빌드는 사용자가 실제로 실행해 설치 링크가 나온 것까지 확인됐고(2026-11-15), iOS(TestFlight)는 Apple 개발자 계정이 없어 시험 못 했어요(미확인).
+
 > 지금은 내 컴퓨터에서 `npx expo start`로 Expo Go에 연결해야만 볼 수 있어요. 이 문서는 **친구 폰에 앱을 직접 설치해서** 써 보게 하는 방법이에요.
 > 2026-11-15 정리. 설정 파일(`mobile/eas.json`, `mobile/app.json`의 앱 ID)은 만들어 두었고, **빌드는 내 Expo 계정으로 로그인해야 해서 사용자가 직접** 실행해요.
 
@@ -10,6 +13,8 @@
 - 앱 ID `kr.moiso.app`는 **임시 값**이에요. 스토어에 올리기 전에 바꿀 수 있어요(테스트 빌드만 쓰는 동안은 상관없어요).
 
 ## 친구가 가입할 수 있으려면 (꼭 먼저)
+> **상태(2026-11-19)**: 1번(Brevo SMTP 연결 · Site URL · 한국어 문구)은 끝났어요. 다만 보내는 사람이 Gmail이라 인증 메일이 **스팸함으로** 가요 — 친구에게 "스팸함도 확인해 달라"고 알려 주세요. 도메인 인증은 남은 일이에요(`AUTH_MAIL.md`).
+
 친구가 가입하면 **인증 메일**이 가야 해요. Supabase 기본 메일 서버는 보내는 양이 아주 적고 받는 주소가 제한될 수 있어서, 둘 중 하나를 먼저 해요.
 1. **(추천) 자체 메일 서비스(SMTP) 연결** — Supabase › Authentication › Emails › SMTP Settings. 출시 때도 필요해요.
 2. **(테스트 기간만) 이메일 인증 끄기** — Supabase › Authentication › Providers › Email › *Confirm email* 끄기. 메일 없이 바로 로그인돼요. 대신 인증 메일 흐름은 이 기간 동안 시험할 수 없고, 끝나면 다시 켜야 해요.
@@ -40,7 +45,7 @@ npx eas-cli env:create --name EXPO_PUBLIC_BGM_BASE_URL      --value "<.env의 �
 cd ~/Desktop/Wedding_Mobile_Inviting/mobile
 npx eas-cli build --platform android --profile preview
 ```
-- 끝나면 **설치 링크 · QR**이 나와요. 친구에게 링크를 보내요.
+- 끝나면 **설치 링크 · QR**이 나와요. 친구에게 링크를 보내요. 그 뒤에 "에뮬레이터에 설치해서 실행할까요?" 같은 질문이 나오면 **no**로 답해요(yes로 하면 `spawn adb ENOENT` 오류가 나지만, 설치 링크는 이미 만들어져 있어요).
 - 친구 폰(Android): 링크를 열어 APK를 받고 → "출처를 알 수 없는 앱 설치"를 허용 → 설치. (구글 Play 보호 경고가 뜰 수 있어요. 내가 보낸 테스트 앱이라고 알려 주세요.)
 
 ## iOS — 두 가지 길
