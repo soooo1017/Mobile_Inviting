@@ -1,5 +1,9 @@
 # 가입 · 비밀번호 메일 설정 (Supabase)
 
+> **역할**: 가입 · 비밀번호 메일(Supabase + Brevo) 설정 순서와 문제 해결 설명서.
+> **최종 확인일**: 2026-11-19 — 앱의 메일 링크 주소(`AuthContext`)와 `web/public/` 안내 페이지가 문서와 맞는 것을 코드로 확인했어요. Supabase · Brevo 대시보드의 실제 설정값은 제가 볼 수 없어서 사용자가 한 설정(Brevo 연결 · 포트 465 · Site URL · Redirect URLs · 한국어 문구)을 기준으로 적었어요(미확인).
+> **지금 상태**: Brevo 연결과 가입 · 비밀번호 메일 동작은 끝났어요(§1의 "친구가 가입 못 함" 문제는 해결됨). 남은 일: 보내는 사람이 Gmail이라 메일이 스팸함으로 가서 **도메인 구입 + Brevo 도메인 인증**이 필요해요(할 일은 Notion 할 일 목록).
+
 > 2026-11-15. 앱 코드는 이미 맞춰져 있어요. 아래는 **Supabase 대시보드에서 한 번 해 줄 설정**이에요(코드로 바꿀 수 없는 부분).
 
 ## 1. 왜 지금은 친구가 가입할 수 없나요?
@@ -15,7 +19,7 @@ Brevo는 이메일을 대신 보내 주는 서비스예요. **무료는 하루 3
 2. **보내는 사람(Sender) 등록** — Brevo는 2024년부터 도메인 인증(SPF · DKIM · DMARC)을 요구해요. 내 도메인이 있으면 Brevo › Senders, domains & dedicated IPs 에서 도메인을 추가하고 안내하는 DNS 레코드를 도메인 관리 화면에 넣은 뒤, `no-reply@내도메인` 같은 주소를 보내는 사람으로 써요(가장 안정적). 도메인이 없으면 개인 메일 주소 하나를 보내는 사람으로 등록해 볼 수 있는데, **스팸함으로 가거나 막힐 수 있어요**(테스트용으로만, 안 되면 도메인을 사요).
 3. **SMTP 키 만들기** — Brevo › SMTP & API › SMTP 탭에서 키를 만들어요. **API 키가 아니라 SMTP 키**예요. 키는 한 번만 보이니 바로 복사해 둬요(채팅 · 저장소에 붙이지 마세요).
 4. Supabase › Authentication › Emails › **SMTP Settings** → Enable custom SMTP:
-   - Host `smtp-relay.brevo.com` · Port `587`(안 되면 465 · 2525)
+   - Host `smtp-relay.brevo.com` · Port **`465`**(2026-11-15 실제로 587은 시간 초과가 나서 465로 바꿔 해결 — §6-5. 그래도 안 되면 2525)
    - Username: Brevo SMTP 탭에 보이는 **SMTP 로그인** 값
    - Password: 3번의 SMTP 키
    - Sender email: 2번에서 인증한 주소 · Sender name: `모이소`
