@@ -1,5 +1,8 @@
 # 스토어 출시 준비 (Google Play · App Store)
 
+> **역할**: 스토어(Google Play · App Store) 출시 준비 체크 설명서.
+> **최종 확인일**: 2026-11-19 — **§4(`app.json` · `eas.json` 현재 값)만 코드와 대조했어요.** §1~3 · 5 · 6의 스토어 정책 · 요건은 2026-11-08 정리 그대로이고 대조하지 않았어요 — 제출 전에 각 스토어 최신 안내를 다시 확인해요(미확인).
+
 > 2026-11-08 정리. 스토어 정책은 자주 바뀌어요 — **제출하기 전에 각 스토어의 최신 안내를 한 번 더 확인**해요.
 > 앱은 Expo(React Native) 하나의 코드로 두 스토어에 모두 낼 수 있어요. 빌드·제출은 EAS(`eas build`, `eas submit`)로 해서 Mac이 없어도 iOS 빌드가 돼요.
 
@@ -39,7 +42,7 @@
 
 ## 4. 코드·설정에서 할 일 (`mobile/app.json`)
 
-현재 없는 값들이에요 — 출시 전에 채워요.
+2026-11-19 기준 `app.json` 현재 값: 앱 ID `kr.moiso.app`(임시 · iOS `bundleIdentifier` = Android `package`), `version` 1.0.0 · `buildNumber` 1 · `versionCode` 1, `ITSAppUsesNonExemptEncryption: false`, `supportsTablet: true`, `eas.json`(preview=APK · production) 있음. **아직 남은 것**: 앱 ID 확정(한 번 정하면 바꾸기 어려워요), 최종 아이콘 · 스플래시 · 로고, 개인정보처리방침 웹 주소 — 아래 목록 중 값이 이미 있는 항목은 확정만 하면 돼요.
 
 - `ios.bundleIdentifier` · `android.package` (한 번 정하면 바꾸기 어려워요)
 - `version` · `ios.buildNumber` · `android.versionCode` (제출할 때마다 올림. EAS `autoIncrement` 사용 가능)
