@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
@@ -84,16 +85,76 @@ function userFromSession(session: Session | null): AuthUser | undefined {
   return { id: session.user.id, username, nickname, email: session.user.email ?? '' };
 }
 
+/**
+ * 아이디 · 닉네임의 원본은 서버의 profiles 표예요. 로그인 세션 메타데이터(user_metadata)는 가입할 때 한 번 넣은 값이라
+ * 닉네임을 바꿔도 따라가지 않아요 — 그래서 화면을 처음 그릴 때만 임시로 쓰고, 곧 폰에 저장해 둔 마지막 값 → 서버 값으로 바꿔요.
+ */
+type ProfileInfo = { username: string; nickname: string };
+const profileCacheKey = (userId: string) => `profile:v1:${userId}`;
+
+async function readCachedProfile(userId: string): Promise<ProfileInfo | null> {
+  try {
+    const raw = await AsyncStorage.getItem(profileCacheKey(userId));
+    if (!raw) return null;
+    const v = JSON.parse(raw) as Partial<ProfileInfo>;
+    return typeof v.username === 'string' && v.username && typeof v.nickname === 'string' && v.nickname ? { username: v.username, nickname: v.nickname } : null;
+  } catch {
+    return null;
+  }
+}
+
+async function writeCachedProfile(userId: string, info: ProfileInfo): Promise<void> {
+  try {
+    await AsyncStorage.setItem(profileCacheKey(userId), JSON.stringify(info));
+  } catch {
+    /* 저장이 안 돼도 다음에 서버에서 다시 읽어요 */
+  }
+}
+
+async function fetchProfile(userId: string): Promise<ProfileInfo | null> {
+  try {
+    const { data, error } = await supabase.from('profiles').select('username, nickname').eq('id', userId).maybeSingle();
+    if (error || !data?.username) return null;
+    return { username: data.username, nickname: data.nickname || data.username };
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [auth, setAuth] = useState<AuthState>({ status: 'unknown' });
 
+  // 같은 회원이 로그인 중일 때만 아이디 · 닉네임을 바꿔요(그 사이 로그아웃 · 다른 회원이면 무시).
+  const applyProfile = useCallback((userId: string, info: ProfileInfo) => {
+    setAuth((prev) =>
+      prev.status === 'authed' && prev.user?.id === userId && (prev.user.username !== info.username || prev.user.nickname !== info.nickname)
+        ? { ...prev, user: { ...prev.user, ...info } }
+        : prev,
+    );
+  }, []);
+
+  const refreshProfile = useCallback(
+    async (userId: string) => {
+      const cached = await readCachedProfile(userId);
+      if (cached) applyProfile(userId, cached);
+      const fresh = await fetchProfile(userId);
+      if (fresh) {
+        applyProfile(userId, fresh);
+        void writeCachedProfile(userId, fresh);
+      }
+    },
+    [applyProfile],
+  );
+
   useEffect(() => {
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
       const user = userFromSession(session);
       setAuth({ status: user ? 'authed' : 'guest', user });
+      // 이 콜백 안에서 바로 서버를 부르면 Supabase가 멈출 수 있어서 한 박자 뒤에 읽어요.
+      if (user && event !== 'TOKEN_REFRESHED') setTimeout(() => void refreshProfile(user.id), 0);
     });
     return () => subscription.subscription.unsubscribe();
-  }, []);
+  }, [refreshProfile]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -102,6 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data } = await supabase.auth.getSession();
         const user = userFromSession(data.session);
         setAuth({ status: user ? 'authed' : 'guest', user });
+        if (user) void refreshProfile(user.id);
       },
       async login(username, password) {
         const { data: email, error: lookupError } = await supabase.rpc('email_for_username', {
@@ -197,12 +259,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { ok: true };
       },
       async updateNickname(nickname) {
-        const { data, error } = await supabase.auth.updateUser({ data: { nickname } });
-        if (error || !data.user) return { ok: false, error: 'unknown' };
-        // Keep profiles.nickname in sync too — the app itself only reads the
-        // auth metadata above, but profiles is the record other tooling (and
-        // any future admin view) would look at.
-        await supabase.from('profiles').update({ nickname }).eq('id', data.user.id);
+        if (!auth.user) return { ok: false, error: 'unknown' };
+        // 닉네임은 profiles 한 곳에만 저장해요(로그인 메타데이터에는 더 이상 쓰지 않아요).
+        // select()로 실제로 바뀐 줄이 있는지 확인해요 — 줄이 없거나 권한이 없으면 오류 없이 0줄이 바뀔 수 있어서요.
+        const { data, error } = await supabase.from('profiles').update({ nickname }).eq('id', auth.user.id).select('id');
+        if (error || !data?.length) return { ok: false, error: 'unknown' };
+        const info = { username: auth.user.username, nickname };
+        applyProfile(auth.user.id, info);
+        void writeCachedProfile(auth.user.id, info);
         return { ok: true };
       },
       async verifyPassword(password) {
@@ -233,14 +297,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.from('account_deletion_feedback').insert({ reason, detail: detail || null });
         const { error } = await supabase.rpc('delete_own_account');
         if (error) return { ok: false, error: 'unknown' };
+        await AsyncStorage.removeItem(profileCacheKey(auth.user.id)).catch(() => {});
         await supabase.auth.signOut();
         return { ok: true };
       },
       async logout() {
+        if (auth.user) await AsyncStorage.removeItem(profileCacheKey(auth.user.id)).catch(() => {});
         await supabase.auth.signOut();
       },
     }),
-    [auth],
+    [auth, applyProfile, refreshProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

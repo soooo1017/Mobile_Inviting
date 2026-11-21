@@ -194,7 +194,7 @@
 | # | 화면 | 구현 상태 | 설명 |
 |---|---|---|---|
 | 26 | 마이페이지 화면 (`MyPageScreen`) | ✅ 실제 구현 | 계정/알림/지원/약관 섹션 허브. 로그아웃은 확인 팝업 없이 즉시 처리, 회원 탈퇴는 하단에 별도 배치 |
-| 26a | 닉네임 변경 (`NicknameEditScreen`) | ✅ Supabase 연동 | `auth.updateUser({ data: { nickname } })` + `profiles.nickname` 동기화 |
+| 26a | 닉네임 변경 (`NicknameEditScreen`) | ✅ Supabase 연동 | `profiles.nickname`만 바꿔요(원본 한 곳). 앱은 로그인하면 `profiles`에서 아이디·닉네임을 읽고 폰에 마지막 값을 저장해 둬요(가입 때 넣은 로그인 메타데이터는 임시값으로만 써요) |
 | 26b | 비밀번호 변경 (`PasswordChangeScreen`) | ✅ Supabase 연동 | 현재 비밀번호를 `signInWithPassword`로 재확인한 뒤 `auth.updateUser({ password })` |
 | 26c | 소셜 계정 연동 (`SocialAccountsScreen`) | ⚠️ UI만 구현 | 카카오/Apple 모두 "연동 안 함"으로 정직하게 표시 — 실제 OAuth 연동 전이라 누르면 "준비 중" 안내. **현재 숨김**: My Page 계정 설정 목록에서 빠짐(`SHOW_SOCIAL_LOGIN`), 로그인 · 비밀번호 찾기의 카카오/Apple 안내도 같이 숨김 |
 | 26d | 회원 탈퇴 (`AccountDeletionScreen`) | ✅ Supabase 연동 | 탈퇴 사유 선택(+기타 상세) → 비밀번호 재확인 → 최종 확인 팝업 → `account_deletion_feedback`에 사유 기록 후 `delete_own_account()` RPC(SECURITY DEFINER)로 자가 삭제 |
