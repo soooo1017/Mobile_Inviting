@@ -792,3 +792,159 @@ revoke all on function public.my_guestbook_posts(text, uuid) from public;
 revoke all on function public.delete_guestbook_post(text, uuid, uuid) from public;
 grant execute on function public.my_guestbook_posts(text, uuid) to anon, authenticated;
 grant execute on function public.delete_guestbook_post(text, uuid, uuid) to anon, authenticated;
+
+-- 14) 회원 정보 합치기 (2026-11-21 초안) — notification_preferences(알림 설정)를 profiles로 합치고, 약관 · 마케팅 동의 이력을 profiles에 남겨요.
+-- 회원 한 명당 한 줄인 두 표를 하나로 줄이는 작업이에요. 옛 notification_preferences는 새 앱이 퍼질 때까지 그대로 두고(15번에서 지워요),
+-- 그동안 옛 앱이 옛 표에 쓴 값은 아래 임시 트리거가 profiles로 복사해 줘요. 다시 실행해도 괜찮아요.
+
+-- 14-1) 칼럼 추가: 알림 설정 5개(기본값은 옛 표와 같게) + 알림을 마지막으로 바꾼 시각 + 동의 일시.
+--  · 약관 · 개인정보 동의 일시는 가입할 때 서버 시각으로 기록해요(앱이 보낸 시각을 믿지 않아요).
+--  · 마케팅은 동의 일시와 철회 일시를 남겨요(다시 동의하면 동의 일시가 새로 찍히고 철회 일시는 비워요).
+alter table public.profiles
+  add column if not exists rsvp_alerts boolean not null default true,
+  add column if not exists guestbook_alerts boolean not null default true,
+  add column if not exists thanks_transition_alerts boolean not null default true,
+  add column if not exists event_schedule_alerts boolean not null default false,
+  add column if not exists marketing_alerts boolean not null default false,
+  add column if not exists notification_updated_at timestamptz,
+  add column if not exists agreed_terms_at timestamptz,
+  add column if not exists agreed_privacy_at timestamptz,
+  add column if not exists marketing_agreed_at timestamptz,
+  add column if not exists marketing_withdrawn_at timestamptz;
+
+-- 14-2) 지금 있는 데이터 옮기기.
+--  ① 동의 일시: auth.users 메타데이터에 적어 둔 값을 가져와요(이미 채워진 칸은 건드리지 않아요, 잘못된 글자는 건너뛰어요).
+do $$
+declare
+  r record;
+begin
+  for r in
+    select p.id, u.raw_user_meta_data as m
+    from public.profiles p join auth.users u on u.id = p.id
+  loop
+    -- 칸마다 따로 처리해요: 메타데이터 값 하나가 날짜가 아니어도 그 칸만 비우고 나머지는 옮겨요.
+    begin
+      update public.profiles set agreed_terms_at = coalesce(agreed_terms_at, nullif(r.m ->> 'agreed_terms_at', '')::timestamptz) where id = r.id;
+    exception when others then null;
+    end;
+    begin
+      update public.profiles set agreed_privacy_at = coalesce(agreed_privacy_at, nullif(r.m ->> 'agreed_privacy_at', '')::timestamptz) where id = r.id;
+    exception when others then null;
+    end;
+    begin
+      update public.profiles set marketing_agreed_at = coalesce(marketing_agreed_at,
+        case when r.m ->> 'agreed_marketing' = 'true' then nullif(r.m ->> 'agreed_marketing_at', '')::timestamptz end) where id = r.id;
+    exception when others then null;
+    end;
+  end loop;
+end $$;
+
+--  ② 알림 설정: 옛 표에 줄이 있으면 그 값을 가져와요(아직 한 번도 옮기지 않은 회원만 — 다시 실행해도 새 값을 덮지 않아요).
+--     마케팅에 동의했는데 옛 표에서 꺼져 있으면 철회 일시는 "알림 설정을 마지막으로 바꾼 시각"으로 어림해 적어요(정확한 시각이 아니에요).
+update public.profiles p set
+  rsvp_alerts = n.rsvp_alerts,
+  guestbook_alerts = n.guestbook_alerts,
+  thanks_transition_alerts = n.thanks_transition_alerts,
+  event_schedule_alerts = n.event_schedule_alerts,
+  marketing_alerts = n.marketing_alerts,
+  marketing_withdrawn_at = case when p.marketing_agreed_at is not null and not n.marketing_alerts then coalesce(p.marketing_withdrawn_at, n.updated_at) else p.marketing_withdrawn_at end,
+  notification_updated_at = n.updated_at
+from public.notification_preferences n
+where n.user_id = p.id and p.notification_updated_at is null;
+
+--  ③ 알림 설정 줄이 없던 회원: 가입 때 마케팅에 동의했으면 마케팅 알림이 켜진 채로 시작해요(옛 앱이 알림 설정을 처음 열 때 해 주던 일).
+update public.profiles
+  set marketing_alerts = true
+  where marketing_agreed_at is not null and marketing_withdrawn_at is null and notification_updated_at is null and not marketing_alerts;
+
+-- 14-3) 새로 가입하는 회원: 가입 때 넘어온 동의 값으로 동의 일시와 마케팅 알림 초기값을 바로 채워요.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  marketing boolean := coalesce(new.raw_user_meta_data ->> 'agreed_marketing', '') = 'true';
+begin
+  insert into public.profiles (id, username, nickname, agreed_terms_at, agreed_privacy_at, marketing_alerts, marketing_agreed_at)
+  values (
+    new.id,
+    new.raw_user_meta_data ->> 'username',
+    new.raw_user_meta_data ->> 'nickname',
+    case when new.raw_user_meta_data ->> 'agreed_terms_at' is not null then now() end,
+    case when new.raw_user_meta_data ->> 'agreed_privacy_at' is not null then now() end,
+    marketing,
+    case when marketing then now() end
+  );
+  return new;
+end;
+$$;
+
+-- 14-4) 알림 설정을 바꾸면 시각을 자동으로 남겨요. 마케팅 알림을 켜면 "동의 일시", 끄면 "철회 일시"가 찍혀요(앱이 따로 할 일이 없어요).
+create or replace function public.profiles_track_changes()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.marketing_alerts is distinct from old.marketing_alerts then
+    if new.marketing_alerts then
+      new.marketing_agreed_at := now();
+      new.marketing_withdrawn_at := null;
+    else
+      new.marketing_withdrawn_at := now();
+    end if;
+  end if;
+  if (new.rsvp_alerts, new.guestbook_alerts, new.thanks_transition_alerts, new.event_schedule_alerts, new.marketing_alerts)
+     is distinct from (old.rsvp_alerts, old.guestbook_alerts, old.thanks_transition_alerts, old.event_schedule_alerts, old.marketing_alerts) then
+    new.notification_updated_at := now();
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_track_changes on public.profiles;
+create trigger profiles_track_changes
+  before update on public.profiles
+  for each row execute function public.profiles_track_changes();
+
+revoke execute on function public.profiles_track_changes() from public, anon, authenticated;
+
+-- 14-5) 앱이 직접 고칠 수 있는 칸을 정해요. 닉네임과 알림 설정 5개만 가능하고, 아이디 · 가입 시각 · 동의 일시는 서버(가입 처리 · 트리거)만 바꿀 수 있어요.
+-- (이전에는 본인 줄이면 어느 칸이든 앱을 거치지 않고 직접 고칠 수 있었어요 — 아이디를 마음대로 바꾸거나 동의 일시를 고칠 수 있는 구멍이라 같이 막아요.)
+drop policy if exists "profiles: update own" on public.profiles;
+create policy "profiles: update own"
+  on public.profiles for update
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
+
+revoke update on public.profiles from anon, authenticated;
+grant update (nickname, rsvp_alerts, guestbook_alerts, thanks_transition_alerts, event_schedule_alerts, marketing_alerts)
+  on public.profiles to authenticated;
+
+-- 14-6) (임시) 옛 앱 호환: 옛 앱이 notification_preferences에 쓴 값을 profiles로 복사해요. 새 앱이 퍼지면 15번에서 이 트리거와 옛 표를 지워요.
+create or replace function public.sync_old_notification_prefs()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.profiles set
+    rsvp_alerts = new.rsvp_alerts,
+    guestbook_alerts = new.guestbook_alerts,
+    thanks_transition_alerts = new.thanks_transition_alerts,
+    event_schedule_alerts = new.event_schedule_alerts,
+    marketing_alerts = new.marketing_alerts
+  where id = new.user_id;
+  return new;
+end;
+$$;
+
+drop trigger if exists sync_old_notification_prefs on public.notification_preferences;
+create trigger sync_old_notification_prefs
+  after insert or update on public.notification_preferences
+  for each row execute function public.sync_old_notification_prefs();
+
+revoke execute on function public.sync_old_notification_prefs() from public, anon, authenticated;
