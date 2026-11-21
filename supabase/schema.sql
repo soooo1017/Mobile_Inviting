@@ -794,7 +794,7 @@ grant execute on function public.my_guestbook_posts(text, uuid) to anon, authent
 grant execute on function public.delete_guestbook_post(text, uuid, uuid) to anon, authenticated;
 
 -- 14) 회원 정보 합치기 (2026-11-21 초안) — notification_preferences(알림 설정)를 profiles로 합치고, 약관 · 마케팅 동의 이력을 profiles에 남겨요.
--- 회원 한 명당 한 줄인 두 표를 하나로 줄이는 작업이에요. 옛 notification_preferences는 새 앱이 퍼질 때까지 그대로 두고(15번에서 지워요),
+-- 회원 한 명당 한 줄인 두 표를 하나로 줄이는 작업이에요. 옛 notification_preferences는 새 앱이 퍼질 때까지 그대로 두고(16번에서 지워요),
 -- 그동안 옛 앱이 옛 표에 쓴 값은 아래 임시 트리거가 profiles로 복사해 줘요. 다시 실행해도 괜찮아요.
 
 -- 14-1) 칼럼 추가: 알림 설정 5개(기본값은 옛 표와 같게) + 알림을 마지막으로 바꾼 시각 + 동의 일시.
@@ -923,7 +923,7 @@ revoke update on public.profiles from anon, authenticated;
 grant update (nickname, rsvp_alerts, guestbook_alerts, thanks_transition_alerts, event_schedule_alerts, marketing_alerts)
   on public.profiles to authenticated;
 
--- 14-6) (임시) 옛 앱 호환: 옛 앱이 notification_preferences에 쓴 값을 profiles로 복사해요. 새 앱이 퍼지면 15번에서 이 트리거와 옛 표를 지워요.
+-- 14-6) (임시) 옛 앱 호환: 옛 앱이 notification_preferences에 쓴 값을 profiles로 복사해요. 새 앱이 퍼지면 16번에서 이 트리거와 옛 표를 지워요.
 create or replace function public.sync_old_notification_prefs()
 returns trigger
 language plpgsql
@@ -948,3 +948,87 @@ create trigger sync_old_notification_prefs
   for each row execute function public.sync_old_notification_prefs();
 
 revoke execute on function public.sync_old_notification_prefs() from public, anon, authenticated;
+
+-- 15) 방문 통계 두 표를 한 표로 합치기 (2026-11-21 초안) — invitation_visits(방문자별 열어본 횟수)를 invitation_visit_days(날짜별 방문자)에 합쳐요.
+-- 날짜별 한 줄에 "그날 연 횟수(open_count)"를 두면 두 표가 하던 일이 다 나와요: 방문한 사람 = 방문자 수(중복 없이), 열어본 횟수 = open_count 합, 최근 N일 = 날짜별 줄 수.
+-- 줄어드는 것: 처음 · 마지막 방문 "시각"(first_at · last_at)은 날짜 단위로만 남아요(앱 통계 화면은 쓰지 않아요). 통계 화면은 지금처럼 숨긴 채로 두고 기록만 계속해요.
+-- 하객 웹은 그대로예요(record_visit 이름 · 인자가 같아요). 옛 invitation_visits는 지금 지우지 않고 16번에서 지워요. 다시 실행해도 괜찮아요(옮기는 작업은 한 번만 해요).
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'invitation_visit_days' and column_name = 'open_count'
+  ) then
+    alter table public.invitation_visit_days add column open_count integer not null default 1;
+
+    if to_regclass('public.invitation_visits') is not null then
+      -- 옛 표의 열어본 횟수를 그 방문자의 가장 최근 날짜 줄에 보태서 합계를 그대로 지켜요(날짜별 줄은 이미 1씩 있어요).
+      update public.invitation_visit_days d
+        set open_count = d.open_count + greatest(v.open_count - c.n, 0)
+      from public.invitation_visits v
+      join (select invitation_id, visitor_id, count(*) as n, max(day) as last_day
+            from public.invitation_visit_days group by invitation_id, visitor_id) c
+        on c.invitation_id = v.invitation_id and c.visitor_id = v.visitor_id
+      where d.invitation_id = v.invitation_id and d.visitor_id = v.visitor_id and d.day = c.last_day;
+
+      -- 날짜별 기록이 없던 방문자(날짜 표를 만들기 전 방문)는 마지막 방문 날짜 한 줄로 옮겨요.
+      insert into public.invitation_visit_days (invitation_id, visitor_id, day, open_count)
+      select v.invitation_id, v.visitor_id, (v.last_at at time zone 'Asia/Seoul')::date, v.open_count
+      from public.invitation_visits v
+      where not exists (
+        select 1 from public.invitation_visit_days d where d.invitation_id = v.invitation_id and d.visitor_id = v.visitor_id
+      );
+    end if;
+  end if;
+end $$;
+
+-- 방문 기록: 열려 있는 초대장일 때만 세요(공유 전 · 중지 후 방문은 세지 않아요). 이제 날짜별 표 한 곳에만 써요.
+create or replace function public.record_visit(p_slug text, p_visitor uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  inv_id uuid;
+begin
+  select id into inv_id from public.invitations
+    where slug = lower(p_slug) and status = 'shared' and expires_at >= now();
+  if inv_id is null then
+    return;
+  end if;
+  -- 같은 사람이 같은 날 여러 번 열어도 하루 1명으로 세고(한국 시간 기준 날짜), 연 횟수만 올려요.
+  insert into public.invitation_visit_days (invitation_id, visitor_id, day)
+  values (inv_id, p_visitor, (now() at time zone 'Asia/Seoul')::date)
+  on conflict (invitation_id, visitor_id, day) do update set open_count = public.invitation_visit_days.open_count + 1;
+end;
+$$;
+
+-- 주인용 방문 통계: 방문한 사람(중복 없이) · 열어본 횟수 · 오늘 방문한 사람 · 최근 N일 날짜별 방문한 사람.
+create or replace function public.visit_stats(p_local_id text, p_days integer default 14)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  inv_id uuid;
+  n integer := least(greatest(coalesce(p_days, 14), 1), 60);
+  today date := (now() at time zone 'Asia/Seoul')::date;
+  people integer;
+  opens integer;
+  daily jsonb;
+begin
+  select id into inv_id from public.invitations where owner_id = auth.uid() and local_id = p_local_id;
+  if inv_id is null then
+    return jsonb_build_object('people', 0, 'opens', 0, 'today', 0, 'daily', (select jsonb_agg(0) from generate_series(1, n)));
+  end if;
+  select count(distinct visitor_id)::integer, coalesce(sum(open_count), 0)::integer into people, opens
+    from public.invitation_visit_days where invitation_id = inv_id;
+  select jsonb_agg(coalesce(d.c, 0) order by g.day) into daily
+  from generate_series(today - (n - 1), today, interval '1 day') as g(day)
+  left join (select day, count(*)::integer as c from public.invitation_visit_days where invitation_id = inv_id group by day) d on d.day = g.day::date;
+  return jsonb_build_object('people', people, 'opens', opens, 'today', coalesce((daily ->> (n - 1))::integer, 0), 'daily', daily);
+end;
+$$;
